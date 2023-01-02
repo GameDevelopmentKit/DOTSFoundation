@@ -1,0 +1,27 @@
+{
+    "name": "GASCore",
+    "rootNamespace": "",
+    "references": [
+        "GameFoundation.BlueprintFlow",
+        "DOTSCore",
+        "Unity.Entities",
+        "Unity.Entities.Hybrid",
+        "Unity.Collections",
+        "Unity.Burst",
+        "Unity.Mathematics",
+        "Unity.Transforms",
+        "Unity.Physics",
+        "Unity.Physics.Hybrid",
+        "GameFoundation.Utilities",
+        "Zenject-Source"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": true,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

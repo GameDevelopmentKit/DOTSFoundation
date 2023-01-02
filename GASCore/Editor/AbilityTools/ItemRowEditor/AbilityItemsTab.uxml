@@ -1,0 +1,10 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="True">
+    <ui:VisualElement name="ItemTab" style="flex-grow: 0; justify-content: flex-start;">
+        <ui:VisualElement name="Header" style="flex-direction: row; align-items: center; justify-content: flex-start; min-height: auto; flex-wrap: nowrap; min-width: auto;">
+            <ui:Label text="Items" display-tooltip-when-elided="true" name="Items" style="width: auto; flex-grow: 0; flex-shrink: 0; font-size: 15px;" />
+            <uie:ToolbarSearchField focusable="true" name="search_field" style="min-width: auto; min-height: auto; width: auto; justify-content: flex-start; flex-shrink: 1;" />
+            <ui:Button text="+" display-tooltip-when-elided="true" name="btnAdd" style="padding-left: 10px; padding-right: 10px; padding-top: 10px; padding-bottom: 10px; margin-top: 0; margin-bottom: 0; margin-left: 0; margin-right: 0; justify-content: flex-start; align-items: center; width: 20px; height: 20px; font-size: 20px; -unity-text-align: middle-center; white-space: nowrap;" />
+        </ui:VisualElement>
+        <ui:ListView name="ListAbilityItemView" virtualization-method="DynamicHeight" reorderable="true" reorder-mode="Simple" style="flex-grow: 1;" />
+    </ui:VisualElement>
+</ui:UXML>

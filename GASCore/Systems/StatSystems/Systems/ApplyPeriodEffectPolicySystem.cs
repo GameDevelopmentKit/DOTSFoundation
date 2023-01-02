@@ -1,0 +1,84 @@
+﻿namespace GASCore.Systems.StatSystems.Systems
+{
+    using GASCore.Groups;
+    using GASCore.Systems.AbilityMainFlow.Components;
+    using GASCore.Systems.CommonSystems.Components;
+    using GASCore.Systems.StatSystems.Components;
+    using Unity.Burst;
+    using Unity.Entities;
+    using UnityEngine;
+
+    [UpdateInGroup(typeof(AbilityLogicEffectGroup))]
+    [UpdateAfter(typeof(ApplyInfiniteEffectPolicySystem))]
+    [RequireMatchingQueriesForUpdate]
+    [BurstCompile]
+    public partial struct ApplyPeriodEffectPolicySystem : ISystem
+    {
+        [BurstCompile]
+        public void OnCreate(ref SystemState state) { }
+        [BurstCompile]
+        public void OnDestroy(ref SystemState state) { }
+        [BurstCompile]
+        public void OnUpdate(ref SystemState state)
+        {
+            var ecbSingleton       = SystemAPI.GetSingleton<BeginSimulationEntityCommandBufferSystem.Singleton>();
+            var ecb                = ecbSingleton.CreateCommandBuffer(state.WorldUnmanaged).AsParallelWriter();
+            var currentElapsedTime = SystemAPI.Time.ElapsedTime;
+            new ApplyPeriodEffectPolicyJob()
+            {
+                Ecb                = ecb,
+                CurrentElapsedTime = currentElapsedTime
+            }.ScheduleParallel();
+            new CreatePeriodInstanceEffectJob()
+            {
+                Ecb                = ecb,
+            }.ScheduleParallel();
+        }
+    }
+
+    /// <summary>
+    /// Add end time for period effect
+    /// </summary>
+    [BurstCompile]
+    [WithNone(typeof(EndTimeComponent))]
+    public partial struct ApplyPeriodEffectPolicyJob : IJobEntity
+    {
+        public EntityCommandBuffer.ParallelWriter Ecb;
+        public double                             CurrentElapsedTime;
+
+        void Execute(Entity statModifierEntity, [EntityInQueryIndex] int entityInQueryIndex, in PeriodEffect periodEffect)
+        {
+            //wait period in second
+            this.Ecb.AddComponent(entityInQueryIndex, statModifierEntity, new EndTimeComponent() { Value = this.CurrentElapsedTime + periodEffect.Value });
+            this.Ecb.SetComponentEnabled<EndTimeComponent>(entityInQueryIndex, statModifierEntity, true);
+        }
+    }
+    
+    
+    /// <summary>
+    /// Instantiate a period instance effect and wait after 'PeriodEffect.Value' second to create a new one, until this stat modifier is removed
+    /// </summary>
+    [BurstCompile]
+    [WithAll(typeof(PeriodEffect))]
+    [WithAny(typeof(DurationEffect), typeof(InfiniteEffect))]
+    [WithNone(typeof(EndTimeComponent))]
+    public partial struct CreatePeriodInstanceEffectJob : IJobEntity
+    {
+        public EntityCommandBuffer.ParallelWriter Ecb;
+
+        void Execute([EntityInQueryIndex] int entityInQueryIndex, in AffectedTargetComponent affectedTarget, in DynamicBuffer<StatModifierEntityElement> statModifierEntityElementBuffers, in ActivatedStateEntityOwner activatedStateEntityOwner)
+        {
+            Debug.Log("ApplyPeriodEffectPolicyJob");
+            // create a period instance effect
+            var periodInstanceEntity = this.Ecb.CreateEntity(entityInQueryIndex);
+            this.Ecb.AddComponent<PeriodEffectInstanceTag>(entityInQueryIndex, periodInstanceEntity);
+            this.Ecb.AddComponent(entityInQueryIndex, periodInstanceEntity, affectedTarget);
+            var cloneBuffer = this.Ecb.AddBuffer<StatModifierEntityElement>(entityInQueryIndex, periodInstanceEntity);
+            foreach (var statModifierEntityElement in statModifierEntityElementBuffers)
+            {
+                cloneBuffer.Add(statModifierEntityElement);
+            }
+            this.Ecb.AddComponent(entityInQueryIndex, periodInstanceEntity, activatedStateEntityOwner);
+        }
+    }
+}

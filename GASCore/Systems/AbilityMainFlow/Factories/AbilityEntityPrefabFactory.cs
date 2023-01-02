@@ -1,0 +1,123 @@
+namespace GASCore.Systems.AbilityMainFlow.Factories
+{
+    using DOTSCore.EntityFactory;
+    using DOTSCore.Extension;
+    using GASCore.Blueprints;
+    using GASCore.Interfaces;
+    using GASCore.Services;
+    using GASCore.Systems.AbilityMainFlow.Components;
+    using GASCore.Systems.LogicEffectSystems.Factories;
+    using GASCore.Systems.TimelineSystems.Components;
+    using GASCore.Systems.TimelineSystems.Factories;
+    using Unity.Collections;
+    using Unity.Entities;
+    using Unity.Transforms;
+
+    public struct AbilityFactoryModel
+    {
+        public AbilityRecord      AbilityRecord;
+        public AbilityLevelRecord AbilityLevelRecord;
+    }
+
+    public class AbilityEntityPrefabFactory : BaseEntityPrefabFactory<AbilityFactoryModel>
+    {
+        #region Inject
+
+        private readonly AbilityEffectEntityPrefabFactory   abilityEffectEntityPrefabFactory;
+        private readonly AbilityTimelineEntityPrefabFactory timelineEntityPrefabFactory;
+
+        #endregion
+
+        public AbilityEntityPrefabFactory(AbilityEffectEntityPrefabFactory abilityEffectEntityPrefabFactory, AbilityTimelineEntityPrefabFactory timelineEntityPrefabFactory) : base()
+        {
+            this.abilityEffectEntityPrefabFactory = abilityEffectEntityPrefabFactory;
+            this.timelineEntityPrefabFactory      = timelineEntityPrefabFactory;
+        }
+
+        protected override void InitComponents(EntityManager entityManager, Entity abilityEntity, AbilityFactoryModel abilityFactoryModel)
+        {
+            var ecb         = new EntityCommandBuffer(Allocator.TempJob);
+            var ecbParallel = ecb.AsParallelWriter();
+            var index       = 0;
+
+            var record = abilityFactoryModel.AbilityRecord;
+            // ====== Ability general info ======
+            ecbParallel.SetName(index, abilityEntity, $"{record.Id}_Lv{abilityFactoryModel.AbilityLevelRecord.LevelIndex + 1}");
+            ecbParallel.AddComponent(index, abilityEntity, new ComponentTypeSet(typeof(LocalToWorld)));
+            ecbParallel.AddComponent(index, abilityEntity, new ComponentTypeSet(typeof(RequestActivate), typeof(GrantedActivation)));
+            ecbParallel.AddComponent(index, abilityEntity, new AbilityId() { Value = record.Id });
+            ecbParallel.AddComponent(index, abilityEntity, new Duration() { Value  = 0 });
+            ecbParallel.SetComponentEnabled<RequestActivate>(index, abilityEntity, false);
+            ecbParallel.SetComponentEnabled<GrantedActivation>(index, abilityEntity, false);
+
+            //attach ability type tag
+            if (record.Type == AbilityType.Active)
+                ecbParallel.AddComponent(index, abilityEntity, new ActiveAbilityTag());
+            else if (record.Type == AbilityType.Passive)
+                ecbParallel.AddComponent(index, abilityEntity, new PassiveAbilityTag());
+
+            // add target type buffer
+            var targetTypeBuffer = ecbParallel.AddBuffer<TargetTypeElement>(index, abilityEntity);
+            foreach (var target in record.Target)
+            {
+                targetTypeBuffer.Add(new TargetTypeElement() { Value = target });
+            }
+
+            // ===== Ability Level Info ======
+            var levelRecord = abilityFactoryModel.AbilityLevelRecord;
+            ecbParallel.AddComponent(index, abilityEntity, new CastRangeComponent() { Value = levelRecord.CastRange });
+            ecbParallel.AddComponent(index, abilityEntity, levelRecord.AoE);
+            ecbParallel.AddComponent(index, abilityEntity, new Cooldown() { Value = levelRecord.Cooldown });
+
+            // add ability cost buffer
+            var abilityCostBuffer = ecbParallel.AddBuffer<AbilityCost>(index, abilityEntity);
+            foreach (var (name, value) in levelRecord.Cost)
+            {
+                abilityCostBuffer.Add(new AbilityCost() { Name = name, Value = value });
+            }
+
+            //setup to auto activate ability by trigger condition 
+            if (string.IsNullOrEmpty(levelRecord.AbilityActivateCondition))
+            {
+                ecbParallel.AddComponent<ManualActiveTag>(index, abilityEntity);
+            }
+            else
+            {
+                var triggerComponentsData = levelRecord.AbilityActivateCondition.ConvertJsonToComponentsData<IComponentConverter>();
+                var count                 = 0;
+                foreach (var component in triggerComponentsData)
+                {
+                    component.Convert(ecbParallel, index, abilityEntity);
+                    if (component is not RecycleTriggerEntityTag._) count++;
+                }
+
+                //if component data contain any trigger condition, will be add TriggerConditionCount
+                if (count > 0)
+                {
+                    ecbParallel.AddComponent(index, abilityEntity, new TriggerConditionCount() { Value  = count });
+                    ecbParallel.AddComponent(index, abilityEntity, new TriggerConditionAmount() { Value = count });
+                }
+            }
+
+            // setup ability timeline prefab
+            var timelineEntity = this.timelineEntityPrefabFactory.CreateEntity(ecbParallel, index, levelRecord.AbilityTimeline);
+            ecbParallel.SetParent(index, timelineEntity, abilityEntity);
+            ecbParallel.AddComponent(index, abilityEntity, new AbilityTimelinePrefabComponent() { Value = timelineEntity });
+
+            // setup ability effect pool
+            var effectPoolBuffer = ecbParallel.AddBuffer<AbilityEffectPoolComponent>(index, abilityEntity);
+            foreach (var effect in levelRecord.AbilityEffectPool)
+            {
+                var effectPrefab = this.abilityEffectEntityPrefabFactory.CreateEntity(ecbParallel, index, effect);
+                effectPoolBuffer.Add(new AbilityEffectPoolComponent() { EffectPrefab = effectPrefab });
+                ecbParallel.SetParent(index, effectPrefab, abilityEntity);
+            }
+            
+            var cacheLinkEntityBuffer = ecbParallel.AddBuffer<LinkedEntityGroup>(index, abilityEntity);
+            cacheLinkEntityBuffer.Add(new LinkedEntityGroup() { Value = abilityEntity });
+
+            ecb.Playback(entityManager);
+            ecb.Dispose();
+        }
+    }
+}

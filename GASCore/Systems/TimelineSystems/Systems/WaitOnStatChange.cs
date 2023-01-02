@@ -1,0 +1,96 @@
+﻿namespace GASCore.Systems.TimelineSystems.Systems
+{
+    using GASCore.Groups;
+    using GASCore.Systems.AbilityMainFlow.Components;
+    using GASCore.Systems.TimelineSystems.Components;
+    using Unity.Burst;
+    using Unity.Collections;
+    using Unity.Entities;
+    using UnityEngine;
+
+    //This system should be update in AbilityVisualEffectGroup, to listen the OnStatChange notify before it's destroyed
+    [UpdateInGroup(typeof(AbilityVisualEffectGroup))]
+    [RequireMatchingQueriesForUpdate]
+    [BurstCompile]
+    public partial struct WaitOnStatChangeSystem : ISystem
+    {
+        private EntityQuery                            triggerOnStatChangeQuery;
+        private ComponentLookup<TriggerOnStatChanged>  triggerOnStatChangeComponentLookup;
+        private ComponentLookup<CasterComponent>       casterLookup;
+        private ComponentLookup<TriggerConditionCount> triggerConditionComponentLookup;
+
+        [BurstCompile]
+        public void OnCreate(ref SystemState state)
+        {
+            using var queryBuilder = new EntityQueryBuilder(Allocator.Temp).WithAll<TriggerOnStatChanged>();
+            this.triggerOnStatChangeQuery = state.GetEntityQuery(queryBuilder);
+
+            this.triggerOnStatChangeComponentLookup = state.GetComponentLookup<TriggerOnStatChanged>(true);
+            this.casterLookup                       = state.GetComponentLookup<CasterComponent>(true);
+            this.triggerConditionComponentLookup    = state.GetComponentLookup<TriggerConditionCount>(true);
+        }
+
+        [BurstCompile]
+        public void OnDestroy(ref SystemState state)
+        {
+        }
+
+        [BurstCompile]
+        public void OnUpdate(ref SystemState state)
+        {
+            this.triggerOnStatChangeComponentLookup.Update(ref state);
+            this.casterLookup.Update(ref state);
+            this.triggerConditionComponentLookup.Update(ref state);
+
+            var triggerOnHits = this.triggerOnStatChangeQuery.ToEntityListAsync(state.WorldUpdateAllocator, out var getTriggerOnHitHandle);
+
+            var ecbSingleton = SystemAPI.GetSingleton<EndSimulationEntityCommandBufferSystem.Singleton>();
+            var ecb          = ecbSingleton.CreateCommandBuffer(state.WorldUnmanaged).AsParallelWriter();
+
+            var listenOnHitEventJob = new ListenOnStatChangedJob()
+            {
+                Ecb                                = ecb,
+                TriggerOnStatChangeEntities        = triggerOnHits,
+                TriggerOnStatChangeComponentLookup = this.triggerOnStatChangeComponentLookup,
+                CasterLookup                       = this.casterLookup,
+                TriggerConditionComponentLookup    = this.triggerConditionComponentLookup
+            };
+
+            state.Dependency = listenOnHitEventJob.ScheduleParallel(getTriggerOnHitHandle);
+        }
+    }
+
+
+    [BurstCompile]
+    public partial struct ListenOnStatChangedJob : IJobEntity
+    {
+        public            EntityCommandBuffer.ParallelWriter     Ecb;
+        [ReadOnly] public NativeList<Entity>                     TriggerOnStatChangeEntities;
+        [ReadOnly] public ComponentLookup<TriggerOnStatChanged>  TriggerOnStatChangeComponentLookup;
+        [ReadOnly] public ComponentLookup<CasterComponent>       CasterLookup;
+        [ReadOnly] public ComponentLookup<TriggerConditionCount> TriggerConditionComponentLookup;
+
+        void Execute([EntityInQueryIndex] int entityInQueryIndex, in OnStatChange event_)
+        {
+            foreach (var triggerOnHitEntity in this.TriggerOnStatChangeEntities)
+            {
+                if (!this.CasterLookup[triggerOnHitEntity].Value.Equals(event_.Source)) continue; // wrong entity
+
+                var triggerCondition = this.TriggerOnStatChangeComponentLookup[triggerOnHitEntity];
+
+                if (!triggerCondition.StatName.Equals(event_.ChangedStat.StatName)) continue; // wrong stat name
+
+                var currentValue = triggerCondition.Percent
+                    ? event_.ChangedStat.CurrentValue / event_.ChangedStat.OriginValue
+                    : event_.ChangedStat.CurrentValue;
+                if (triggerCondition.Above && currentValue >= triggerCondition.Value
+                    || !triggerCondition.Above && currentValue <= triggerCondition.Value)
+                {
+                    Debug.Log($"ListenOnStatChangedJob from stat {event_.ChangedStat.StatName}");
+                    // mark this condition was done
+                    this.Ecb.SetComponent(entityInQueryIndex, triggerOnHitEntity, new TriggerConditionCount() { Value = this.TriggerConditionComponentLookup[triggerOnHitEntity].Value - 1 });
+                }
+            }
+        }
+    }
+}

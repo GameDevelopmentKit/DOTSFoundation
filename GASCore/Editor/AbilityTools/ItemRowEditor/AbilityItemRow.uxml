@@ -1,0 +1,6 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
+    <ui:VisualElement name="ItemRow" style="justify-content: flex-start; flex-direction: row; align-items: center; width: 347px;">
+        <ui:VisualElement name="Icon" style="background-image: url(&apos;/Assets/WUG/Sprites/UnknownIcon.png&apos;); width: 55px; height: 55px;" />
+        <ui:Label text="Unknown" display-tooltip-when-elided="true" name="Name" style="flex-grow: 1; -unity-text-align: middle-left; -unity-font-style: bold; font-size: 16px; flex-wrap: wrap; white-space: normal;" />
+    </ui:VisualElement>
+</ui:UXML>

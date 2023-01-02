@@ -1,0 +1,14 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements">
+    <ui:VisualElement name="AbilityEffectRow">
+        <ui:TextField picking-mode="Ignore" label="EffectId" value="filler text" text="filler text" name="EffectId" binding-path="EffectId" />
+        <uie:PropertyField name="AffectedTarget" label="AffectedTarget" binding-path="AffectedTarget" />
+        <ui:VisualElement style="flex-direction: row; justify-content: space-between;">
+            <ui:ScrollView name="LogicEffectView">
+                <ui:IMGUIContainer name="LogicEffectContainaer" />
+            </ui:ScrollView>
+            <ui:ScrollView name="VisualEffectView">
+                <ui:IMGUIContainer name="VisualEffectContainaer" />
+            </ui:ScrollView>
+        </ui:VisualElement>
+    </ui:VisualElement>
+</ui:UXML>

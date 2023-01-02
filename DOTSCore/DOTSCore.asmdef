@@ -1,0 +1,27 @@
+{
+    "name": "DOTSCore",
+    "rootNamespace": "",
+    "references": [
+        "Unity.Entities",
+        "Unity.Scenes",
+        "Unity.Burst",
+        "Unity.Transforms",
+        "Unity.Collections",
+        "Unity.Mathematics",
+        "Zenject-Source",
+        "GameFoundation.Utilities",
+        "Unity.Entities.Hybrid",
+        "UniTask",
+        "Unity.Physics",
+        "Unity.Physics.Hybrid"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
