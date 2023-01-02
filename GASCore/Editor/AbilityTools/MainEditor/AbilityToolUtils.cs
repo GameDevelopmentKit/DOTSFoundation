@@ -12,7 +12,7 @@
     {
         public const string AbilityItemSOFolderPath = "Assets/ScriptableObjects/AbilityItems/";
         public const string AbilityToolEditorPath   = "Assets/DOTSFoundation/GASCore/Editor/AbilityTools";
-        public const string PathGoogleSheetConfig   = "Assets/GASCore/Editor/GoogleSheetSync/ConfigGoogleSheet.asset";
+        public const string PathGoogleSheetConfig   = "Assets/DOTSFoundation/GASCore/Editor/GoogleSheetSync/ConfigGoogleSheet.asset";
 
         private static readonly string AbilityWindowEditorPath   = $"{AbilityToolEditorPath}/{nameof(MainEditor)}/AbilityWindowEditor.uxml";
         private static readonly string AbilityItemRowEditorPath  = $"{AbilityToolEditorPath}/ItemRowEditor/AbilityItemRow.uxml";
