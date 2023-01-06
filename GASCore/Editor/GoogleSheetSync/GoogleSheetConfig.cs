@@ -1,12 +1,11 @@
-using Sirenix.OdinInspector;
-using UnityEngine;
-
-namespace GASCore.Editor.GoogleSheetSync
+﻿namespace GASCore.Editor.GoogleSheetSync
 {
+    using Sirenix.OdinInspector;
+    using UnityEngine;
     using ScriptableObject = UnityEngine.ScriptableObject;
 
     [CreateAssetMenu(fileName = "ConfigGoogleSheet", menuName = "GDK/ConfigGoogleSheet")]
-    public class ConfigGoogleSheet : ScriptableObject
+    public class GoogleSheetConfig : ScriptableObject
     {
         public string SpreadSheetID;
     

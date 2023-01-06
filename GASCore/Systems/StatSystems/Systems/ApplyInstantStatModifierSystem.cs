@@ -64,7 +64,7 @@
             // Apply stat modifier to affect targets 
             foreach (var aggregator in listModifierAggregators)
             {
-                Debug.Log($"ApplyInstantEffectJob Apply stat {aggregator.TargetStat} modifier to affect targets to {entity.Index}");
+                // Debug.Log($"ApplyInstantEffectJob Apply stat {aggregator.TargetStat} modifier to affect targets to {entity.Index}");
                 statAspect.SetBaseValueAndNotify(this.Ecb, entityInQueryIndex, aggregator.TargetStat, statAspect.CalculateStatValue(aggregator));
             }
         }

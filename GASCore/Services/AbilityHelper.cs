@@ -22,7 +22,6 @@
                         {
                             result.Add(targetElement.Value);
                         }
-                        Debug.Log($"AddAllAffectedTargetInAoe - targetBuffer count = {targetBuffer.Length}");
 
                         break;
                     case TargetType.Self:

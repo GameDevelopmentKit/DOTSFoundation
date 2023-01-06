@@ -13,7 +13,7 @@
             public SimpleVector3 Value;
             public void Convert(EntityCommandBuffer.ParallelWriter ecb, int index, Entity entity)
             {
-                ecb.AddComponent(index, entity, new PositionOffset(){ Value = new float3(this.Value.X, this.Value.Y, this.Value.Z)});
+                ecb.AddComponent(index, entity, new PositionOffset(){ Value = new float3(this.Value.x, this.Value.y, this.Value.z)});
             }
         }
     }

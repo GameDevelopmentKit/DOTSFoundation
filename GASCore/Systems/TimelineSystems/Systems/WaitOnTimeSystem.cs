@@ -35,7 +35,6 @@
 
     [BurstCompile]
     [WithNone(typeof(EndTimeComponent))]
-    [WithChangeFilter(typeof(TriggerAfterSecond))]
     public partial struct SetEndTimeTriggerAfterSecondJob : IJobEntity
     {
         public EntityCommandBuffer.ParallelWriter Ecb;
@@ -45,6 +44,7 @@
             if (triggerAfterSecond.Second > 0)
             {
                 this.Ecb.AddComponent(entityInQueryIndex, entity, new EndTimeComponent() { Value = this.CurrentElapsedTime + triggerAfterSecond.Second });
+                this.Ecb.SetComponentEnabled<EndTimeComponent>(entityInQueryIndex, entity, true);
             }
         }
     }

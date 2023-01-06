@@ -101,7 +101,7 @@
                         }
 
                         // try to add new ability flow
-                        Debug.Log($"requestInitializeAbility + {requestAddOrUpgradeAbility.AbilityLevelKey} ");
+                        // Debug.Log($"requestInitializeAbility + {requestAddOrUpgradeAbility.AbilityLevelKey} ");
                         if (abilityNameToLevelPrefabs.TryGetValue(requestAddOrUpgradeAbility.AbilityLevelKey, out var abilityPrefab))
                         {
                             // instantiate ability and log to AbilityContainerElement

@@ -32,8 +32,8 @@
 
     public class BoxColliderAuthoring : IAbilityActionComponentConverter
     {
-        public SimpleVector3           Size              = new() { X = 1, Y = 1, Z = 1 };
-        public SimpleVector3           Center            = new() { X = 0, Y = 0, Z = 0 };
+        public SimpleVector3           Size              = new() { x = 1, y = 1, z = 1 };
+        public SimpleVector3           Center            = new() { x = 0, y = 0, z = 0 };
         public CollisionResponsePolicy CollisionResponse = CollisionResponsePolicy.RaiseTriggerEvents;
 
         [JsonConverter(typeof(PhysicsCategoryTagsConverter))]
@@ -51,7 +51,7 @@
     public class SphereColliderAuthoring : IAbilityActionComponentConverter
     {
         public float                   Radius            = 1;
-        public SimpleVector3           Center            = new() { X = 0, Y = 0, Z = 0 };
+        public SimpleVector3           Center            = new() { x = 0, y = 0, z = 0 };
         public CollisionResponsePolicy CollisionResponse = CollisionResponsePolicy.RaiseTriggerEvents;
 
         [JsonConverter(typeof(PhysicsCategoryTagsConverter))]

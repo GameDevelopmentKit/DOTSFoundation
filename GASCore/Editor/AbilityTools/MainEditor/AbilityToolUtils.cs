@@ -33,7 +33,7 @@
         public static VisualTreeAsset LoadAbilityItemInfoEditor() => AssetDatabase.LoadAssetAtPath<VisualTreeAsset>(AbilityItemInfoEditorPath);
         public static VisualTreeAsset LoadAbilityLevelItemEditor() => AssetDatabase.LoadAssetAtPath<VisualTreeAsset>(AbilityLevelItemEditorPath);
 
-        public static ConfigGoogleSheet LoadConfigGoogleSheet() => AssetDatabase.LoadAssetAtPath<ConfigGoogleSheet>(PathGoogleSheetConfig);
+        public static GoogleSheetConfig LoadConfigGoogleSheet() => AssetDatabase.LoadAssetAtPath<GoogleSheetConfig>(PathGoogleSheetConfig);
 
         public static IEnumerable<AbilityItem> LoadAllAbilityItemSO() => LoadAllItemAtPath<AbilityItem>(AbilityItemSOFolderPath);
     }

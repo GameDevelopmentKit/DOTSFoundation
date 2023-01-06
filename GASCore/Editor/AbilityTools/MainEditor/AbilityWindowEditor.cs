@@ -22,7 +22,7 @@ namespace GASCore.Editor.AbilityTools.MainEditor
 
     public class AbilityWindowEditor : EditorWindow
     {
-        private ConfigGoogleSheet configGoogleSheet;
+        private GoogleSheetConfig configGoogleSheet;
 
         private List<AbilityItem> abilityInventory;
         private ListView          abilityItemListView;
@@ -292,7 +292,7 @@ namespace GASCore.Editor.AbilityTools.MainEditor
             this.inspectorWindow.Focus();
 
 
-            this.configGoogleSheet = (ConfigGoogleSheet)AssetDatabase.LoadAssetAtPath(AbilityToolUtils.PathGoogleSheetConfig, typeof(ScriptableObject));
+            this.configGoogleSheet = (GoogleSheetConfig)AssetDatabase.LoadAssetAtPath(AbilityToolUtils.PathGoogleSheetConfig, typeof(ScriptableObject));
             Selection.activeObject = this.configGoogleSheet;
         }
 

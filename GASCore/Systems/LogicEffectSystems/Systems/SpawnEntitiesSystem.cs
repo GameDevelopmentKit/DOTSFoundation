@@ -1,5 +1,6 @@
 ﻿namespace GASCore.Systems.LogicEffectSystems.Systems
 {
+    using System;
     using DOTSCore.Extension;
     using GASCore.Groups;
     using GASCore.Systems.AbilityMainFlow.Components;
@@ -7,7 +8,9 @@
     using GASCore.Systems.LogicEffectSystems.Components;
     using Unity.Burst;
     using Unity.Collections;
+    using Unity.Collections.LowLevel.Unsafe;
     using Unity.Entities;
+    using Unity.Mathematics;
     using Unity.Transforms;
     using UnityEngine;
     using Random = Unity.Mathematics.Random;
@@ -19,12 +22,15 @@
     {
         private EntityQuery                  spawnerEntityQuery;
         private ComponentLookup<TeamOwnerId> teamLookup;
+        private ComponentLookup<Rotation>    rotationLookup;
+
         [BurstCompile]
         public void OnCreate(ref SystemState state)
         {
             using var queryBuilder = new EntityQueryBuilder(Allocator.Temp).WithAll<EntitySpawner>().WithNone<EndTimeComponent>().WithOptions(EntityQueryOptions.FilterWriteGroup);
             this.spawnerEntityQuery = state.GetEntityQuery(queryBuilder);
             this.teamLookup         = state.GetComponentLookup<TeamOwnerId>(true);
+            this.rotationLookup     = state.GetComponentLookup<Rotation>(true);
         }
 
         [BurstCompile]
@@ -36,10 +42,13 @@
             var ecbSingleton = SystemAPI.GetSingleton<EndSimulationEntityCommandBufferSystem.Singleton>();
             var ecb          = ecbSingleton.CreateCommandBuffer(state.WorldUnmanaged).AsParallelWriter();
             this.teamLookup.Update(ref state);
+            this.rotationLookup.Update(ref state);
+
             var spawnJob = new SpawnEntitiesJob()
             {
-                Ecb = ecb,
-                TeamLookup = teamLookup
+                Ecb            = ecb,
+                TeamLookup     = this.teamLookup,
+                RotationLookup = this.rotationLookup
             };
             spawnJob.ScheduleParallel(spawnerEntityQuery);
         }
@@ -51,29 +60,45 @@
         public EntityCommandBuffer.ParallelWriter Ecb;
 
         [ReadOnly] public ComponentLookup<TeamOwnerId> TeamLookup;
+        [ReadOnly] public ComponentLookup<Rotation>    RotationLookup;
 
-        void Execute([EntityInQueryIndex] int entityInQueryIndex, in EntitySpawner entitySpawner, in ActivatedStateEntityOwner activatedStateEntityOwner, in CasterComponent caster,
-            in AbilityEffectId effectId, in AffectedTargetComponent affectedTargetComponent)
+        [NativeSetThreadIndex] private int threadId;
+
+        void Execute([EntityInQueryIndex] int index,
+            ref EntitySpawner spawnData,
+            in ActivatedStateEntityOwner activatedStateEntityOwner,
+            in CasterComponent caster,
+            in AbilityEffectId effectId,
+            in AffectedTargetComponent affectedTarget)
         {
-            var rnd    = Random.CreateFromIndex((uint)entityInQueryIndex);
-            var amount = entitySpawner.IsRandomAmount ? rnd.NextInt(1, entitySpawner.MaxAmount) : entitySpawner.MaxAmount;
+            var rnd = Random.CreateFromIndex((uint)this.threadId);
 
-            Debug.Log($"SpawnEntitiesJob {entitySpawner.EntityPrefab}-{amount}");
+            if (spawnData.Clockwise == 0)
+            { 
+                spawnData.CurrentAngle = rnd.NextFloat(spawnData.StartAngleRange.min, spawnData.StartAngleRange.max);
+                spawnData.Clockwise    = rnd.NextBool() ? 1 : -1;
+            }
 
-            for (int i = 0; i < amount; i++)
+            var amount = rnd.NextInt(spawnData.AmountRange.min, spawnData.AmountRange.max);
+
+            while (amount-- > 0)
             {
-                var entityInstance = this.Ecb.Instantiate(entityInQueryIndex, entitySpawner.EntityPrefab);
-                this.Ecb.RemoveParent(entityInQueryIndex, entityInstance);
+                var entity = this.Ecb.Instantiate(index, spawnData.EntityPrefab);
+                this.Ecb.RemoveParent(index, entity);
 
-                this.Ecb.AddComponent(entityInQueryIndex, entityInstance, new AbilityEffectId() { Value         = effectId.Value });
-                this.Ecb.AddComponent(entityInQueryIndex, entityInstance, new AffectedTargetComponent() { Value = affectedTargetComponent.Value });
-                this.Ecb.AddComponent(entityInQueryIndex, entityInstance, caster);
+                this.Ecb.SetComponent(index, entity, new Rotation { Value = math.mul(this.RotationLookup[caster.Value].Value,quaternion.RotateY(spawnData.CurrentAngle)) });
 
-                this.Ecb.AddComponent(entityInQueryIndex, entityInstance, this.TeamLookup[caster.Value]);
+                this.Ecb.AddComponent(index, entity, new AbilityEffectId() { Value         = effectId.Value });
+                this.Ecb.AddComponent(index, entity, new AffectedTargetComponent() { Value = affectedTarget.Value });
+                this.Ecb.AddComponent(index, entity, caster);
 
-                if (entitySpawner.IsDrop) continue;
-                this.Ecb.AddComponent(entityInQueryIndex, entityInstance, activatedStateEntityOwner);
-                this.Ecb.AppendToBuffer(entityInQueryIndex, activatedStateEntityOwner.Value, new LinkedEntityGroup() { Value = entityInstance });
+                this.Ecb.AddComponent(index, entity, this.TeamLookup[caster.Value]);
+
+                if (spawnData.IsDrop) continue;
+                this.Ecb.AddComponent(index, entity, activatedStateEntityOwner);
+                this.Ecb.AppendToBuffer(index, activatedStateEntityOwner.Value, new LinkedEntityGroup() { Value = entity });
+                
+                spawnData.CurrentAngle += rnd.NextFloat(spawnData.AngleStepRange.min, spawnData.AngleStepRange.max) * spawnData.Clockwise;
             }
         }
     }
