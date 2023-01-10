@@ -46,7 +46,7 @@
         public            EntityCommandBuffer.ParallelWriter     Ecb;
         [ReadOnly] public ComponentLookup<TriggerConditionCount> TriggerConditionLookup;
         void Execute([EntityInQueryIndex] int entityInQueryIndex, in DynamicBuffer<WaitToTrigger> waitToTriggerBuffer, in ActivatedStateEntityOwner activatedStateEntity,
-            in CasterComponent caster, in DynamicBuffer<TargetElement> targetBuffer, in DynamicBuffer<ExcludeAffectedTargetElement> excludeAffectedTargetBuffer)
+            in CasterComponent caster, in DynamicBuffer<TargetableElement> targetBuffer, in DynamicBuffer<ExcludeAffectedTargetElement> excludeAffectedTargetBuffer)
         {
             foreach (var waitToTrigger in waitToTriggerBuffer)
             {
@@ -60,7 +60,7 @@
                     this.Ecb.SetComponent(entityInQueryIndex, abilityTimelineAction, new TriggerConditionCount() { Value = triggerConditionCount.Value - 1 });
                 }
 
-                var targetBufferClone = this.Ecb.AddBuffer<TargetElement>(entityInQueryIndex, abilityTimelineAction);
+                var targetBufferClone = this.Ecb.AddBuffer<TargetableElement>(entityInQueryIndex, abilityTimelineAction);
                 foreach (var targetType in targetBuffer)
                 {
                     targetBufferClone.Add(targetType);

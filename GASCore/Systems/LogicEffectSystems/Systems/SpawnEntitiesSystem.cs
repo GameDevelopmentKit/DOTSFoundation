@@ -74,7 +74,7 @@
             var rnd = Random.CreateFromIndex((uint)this.threadId);
 
             if (spawnData.Clockwise == 0)
-            { 
+            {
                 spawnData.CurrentAngle = rnd.NextFloat(spawnData.StartAngleRange.min, spawnData.StartAngleRange.max);
                 spawnData.Clockwise    = rnd.NextBool() ? 1 : -1;
             }
@@ -86,19 +86,23 @@
                 var entity = this.Ecb.Instantiate(index, spawnData.EntityPrefab);
                 this.Ecb.RemoveParent(index, entity);
 
-                this.Ecb.SetComponent(index, entity, new Rotation { Value = math.mul(this.RotationLookup[caster.Value].Value,quaternion.RotateY(spawnData.CurrentAngle)) });
+                var rotateY = quaternion.RotateY(spawnData.CurrentAngle);
+                this.Ecb.SetComponent(index, entity, new Rotation { Value = spawnData.FollowCasterRotation ? math.mul(this.RotationLookup[caster.Value].Value, rotateY) : rotateY });
+                spawnData.CurrentAngle += rnd.NextFloat(spawnData.AngleStepRange.min, spawnData.AngleStepRange.max) * spawnData.Clockwise;
 
                 this.Ecb.AddComponent(index, entity, new AbilityEffectId() { Value         = effectId.Value });
                 this.Ecb.AddComponent(index, entity, new AffectedTargetComponent() { Value = affectedTarget.Value });
                 this.Ecb.AddComponent(index, entity, caster);
 
-                this.Ecb.AddComponent(index, entity, this.TeamLookup[caster.Value]);
-
-                if (spawnData.IsDrop) continue;
-                this.Ecb.AddComponent(index, entity, activatedStateEntityOwner);
-                this.Ecb.AppendToBuffer(index, activatedStateEntityOwner.Value, new LinkedEntityGroup() { Value = entity });
-                
-                spawnData.CurrentAngle += rnd.NextFloat(spawnData.AngleStepRange.min, spawnData.AngleStepRange.max) * spawnData.Clockwise;
+                if (!spawnData.IsDrop)
+                {
+                    this.Ecb.AddComponent(index, entity, activatedStateEntityOwner);
+                    this.Ecb.AppendToBuffer(index, activatedStateEntityOwner.Value, new LinkedEntityGroup() { Value = entity });
+                }
+                else
+                {
+                    this.Ecb.AddComponent(index, entity, this.TeamLookup[caster.Value]);
+                }
             }
         }
     }

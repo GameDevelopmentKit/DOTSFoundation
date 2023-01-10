@@ -66,7 +66,6 @@ namespace GASCore.Systems.AbilityMainFlow.Factories
             // ===== Ability Level Info ======
             var levelRecord = abilityFactoryModel.AbilityLevelRecord;
             ecbParallel.AddComponent(index, abilityEntity, new CastRangeComponent() { Value = levelRecord.CastRange });
-            ecbParallel.AddComponent(index, abilityEntity, levelRecord.AoE);
             ecbParallel.AddComponent(index, abilityEntity, new Cooldown() { Value = levelRecord.Cooldown });
 
             // add ability cost buffer

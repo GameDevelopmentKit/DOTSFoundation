@@ -2,7 +2,7 @@
 {
     using Unity.Entities;
 
-    public struct TargetElement : IBufferElementData
+    public struct TargetableElement : IBufferElementData
     {
         public Entity Value;
     }

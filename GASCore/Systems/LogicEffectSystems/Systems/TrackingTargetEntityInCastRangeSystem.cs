@@ -75,7 +75,7 @@
                                     case TargetType.Opponent:
                                         if (teamIds[i].Value != casterTeamId) isTargetableEntity = true;
                                         break;
-                                    case TargetType.Self:
+                                    case TargetType.Caster:
                                         if (targetEntity == caster.Value) isTargetableEntity = true;
                                         break;
                                     case TargetType.Ally:

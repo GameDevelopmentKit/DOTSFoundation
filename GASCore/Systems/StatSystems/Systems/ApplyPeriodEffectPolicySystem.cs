@@ -21,17 +21,20 @@
         [BurstCompile]
         public void OnUpdate(ref SystemState state)
         {
-            var ecbSingleton       = SystemAPI.GetSingleton<BeginSimulationEntityCommandBufferSystem.Singleton>();
-            var ecb                = ecbSingleton.CreateCommandBuffer(state.WorldUnmanaged).AsParallelWriter();
+            var endEcbSingleton    = SystemAPI.GetSingleton<EndSimulationEntityCommandBufferSystem.Singleton>();
+            var endEcb                = endEcbSingleton.CreateCommandBuffer(state.WorldUnmanaged).AsParallelWriter();
             var currentElapsedTime = SystemAPI.Time.ElapsedTime;
             new ApplyPeriodEffectPolicyJob()
             {
-                Ecb                = ecb,
+                Ecb                = endEcb,
                 CurrentElapsedTime = currentElapsedTime
             }.ScheduleParallel();
+            
+            var beginEcbSingleton = SystemAPI.GetSingleton<BeginSimulationEntityCommandBufferSystem.Singleton>();
+            var beginEcb          = beginEcbSingleton.CreateCommandBuffer(state.WorldUnmanaged).AsParallelWriter();
             new CreatePeriodInstanceEffectJob()
             {
-                Ecb                = ecb,
+                Ecb                = beginEcb,
             }.ScheduleParallel();
         }
     }

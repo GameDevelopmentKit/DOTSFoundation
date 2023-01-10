@@ -1,6 +1,7 @@
 ﻿namespace GASCore.Systems.VisualEffectSystems.Systems
 {
     using GASCore.Groups;
+    using GASCore.Systems.CommonSystems.Components;
     using GASCore.Systems.VisualEffectSystems.Components;
     using Unity.Burst;
     using Unity.Collections.LowLevel.Unsafe;
@@ -40,6 +41,7 @@
     }
 
     [BurstCompile]
+    [WithNone(typeof(ArrivedAtDestinationTag))]
     public partial struct CurveForwardJob : IJobEntity
     {
         public EntityCommandBuffer.ParallelWriter Ecb;
@@ -62,8 +64,8 @@
             // arrive at destination
             if (math.distancesq(translation.Value, data.Destination) < .1f)
             {
-                // TODO: rm this
-                this.Ecb.DestroyEntity(index, entity);
+                this.Ecb.AddComponent<ArrivedAtDestinationTag>(index, entity);
+                return;
             }
 
             // rotate toward target

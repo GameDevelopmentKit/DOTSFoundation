@@ -22,6 +22,8 @@
             Entities.WithAny<AttachToAffectedTarget, PositionOffset, RandomPositionOffset>().WithNone<GameObjectHybridLink>().ForEach(
                 (Entity actionEntity, int entityInQueryIndex, ref Translation transform, in AffectedTargetComponent affectedTarget) =>
                 {
+                    //Todo: hotfix bug cause crash on mobile, need to recheck 
+                    if(!HasComponent<LocalToWorld>(affectedTarget.Value)) return;
                     var localToWorld = GetComponent<LocalToWorld>(affectedTarget.Value);
                     if (HasComponent<AttachToAffectedTarget>(actionEntity))
                     {

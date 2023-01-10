@@ -14,6 +14,7 @@
     {
         public Entity           EntityPrefab;
         public bool             IsDrop;
+        public bool             FollowCasterRotation;
         public SimpleIntRange   AmountRange;
         public SimpleFloatRange StartAngleRange;
         public SimpleFloatRange AngleStepRange;
@@ -26,10 +27,11 @@
     {
         [Inject] private AbilityActionEntityPrefabFactory actionEntityPrefabFactory;
 
-        public bool             IsDrop          = false;
-        public SimpleIntRange   AmountRange     = new SimpleIntRange() { min   = 1, max = 1 };
-        public SimpleFloatRange StartAngleRange = new SimpleFloatRange() { min = 0, max = 359 };
-        public SimpleFloatRange AngleStepRange  = new SimpleFloatRange() { min = 5, max = 5 };
+        public bool             IsDrop               = false;
+        public bool             FollowCasterRotation = false;
+        public SimpleIntRange   AmountRange          = new() { min = 1, max = 1 };
+        public SimpleFloatRange StartAngleRange      = new() { min = 0, max = 359 };
+        public SimpleFloatRange AngleStepRange       = new() { min = 5, max = 5 };
 
         public EntityConverter.EntityData<IComponentConverter> EntityPrefab;
 
@@ -41,12 +43,13 @@
 
             ecb.AddComponent(index, entity, new EntitySpawner()
             {
-                EntityPrefab    = entityPrefab,
-                IsDrop          = this.IsDrop,
-                AmountRange     = this.AmountRange,
-                StartAngleRange = new SimpleFloatRange() { min = math.radians(this.StartAngleRange.min), max = math.radians(this.StartAngleRange.max) },
-                AngleStepRange  = new SimpleFloatRange() { min = math.radians(this.AngleStepRange.min), max  = math.radians(this.AngleStepRange.max) },
-                Clockwise       = 0,
+                EntityPrefab         = entityPrefab,
+                IsDrop               = this.IsDrop,
+                FollowCasterRotation = this.FollowCasterRotation,
+                AmountRange          = this.AmountRange,
+                StartAngleRange      = new SimpleFloatRange() { min = math.radians(this.StartAngleRange.min), max = math.radians(this.StartAngleRange.max) },
+                AngleStepRange       = new SimpleFloatRange() { min = math.radians(this.AngleStepRange.min), max  = math.radians(this.AngleStepRange.max) },
+                Clockwise            = 0,
             });
             ecb.SetParent(index, entityPrefab, entity);
         }

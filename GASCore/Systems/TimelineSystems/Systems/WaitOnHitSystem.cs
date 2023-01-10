@@ -2,6 +2,7 @@
 {
     using GASCore.Groups;
     using GASCore.Systems.AbilityMainFlow.Components;
+    using GASCore.Systems.CommonSystems.Components;
     using GASCore.Systems.LogicEffectSystems.Components;
     using GASCore.Systems.TimelineSystems.Components;
     using Unity.Burst;
@@ -69,11 +70,12 @@
         [ReadOnly] public ComponentLookup<TriggerConditionCount>     TriggerConditionComponentLookup;
         void Execute(Entity abilityActionEntity, [EntityInQueryIndex] int entityInQueryIndex, in AbilityEffectId effectId, in DynamicBuffer<StatefulTriggerEvent> triggerEventBuffer)
         {
-            if(triggerEventBuffer.IsEmpty) return;
+            if (triggerEventBuffer.IsEmpty) return;
             foreach (var triggerOnHitEntity in this.TriggerOnHitEntities)
             {
+                var triggerOnHit = this.TriggerOnHitLookup[triggerOnHitEntity];
                 if (this.OwnerLookup[triggerOnHitEntity].Value.Equals(this.OwnerLookup[abilityActionEntity].Value) &&
-                    this.TriggerOnHitLookup[triggerOnHitEntity].FromAbilityEffectId.Equals(effectId.Value))
+                    triggerOnHit.FromAbilityEffectId.Equals(effectId.Value))
                 {
                     // Debug.Log($"ListenOnHitEventJob - add hit target to {triggerOnHitEntity.Index}, effectId.Value = {effectId.Value}");
 
@@ -86,7 +88,7 @@
                         {
                             isHit = true;
                             var otherEntity = triggerEvent.GetOtherEntity(abilityActionEntity);
-                            this.Ecb.AppendToBuffer(entityInQueryIndex, triggerOnHitEntity, new TargetElement() { Value = otherEntity });
+                            this.Ecb.AppendToBuffer(entityInQueryIndex, triggerOnHitEntity, new TargetableElement() { Value = otherEntity });
                         }
                     }
 
@@ -94,8 +96,10 @@
                     {
                         //mark this condition was done
                         this.Ecb.SetComponent(entityInQueryIndex, triggerOnHitEntity, new TriggerConditionCount() { Value = this.TriggerConditionComponentLookup[triggerOnHitEntity].Value - 1 });
+                        if (triggerOnHit.IsDestroyAbilityEffectOnHit)
+                            this.Ecb.AddComponent<ForceCleanupTag>(entityInQueryIndex, abilityActionEntity);
                     }
-                    
+
                     break;
                 }
             }

@@ -4,6 +4,7 @@
     using GASCore.Groups;
     using GASCore.Services;
     using GASCore.Systems.AbilityMainFlow.Components;
+    using GASCore.Systems.CommonSystems.Components;
     using GASCore.Systems.LogicEffectSystems.Components;
     using GASCore.Systems.TimelineSystems.Components;
     using Unity.Collections;
@@ -16,17 +17,17 @@
     [RequireMatchingQueriesForUpdate]
     public partial class InstantiateAbilityEffectFromPoolSystem : SystemBase
     {
-        ComponentLookup<AoE>                     aoeComponentLookup;
+        ComponentLookup<TeamOwnerId>             teamLookup;
         BufferLookup<AffectedTargetTypeElement>  affectedTargetTypeLookup;
         BufferLookup<Child>                      childLookup;
         BufferLookup<AbilityEffectPoolComponent> effectPoolLookup;
 
         protected override void OnCreate()
         {
-            aoeComponentLookup       = this.GetComponentLookup<AoE>(true);
             affectedTargetTypeLookup = this.GetBufferLookup<AffectedTargetTypeElement>(true);
             childLookup              = this.GetBufferLookup<Child>(true);
             effectPoolLookup         = this.GetBufferLookup<AbilityEffectPoolComponent>(true);
+            teamLookup               = this.GetComponentLookup<TeamOwnerId>(true);
         }
 
         protected override void OnUpdate()
@@ -34,16 +35,24 @@
             EntityCommandBuffer                ecb         = new EntityCommandBuffer(Allocator.TempJob);
             EntityCommandBuffer.ParallelWriter ecbParallel = ecb.AsParallelWriter();
 
-            var localAoeLookup            = aoeComponentLookup.UpdateComponentLookup(this);
             var localAffectedTargetLookup = affectedTargetTypeLookup.UpdateBufferLookup(this);
             var localChildLookup          = childLookup.UpdateBufferLookup(this);
             var localEffectPoolLookup     = effectPoolLookup.UpdateBufferLookup(this);
+            var localTeamLookup           = teamLookup.UpdateComponentLookup(this);
 
-            Entities.WithAll<WaitingCreateEffect>().WithNone<TriggerConditionCount>()
-                .WithReadOnly(localAoeLookup).WithReadOnly(localAffectedTargetLookup).WithReadOnly(localChildLookup).WithReadOnly(localEffectPoolLookup)
-                .ForEach((Entity actionEntity, int entityInQueryIndex, ref DynamicBuffer<TargetElement> targetBuffer, ref DynamicBuffer<ExcludeAffectedTargetElement> excludeAffectedTargetBuffer,
+            Entities.WithAll<WaitingCreateEffect>()
+                .WithNone<TriggerConditionCount>()
+                .WithReadOnly(localAffectedTargetLookup)
+                .WithReadOnly(localChildLookup)
+                .WithReadOnly(localEffectPoolLookup)
+                .WithReadOnly(localTeamLookup)
+                .ForEach((Entity actionEntity,
+                    int entityInQueryIndex,
+                    ref DynamicBuffer<TargetableElement> targetableBuffer,
+                    ref DynamicBuffer<ExcludeAffectedTargetElement> excludeAffectedTargetBuffer,
                     in DynamicBuffer<CreateAbilityEffectElement> abilityEffectIds,
-                    in ActivatedStateEntityOwner activatedAbilityEntity, in CasterComponent caster) =>
+                    in ActivatedStateEntityOwner activatedAbilityEntity,
+                    in CasterComponent caster) =>
                 {
                     var effectPoolBuffer       = localEffectPoolLookup[activatedAbilityEntity.Value];
                     var effectIdToEffectPrefab = new NativeHashMap<FixedString64Bytes, Entity>(effectPoolBuffer.Length, Allocator.Temp);
@@ -62,16 +71,11 @@
                             var effectActionPrefabEntities = localChildLookup[effectEntityPrefab];
 
                             //Find all affected targets
-                            NativeHashSet<Entity> affectedTargetEntities = new NativeHashSet<Entity>(targetBuffer.Capacity, Allocator.Temp);
+                            NativeHashSet<Entity> affectedTargetEntities = new NativeHashSet<Entity>(targetableBuffer.Capacity, Allocator.Temp);
 
                             if (!HasComponent<AffectedTargetComponent>(actionEntity))
                             {
-                                // take target aoe from effect entity if have, or take from ability owner
-                                var abilityTargetAoe = localAoeLookup.HasComponent(actionEntity)
-                                    ? localAoeLookup[actionEntity] // use for casting on multiple aoe purpose
-                                    : localAoeLookup[activatedAbilityEntity.Value];
-
-                                affectedTargetEntities.AddAllAffectedTargetInAoe(caster.Value, targetBuffer, abilityTargetAoe, affectTargetTypes);
+                                affectedTargetEntities.AddAllAffectedTarget(caster.Value, targetableBuffer, affectTargetTypes, localTeamLookup);
                             }
                             else
                             {
@@ -106,7 +110,7 @@
 
                     effectIdToEffectPrefab.Dispose();
                     excludeAffectedTargetBuffer.Clear();
-                    targetBuffer.Clear();
+                    targetableBuffer.Clear();
                     ecbParallel.SetComponentEnabled<WaitingCreateEffect>(entityInQueryIndex, actionEntity, false);
                 }).ScheduleParallel();
 

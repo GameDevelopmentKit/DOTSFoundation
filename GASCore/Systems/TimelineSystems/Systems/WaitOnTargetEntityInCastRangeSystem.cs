@@ -89,7 +89,7 @@
                     {
                         Debug.Log($"WaitOnTargetEntityInCastRangeJob  {linkedEntity.Value.Index}");
                         //set target entity 
-                        this.Ecb.AppendToBuffer(entityInQueryIndex, linkedEntity.Value, new TargetElement() { Value = onInAbilityRange.TargetEntity });
+                        this.Ecb.AppendToBuffer(entityInQueryIndex, linkedEntity.Value, new TargetableElement() { Value = onInAbilityRange.TargetEntity });
 
                         //mark this condition was done
                         this.Ecb.SetComponent(entityInQueryIndex, linkedEntity.Value, new TriggerConditionCount() { Value = this.TriggerConditionComponentLookup[linkedEntity.Value].Value - 1 });

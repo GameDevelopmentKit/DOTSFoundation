@@ -46,8 +46,6 @@ namespace GASCore.Blueprints
         public Dictionary<string, float> Cost;
         public float                     CastRange;
 
-        [NestedBlueprint] public AoE AoE;
-
         public string                        AbilityActivateCondition;
         public string                        AbilityTimeline;
         public BlueprintByRow<AbilityEffect> AbilityEffectPool;
@@ -89,9 +87,7 @@ namespace GASCore.Blueprints
     {
         None,
         Opponent,
-        Self,
+        Caster,
         Ally,
-        Ground,
-        CastedTile
     }
 }

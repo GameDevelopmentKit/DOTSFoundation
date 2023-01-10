@@ -52,7 +52,7 @@
         [ReadOnly] public ComponentLookup<TriggerByAnotherTrigger> TriggerByAnotherTriggerLookup;
 
         void Execute(Entity abilityEntity, [EntityInQueryIndex] int entityInQueryIndex, in DynamicBuffer<AbilityEffectPoolComponent> effectPool, in AbilityTimelinePrefabComponent timelinePrefab,
-            in CasterComponent caster, in AbilityId abilityId, in AoE aoE, in Cooldown cooldown, in CastRangeComponent castRangeComponent, in DynamicBuffer<TargetTypeElement> targetTypeBuffer)
+            in CasterComponent caster, in AbilityId abilityId, in Cooldown cooldown, in CastRangeComponent castRangeComponent, in DynamicBuffer<TargetTypeElement> targetTypeBuffer)
         {
             // set cooldownTime for ability if available
             if (cooldown.Value > 0)
@@ -71,7 +71,6 @@
             this.Ecb.AddComponent(entityInQueryIndex, activatedStateEntity, caster);
             this.Ecb.AddComponent(entityInQueryIndex, activatedStateEntity, castRangeComponent);
             this.Ecb.AddComponent(entityInQueryIndex, activatedStateEntity, new AbilityOwner() { Value = abilityEntity });
-            this.Ecb.AddComponent(entityInQueryIndex, activatedStateEntity, aoE);
             this.Ecb.AddBuffer<OnDestroyAbilityActionElement>(entityInQueryIndex, activatedStateEntity);
             var abilityEffectPoolBuffer = this.Ecb.AddBuffer<AbilityEffectPoolComponent>(entityInQueryIndex, activatedStateEntity);
             foreach (var effect in effectPool)
@@ -114,7 +113,7 @@
                         var abilityTimelineAction = this.Ecb.Instantiate(entityInQueryIndex, childPrefab.Value);
                         this.Ecb.AddComponent(entityInQueryIndex, abilityTimelineAction, new ActivatedStateEntityOwner() { Value = activatedStateEntity });
                         this.Ecb.AddComponent(entityInQueryIndex, abilityTimelineAction, caster);
-                        this.Ecb.AddBuffer<TargetElement>(entityInQueryIndex, abilityTimelineAction);
+                        this.Ecb.AddBuffer<TargetableElement>(entityInQueryIndex, abilityTimelineAction);
                         this.Ecb.AddBuffer<ExcludeAffectedTargetElement>(entityInQueryIndex, abilityTimelineAction);
                         this.Ecb.RemoveComponent<Parent>(entityInQueryIndex, abilityTimelineAction);
                         linkedEntityGroups.Add(new LinkedEntityGroup() { Value = abilityTimelineAction });

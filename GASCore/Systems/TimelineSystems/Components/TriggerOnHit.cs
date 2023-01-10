@@ -7,16 +7,19 @@
     public struct TriggerOnHit : IComponentData
     {
         public FixedString64Bytes FromAbilityEffectId;
+        public bool               IsDestroyAbilityEffectOnHit;
 
         public class _ : ITriggerConditionActionConverter
         {
             public string FromAbilityEffectId;
+            public bool   IsDestroyAbilityEffectOnHit;
 
             public void Convert(EntityCommandBuffer.ParallelWriter ecb, int index, Entity entity)
             {
                 ecb.AddComponent(index, entity, new TriggerOnHit()
                 {
                     FromAbilityEffectId = this.FromAbilityEffectId,
+                    IsDestroyAbilityEffectOnHit = this.IsDestroyAbilityEffectOnHit
                 });
             }
         }

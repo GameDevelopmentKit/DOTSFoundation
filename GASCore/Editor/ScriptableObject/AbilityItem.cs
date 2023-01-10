@@ -21,7 +21,6 @@ namespace GASCore.Editor.ScriptableObject
         public string            Icon;
         public List<TargetType>  Target;
         public AbilityEffectType EffectCategory;
-        public bool              IsPreload;
 
         [ListDrawerSettings(ShowPaging = true, ListElementLabelName = "LevelTitle", OnBeginListElementGUI = "BeginListElement", NumberOfItemsPerPage = 5)]
         public List<AbilityLevelEditorData> AbilityLevelEditorRecords;
@@ -51,7 +50,6 @@ namespace GASCore.Editor.ScriptableObject
                     Cooldown   = levelEditorRecord.Cooldown,
                     Cost       = levelEditorRecord.Cost,
                     CastRange  = levelEditorRecord.CastRange,
-                    AoE        = levelEditorRecord.AoE,
 
                     AbilityActivateCondition = levelEditorRecord.abilityActivateConditionComponents.ConvertComponentsDataToJson(),
                     AbilityTimeline          = levelEditorRecord.timelineComponents.ConvertEntitiesDataToJson(),
@@ -93,7 +91,6 @@ namespace GASCore.Editor.ScriptableObject
                     Cooldown                           = levelRecord.Cooldown,
                     Cost                               = levelRecord.Cost,
                     CastRange                          = levelRecord.CastRange,
-                    AoE                                = levelRecord.AoE,
                     abilityActivateConditionComponents = levelRecord.AbilityActivateCondition.ConvertJsonToComponentsData<IAbilityActivateConditionConverter>(),
                     timelineComponents                 = levelRecord.AbilityTimeline.ConvertJsonToEntitiesData<ITimelineActionComponentConverter>(),
                     listAbilityEffects                 = abilityEffectEditors
@@ -115,7 +112,6 @@ namespace GASCore.Editor.ScriptableObject
         public                                     float                     Cooldown;
         public                                     Dictionary<string, float> Cost;
         public                                     float                     CastRange;
-        public                                     AoE                       AoE;
 
         [SerializeReference] public List<IAbilityActivateConditionConverter> abilityActivateConditionComponents = new();
 

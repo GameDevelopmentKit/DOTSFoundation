@@ -64,7 +64,7 @@
             in CasterComponent caster,
             in DynamicBuffer<TargetWithStatElement> statNames,
             in DynamicBuffer<TargetTypeElement> targetTypes,
-            ref DynamicBuffer<TargetElement> targets,
+            ref DynamicBuffer<TargetableElement> targets,
             ref TriggerConditionCount triggerConditionCount
         )
         {
@@ -82,7 +82,7 @@
                         case TargetType.Opponent:
                             if (casterTeam != targetTeam) isTarget = true;
                             break;
-                        case TargetType.Self:
+                        case TargetType.Caster:
                             if (caster.Value == target) isTarget = true;
                             break;
                         case TargetType.Ally:
@@ -106,7 +106,7 @@
 
                 if (!isTarget) continue; // wrong stat name
 
-                targets.Add(new TargetElement() { Value = target });
+                targets.Add(new TargetableElement() { Value = target });
             }
 
             // count as complete even if no target found

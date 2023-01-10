@@ -43,7 +43,7 @@
             var localTranslationLookup = this.translationLookup.UpdateComponentLookup(this);
             var localTagLookup         = this.tagLookup.UpdateComponentLookup(this);
             this.Dependency = this.Entities.WithBurst().WithChangeFilter<FindNearestTarget>().WithReadOnly(entityList).WithReadOnly(localTeamOwnerLookup).WithReadOnly(localTranslationLookup).WithReadOnly(localTagLookup)
-                .ForEach((Entity triggerEntity, int entityInQueryIndex, ref DynamicBuffer<TargetElement> targetBuffer, in TriggerConditionCount triggerConditionCount, in CasterComponent caster,
+                .ForEach((Entity triggerEntity, int entityInQueryIndex, ref DynamicBuffer<TargetableElement> targetBuffer, in TriggerConditionCount triggerConditionCount, in CasterComponent caster,
                     in DynamicBuffer<TargetTypeElement> targetTypeBuffer, in FindNearestTarget findNearestTarget) =>
                 {
                     var casterPosition = localTranslationLookup[caster.Value].Value;
@@ -67,7 +67,7 @@
                                 case TargetType.Opponent:
                                     if (localTeamOwnerLookup[tempTargetEntity].Value != casterTeamId) isTargetableEntity = true;
                                     break;
-                                case TargetType.Self:
+                                case TargetType.Caster:
                                     if (tempTargetEntity == caster.Value) isTargetableEntity = true;
                                     break;
                                 case TargetType.Ally:
@@ -90,7 +90,7 @@
 
                     if (!targetEntity.Equals(default))
                     {
-                        targetBuffer.Add(new TargetElement() { Value                                            = targetEntity });
+                        targetBuffer.Add(new TargetableElement() { Value                                            = targetEntity });
                         ecb.SetComponent(entityInQueryIndex, triggerEntity, new TriggerConditionCount() { Value = triggerConditionCount.Value - 1 });
                     }
                 }).ScheduleParallel(JobHandle.CombineDependencies(getTargetEntityJobHandle, this.Dependency));
