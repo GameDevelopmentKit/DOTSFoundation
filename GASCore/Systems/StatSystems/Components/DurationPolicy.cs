@@ -58,5 +58,6 @@
         }
     }
     
+    //todo seem this component is useless
     public struct PeriodEffectInstanceTag: IComponentData{}
 }

@@ -32,10 +32,10 @@
             
             var beginEcbSingleton = SystemAPI.GetSingleton<BeginSimulationEntityCommandBufferSystem.Singleton>();
             var beginEcb          = beginEcbSingleton.CreateCommandBuffer(state.WorldUnmanaged).AsParallelWriter();
-            new CreatePeriodInstanceEffectJob()
+           state.Dependency = new CreatePeriodInstanceEffectJob()
             {
                 Ecb                = beginEcb,
-            }.ScheduleParallel();
+            }.ScheduleParallel(state.Dependency);
         }
     }
 
@@ -69,14 +69,14 @@
     {
         public EntityCommandBuffer.ParallelWriter Ecb;
 
-        void Execute([EntityInQueryIndex] int entityInQueryIndex, in AffectedTargetComponent affectedTarget, in DynamicBuffer<StatModifierEntityElement> statModifierEntityElementBuffers, in ActivatedStateEntityOwner activatedStateEntityOwner)
+        void Execute([EntityInQueryIndex] int entityInQueryIndex, in AffectedTargetComponent affectedTarget, in DynamicBuffer<ModifierAggregatorData> statModifierEntityElementBuffers, in ActivatedStateEntityOwner activatedStateEntityOwner)
         {
             Debug.Log("ApplyPeriodEffectPolicyJob");
             // create a period instance effect
             var periodInstanceEntity = this.Ecb.CreateEntity(entityInQueryIndex);
             this.Ecb.AddComponent<PeriodEffectInstanceTag>(entityInQueryIndex, periodInstanceEntity);
             this.Ecb.AddComponent(entityInQueryIndex, periodInstanceEntity, affectedTarget);
-            var cloneBuffer = this.Ecb.AddBuffer<StatModifierEntityElement>(entityInQueryIndex, periodInstanceEntity);
+            var cloneBuffer = this.Ecb.AddBuffer<ModifierAggregatorData>(entityInQueryIndex, periodInstanceEntity);
             foreach (var statModifierEntityElement in statModifierEntityElementBuffers)
             {
                 cloneBuffer.Add(statModifierEntityElement);

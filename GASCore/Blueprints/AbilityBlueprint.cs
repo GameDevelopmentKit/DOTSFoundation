@@ -6,7 +6,6 @@ namespace GASCore.Blueprints
     using GASCore.Systems.AbilityMainFlow.Components;
 
     /// <summary>Define a ability data, Name, Description, Icon, Effects....</summary>
-    [CsvHeaderKey("Id")]
     [BlueprintReader("Ability")]
     public class AbilityBlueprint : GenericBlueprintReaderByRow<string, AbilityRecord>
     {
@@ -23,6 +22,7 @@ namespace GASCore.Blueprints
     }
 
     [Serializable]
+    [CsvHeaderKey("Id")]
     public struct AbilityRecord
     {
         public string            Id;
@@ -39,6 +39,7 @@ namespace GASCore.Blueprints
     }
 
     [Serializable]
+    [CsvHeaderKey("LevelIndex")]
     public struct AbilityLevelRecord
     {
         public int                       LevelIndex;

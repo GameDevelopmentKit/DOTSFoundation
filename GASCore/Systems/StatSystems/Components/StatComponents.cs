@@ -65,25 +65,42 @@
         private readonly DynamicBuffer<StatDataElement> statDataBuffer;
         private readonly RefRO<StatNameToIndex>         statNameToIndex;
 
+        public bool SetBaseValue(FixedString64Bytes statName, float newValue)
+        {
+            if (!this.statNameToIndex.ValueRO.BlobValue.Value.TryGetValue(statName, out var statIndex)) return false;
+            var statData = this.statDataBuffer[statIndex];
+            statData.BaseValue = newValue;
+            this.statDataBuffer.RemoveAt(statIndex);
+            this.statDataBuffer.Insert(statIndex, statData);
+            return true;
+        }
+
+        public bool SetAddedValue(FixedString64Bytes statName, float newValue)
+        {
+            if (!this.statNameToIndex.ValueRO.BlobValue.Value.TryGetValue(statName, out var statIndex)) return false;
+            var statData = this.statDataBuffer[statIndex];
+            statData.AddedValue = newValue;
+            this.statDataBuffer.RemoveAt(statIndex);
+            this.statDataBuffer.Insert(statIndex, statData);
+            return true;
+        }
+        
         public int GetStatCount() { return this.statDataBuffer.Length; }
+        
+        public float GetBaseValue(FixedString64Bytes statName)
+        {
+            if (this.statNameToIndex.ValueRO.BlobValue.Value.TryGetValue(statName, out var statIndex))
+                return this.statDataBuffer[statIndex].BaseValue;
+
+            return 0;
+        }
+        
         public float GetCurrentValue(FixedString64Bytes statName)
         {
             if (this.statNameToIndex.ValueRO.BlobValue.Value.TryGetValue(statName, out var statIndex))
                 return this.statDataBuffer[statIndex].CurrentValue;
 
             return 0;
-        }
-
-        public void SetBaseValue(FixedString64Bytes statName, float newValue)
-        {
-            if (this.statNameToIndex.ValueRO.BlobValue.Value.TryGetValue(statName, out var statIndex))
-            {
-                var statData = this.statDataBuffer[statIndex];
-                statData.BaseValue = newValue;
-                this.statDataBuffer.RemoveAt(statIndex);
-                this.statDataBuffer.Insert(statIndex, statData);
-                Debug.Log($"After SetBaseValue {statName} {this.statDataBuffer[statIndex].BaseValue}");
-            }
         }
 
         public int GetStatIndex(FixedString64Bytes statName)
@@ -95,62 +112,26 @@
 
             return -1;
         }
-        public float GetBaseValue(FixedString64Bytes statName)
+        
+        public void NotifyStatChange(EntityCommandBuffer.ParallelWriter ecb, int entityInQueryIndex, FixedString64Bytes statName)
         {
-            if (this.statNameToIndex.ValueRO.BlobValue.Value.TryGetValue(statName, out var statIndex))
-                return this.statDataBuffer[statIndex].BaseValue;
-
-            return 0;
+            if (!this.statNameToIndex.ValueRO.BlobValue.Value.TryGetValue(statName, out var statIndex)) return;
+            var notifyEntity = ecb.CreateNotifyEntity(entityInQueryIndex);
+            ecb.AddComponent(entityInQueryIndex, notifyEntity, new OnStatChange()
+            {
+                Source      = this.sourceEntity,
+                ChangedStat = this.statDataBuffer[statIndex]
+            });
         }
 
-        public bool HasStat(FixedString64Bytes statName) { return this.statNameToIndex.ValueRO.BlobValue.Value.ContainsKey(statName); }
+        public bool HasStat(FixedString64Bytes statName)
+        {
+            return this.statNameToIndex.ValueRO.BlobValue.Value.ContainsKey(statName);
+        }
 
-        public float CalculateStatValue(ModifierDataAggregator aggregator)
+        public float CalculateStatValue(ModifierAggregatorData aggregator)
         {
             return aggregator.Override != 0 ? aggregator.Override : (GetBaseValue(aggregator.TargetStat) + aggregator.Add) * aggregator.Multiply / aggregator.Division;
         }
-        public void SetBaseValueAndNotify(EntityCommandBuffer.ParallelWriter ecb, int entityInQueryIndex, FixedString64Bytes statName, float newValue)
-        {
-            if (this.statNameToIndex.ValueRO.BlobValue.Value.TryGetValue(statName, out var statIndex))
-            {
-                var statData = this.statDataBuffer[statIndex];
-                statData.BaseValue = newValue;
-                this.statDataBuffer.RemoveAt(statIndex);
-                this.statDataBuffer.Insert(statIndex, statData);
-                // Debug.Log($"After SetBaseValue {statName} {this.statDataBuffer[statIndex].BaseValue}");
-
-                var notifyEntity = ecb.CreateNotifyEntity(entityInQueryIndex);
-                ecb.AddComponent(entityInQueryIndex, notifyEntity, new OnStatChange()
-                {
-                    Source      = this.sourceEntity,
-                    ChangedStat = statData
-                });
-            }
-        }
-
-        public void SetCurrentValueAndNotify(EntityCommandBuffer.ParallelWriter ecb, int entityInQueryIndex, FixedString64Bytes statName, float newValue)
-        {
-            if (this.statNameToIndex.ValueRO.BlobValue.Value.TryGetValue(statName, out var statIndex))
-            {
-                var statData = this.statDataBuffer[statIndex];
-                statData.AddedValue = newValue - statData.BaseValue;
-                this.statDataBuffer.RemoveAt(statIndex);
-                this.statDataBuffer.Insert(statIndex, statData);
-                // Debug.Log($"After SetCurrentValue {statName} {this.statDataBuffer[statIndex].CurrentValue}");
-
-                var notifyEntity = ecb.CreateNotifyEntity(entityInQueryIndex);
-                ecb.AddComponent(entityInQueryIndex, notifyEntity, new OnStatChange()
-                {
-                    Source      = this.sourceEntity,
-                    ChangedStat = statData
-                });
-            }
-        }
-    }
-
-    public partial struct StatName
-    {
-        public static readonly FixedString64Bytes Health        = "Health";
-        public static readonly FixedString64Bytes MovementSpeed = "MovementSpeed";
     }
 }

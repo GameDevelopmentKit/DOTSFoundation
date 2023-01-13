@@ -11,14 +11,16 @@
     using Unity.Entities;
     using Zenject;
 
-    public struct ModifierDataAggregator
+    public struct ModifierAggregatorData : IBufferElementData
     {
         public FixedString64Bytes TargetStat;
 
-        public float Add;
-        public float Multiply;
-        public float Division;
-        public float Override;
+        public float              Add;
+        public float              Multiply;
+        public float              Division;
+        public float              Override;
+        
+        public bool IsChangeBaseValue;
     }
 
     public struct StatModifierEntityElement : IBufferElementData
@@ -26,13 +28,13 @@
         public Entity Value;
     }
 
-    public class StatModifierEntityBufferAuthoring : IAbilityActionComponentConverter
+    public class StatModifierEntityAuthoring : IAbilityActionComponentConverter
     {
         [Inject] private AbilityActionEntityPrefabFactory actionEntityPrefabFactory;
         
         public List<EntityConverter.EntityData<IStatModifierComponentConverter>> StatModifiersData;
 
-        public void Convert(EntityCommandBuffer.ParallelWriter ecb, int index, Entity entity)
+        public virtual void Convert(EntityCommandBuffer.ParallelWriter ecb, int index, Entity entity)
         {
             ZenjectUtils.GetCurrentContainer()?.Inject(this);
             var statModifierBuffers = ecb.AddBuffer<StatModifierEntityElement>(index, entity);
@@ -90,27 +92,24 @@
     }
 
     //Capture source attribute
-    public struct AttributeBasedMagnitudeCalculation : IMagnitudeCalculation
+    public struct StatBasedMagnitudeCalculation : IMagnitudeCalculation
     {
         public float              Coefficient;
-        public FixedString64Bytes SourceAttribute;
+        public FixedString64Bytes SourceStat;
         public SourceType         SourceType;
-        public bool               SnapShot;
 
         public class _ : IStatModifierComponentConverter
         {
-            public float      Coefficient;
-            public string     SourceAttribute;
+            public float      Coefficient = 1.0f;
+            public string     SourceStat;
             public SourceType SourceType;
-            public bool       SnapShot;
             public void Convert(EntityCommandBuffer.ParallelWriter ecb, int index, Entity entity)
             {
-                ecb.AddComponent(index, entity, new AttributeBasedMagnitudeCalculation()
+                ecb.AddComponent(index, entity, new StatBasedMagnitudeCalculation()
                 {
                     Coefficient     = this.Coefficient,
-                    SourceAttribute = this.SourceAttribute,
+                    SourceStat = this.SourceStat,
                     SourceType      = this.SourceType,
-                    SnapShot        = this.SnapShot,
                 });
             }
         }
@@ -120,8 +119,8 @@
 
     public enum SourceType
     {
-        Source,
-        Target
+        Caster,
+        AffectedTarget
     }
 
     public enum ModifierOperatorType : uint

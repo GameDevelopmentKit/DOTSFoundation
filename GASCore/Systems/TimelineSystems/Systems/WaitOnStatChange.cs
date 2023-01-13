@@ -44,7 +44,7 @@
 
             var triggerOnHits = this.triggerOnStatChangeQuery.ToEntityListAsync(state.WorldUpdateAllocator, out var getTriggerOnHitHandle);
 
-            var ecbSingleton = SystemAPI.GetSingleton<EndSimulationEntityCommandBufferSystem.Singleton>();
+            var ecbSingleton = SystemAPI.GetSingleton<AbilityPresentEntityCommandBufferSystem.Singleton>();
             var ecb          = ecbSingleton.CreateCommandBuffer(state.WorldUnmanaged).AsParallelWriter();
 
             var listenOnHitEventJob = new ListenOnStatChangedJob()
@@ -70,25 +70,25 @@
         [ReadOnly] public ComponentLookup<CasterComponent>       CasterLookup;
         [ReadOnly] public ComponentLookup<TriggerConditionCount> TriggerConditionComponentLookup;
 
-        void Execute([EntityInQueryIndex] int entityInQueryIndex, in OnStatChange event_)
+        void Execute([EntityInQueryIndex] int entityInQueryIndex, in OnStatChange statChangeEvent)
         {
-            foreach (var triggerOnHitEntity in this.TriggerOnStatChangeEntities)
+            foreach (var triggerEntity in this.TriggerOnStatChangeEntities)
             {
-                if (!this.CasterLookup[triggerOnHitEntity].Value.Equals(event_.Source)) continue; // wrong entity
+                if (!this.CasterLookup[triggerEntity].Value.Equals(statChangeEvent.Source)) continue; // wrong entity
 
-                var triggerCondition = this.TriggerOnStatChangeComponentLookup[triggerOnHitEntity];
+                var triggerCondition = this.TriggerOnStatChangeComponentLookup[triggerEntity];
 
-                if (!triggerCondition.StatName.Equals(event_.ChangedStat.StatName)) continue; // wrong stat name
+                if (!triggerCondition.StatName.Equals(statChangeEvent.ChangedStat.StatName)) continue; // wrong stat name
 
                 var currentValue = triggerCondition.Percent
-                    ? event_.ChangedStat.CurrentValue / event_.ChangedStat.OriginValue
-                    : event_.ChangedStat.CurrentValue;
+                    ? statChangeEvent.ChangedStat.CurrentValue / statChangeEvent.ChangedStat.OriginValue
+                    : statChangeEvent.ChangedStat.CurrentValue;
                 if (triggerCondition.Above && currentValue >= triggerCondition.Value
                     || !triggerCondition.Above && currentValue <= triggerCondition.Value)
                 {
-                    Debug.Log($"ListenOnStatChangedJob from stat {event_.ChangedStat.StatName}");
+                    // Debug.Log($"ListenOnStatChangedJob from stat {event_.ChangedStat.StatName}");
                     // mark this condition was done
-                    this.Ecb.SetComponent(entityInQueryIndex, triggerOnHitEntity, new TriggerConditionCount() { Value = this.TriggerConditionComponentLookup[triggerOnHitEntity].Value - 1 });
+                    this.Ecb.SetComponent(entityInQueryIndex, triggerEntity, new TriggerConditionCount() { Value = this.TriggerConditionComponentLookup[triggerEntity].Value - 1 });
                 }
             }
         }

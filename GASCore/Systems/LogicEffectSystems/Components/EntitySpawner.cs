@@ -14,7 +14,7 @@
     {
         public Entity           EntityPrefab;
         public bool             IsDrop;
-        public bool             FollowCasterRotation;
+        public bool             FollowAffectedTargetRotation;
         public SimpleIntRange   AmountRange;
         public SimpleFloatRange StartAngleRange;
         public SimpleFloatRange AngleStepRange;
@@ -45,7 +45,7 @@
             {
                 EntityPrefab         = entityPrefab,
                 IsDrop               = this.IsDrop,
-                FollowCasterRotation = this.FollowCasterRotation,
+                FollowAffectedTargetRotation = this.FollowCasterRotation,
                 AmountRange          = this.AmountRange,
                 StartAngleRange      = new SimpleFloatRange() { min = math.radians(this.StartAngleRange.min), max = math.radians(this.StartAngleRange.max) },
                 AngleStepRange       = new SimpleFloatRange() { min = math.radians(this.AngleStepRange.min), max  = math.radians(this.AngleStepRange.max) },

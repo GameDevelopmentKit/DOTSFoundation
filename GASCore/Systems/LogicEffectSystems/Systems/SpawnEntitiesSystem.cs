@@ -1,6 +1,5 @@
 ﻿namespace GASCore.Systems.LogicEffectSystems.Systems
 {
-    using System;
     using DOTSCore.Extension;
     using GASCore.Groups;
     using GASCore.Systems.AbilityMainFlow.Components;
@@ -12,7 +11,6 @@
     using Unity.Entities;
     using Unity.Mathematics;
     using Unity.Transforms;
-    using UnityEngine;
     using Random = Unity.Mathematics.Random;
 
     [UpdateInGroup(typeof(AbilityLogicEffectGroup))]
@@ -20,9 +18,10 @@
     [BurstCompile]
     public partial struct SpawnEntitiesSystem : ISystem
     {
-        private EntityQuery                  spawnerEntityQuery;
-        private ComponentLookup<TeamOwnerId> teamLookup;
-        private ComponentLookup<Rotation>    rotationLookup;
+        private EntityQuery                   spawnerEntityQuery;
+        private ComponentLookup<TeamOwnerId>  teamLookup;
+        private ComponentLookup<Rotation>     rotationLookup;
+        private ComponentLookup<LocalToWorld> localToWorldLookup;
 
         [BurstCompile]
         public void OnCreate(ref SystemState state)
@@ -31,6 +30,7 @@
             this.spawnerEntityQuery = state.GetEntityQuery(queryBuilder);
             this.teamLookup         = state.GetComponentLookup<TeamOwnerId>(true);
             this.rotationLookup     = state.GetComponentLookup<Rotation>(true);
+            this.localToWorldLookup = state.GetComponentLookup<LocalToWorld>(true);
         }
 
         [BurstCompile]
@@ -43,12 +43,14 @@
             var ecb          = ecbSingleton.CreateCommandBuffer(state.WorldUnmanaged).AsParallelWriter();
             this.teamLookup.Update(ref state);
             this.rotationLookup.Update(ref state);
+            this.localToWorldLookup.Update(ref state);
 
             var spawnJob = new SpawnEntitiesJob()
             {
                 Ecb            = ecb,
                 TeamLookup     = this.teamLookup,
-                RotationLookup = this.rotationLookup
+                RotationLookup = this.rotationLookup,
+                LocalToWorldLookup = this.localToWorldLookup
             };
             spawnJob.ScheduleParallel(spawnerEntityQuery);
         }
@@ -59,8 +61,9 @@
     {
         public EntityCommandBuffer.ParallelWriter Ecb;
 
-        [ReadOnly] public ComponentLookup<TeamOwnerId> TeamLookup;
-        [ReadOnly] public ComponentLookup<Rotation>    RotationLookup;
+        [ReadOnly] public ComponentLookup<TeamOwnerId>  TeamLookup;
+        [ReadOnly] public ComponentLookup<Rotation>     RotationLookup;
+        [ReadOnly] public ComponentLookup<LocalToWorld> LocalToWorldLookup;
 
         [NativeSetThreadIndex] private int threadId;
 
@@ -86,8 +89,11 @@
                 var entity = this.Ecb.Instantiate(index, spawnData.EntityPrefab);
                 this.Ecb.RemoveParent(index, entity);
 
+                var affectedTargetTransform = this.LocalToWorldLookup[affectedTarget.Value];
+                this.Ecb.SetComponent(index, entity, new LocalToWorld() { Value = new float4x4(affectedTargetTransform.Value) });
+                
                 var rotateY = quaternion.RotateY(spawnData.CurrentAngle);
-                this.Ecb.SetComponent(index, entity, new Rotation { Value = spawnData.FollowCasterRotation ? math.mul(this.RotationLookup[caster.Value].Value, rotateY) : rotateY });
+                this.Ecb.SetComponent(index, entity, new Rotation { Value = spawnData.FollowAffectedTargetRotation ? math.mul(this.RotationLookup[affectedTarget.Value].Value, rotateY) : rotateY });
                 spawnData.CurrentAngle += rnd.NextFloat(spawnData.AngleStepRange.min, spawnData.AngleStepRange.max) * spawnData.Clockwise;
 
                 this.Ecb.AddComponent(index, entity, new AbilityEffectId() { Value         = effectId.Value });

@@ -14,31 +14,30 @@
     [BurstCompile]
     public partial class CalculateStatModifierMagnitudeSystem : SystemBase
     {
-        private EndSimulationEntityCommandBufferSystem endSimEcbSystem;
-
-        protected override void OnCreate() { this.endSimEcbSystem = this.World.GetExistingSystemManaged<EndSimulationEntityCommandBufferSystem>(); }
 
         protected override void OnUpdate()
         {
             var scalableFloatMagnitudeJob = new CalculateScalableFloatMagnitudeJob().ScheduleParallel(Dependency);
 
-            var attributeBasedMagnitudeJob = Entities.WithBurst().WithChangeFilter<AttributeBasedMagnitudeCalculation>().WithNone<PeriodEffectInstanceTag>().ForEach(
-                (ref StatModifierData statModifierData, in AttributeBasedMagnitudeCalculation attributeBased, in Parent effectEntity) =>
+            var attributeBasedMagnitudeJob = Entities.WithBurst().WithChangeFilter<StatBasedMagnitudeCalculation>().WithNone<PeriodEffectInstanceTag>().ForEach(
+                (ref StatModifierData statModifierData, in StatBasedMagnitudeCalculation attributeBased, in Parent effectEntity) =>
                 {
                     Entity sourceEntity = default;
-                    if (attributeBased.SourceType == SourceType.Target)
+                    if (attributeBased.SourceType == SourceType.AffectedTarget)
                     {
                         sourceEntity = GetComponent<AffectedTargetComponent>(effectEntity.Value).Value;
                     }
-                    else if (attributeBased.SourceType == SourceType.Source)
+                    else if (attributeBased.SourceType == SourceType.Caster)
                     {
                         sourceEntity = GetComponent<CasterComponent>(effectEntity.Value).Value;
                     }
 
                     var statAspect = SystemAPI.GetAspectRO<StatAspect>(sourceEntity);
-                    if (statAspect.HasStat(attributeBased.SourceAttribute))
+                    Debug.Log($"attributeBasedMagnitudeJob - source entity is {attributeBased.SourceType} - has {attributeBased.SourceStat} : {statAspect.HasStat(attributeBased.SourceStat)}");
+
+                    if (statAspect.HasStat(attributeBased.SourceStat))
                     {
-                        statModifierData.ModifierMagnitude = attributeBased.Coefficient * statAspect.GetCurrentValue(attributeBased.SourceAttribute);
+                        statModifierData.ModifierMagnitude = attributeBased.Coefficient * statAspect.GetCurrentValue(attributeBased.SourceStat);
                     }
                     else
                     {
@@ -46,11 +45,9 @@
                     }
 
                     Debug.Log($"attributeBasedMagnitudeJob magnitude = {statModifierData.ModifierMagnitude}");
-                }).ScheduleParallel(Dependency);
+                }).ScheduleParallel(scalableFloatMagnitudeJob);
 
-            Dependency = JobHandle.CombineDependencies(scalableFloatMagnitudeJob, attributeBasedMagnitudeJob);
-
-            this.endSimEcbSystem.AddJobHandleForProducer(Dependency);
+            Dependency = attributeBasedMagnitudeJob;
         }
     }
 

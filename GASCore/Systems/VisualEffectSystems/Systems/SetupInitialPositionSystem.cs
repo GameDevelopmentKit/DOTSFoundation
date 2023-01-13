@@ -8,6 +8,8 @@
     using Unity.Entities;
     using Unity.Mathematics;
     using Unity.Transforms;
+    using UnityEngine;
+    using Random = Unity.Mathematics.Random;
 
     [UpdateInGroup(typeof(AbilityVisualEffectGroup))]
     [RequireMatchingQueriesForUpdate]
@@ -19,12 +21,9 @@
         protected override void OnUpdate()
         {
             var ecb = this.beginSimEcbSystem.CreateCommandBuffer().AsParallelWriter();
-            Entities.WithAny<AttachToAffectedTarget, PositionOffset, RandomPositionOffset>().WithNone<GameObjectHybridLink>().ForEach(
-                (Entity actionEntity, int entityInQueryIndex, ref Translation transform, in AffectedTargetComponent affectedTarget) =>
+            Entities.WithAny<AttachToAffectedTarget, PositionOffset, RandomPositionOffset>().WithNone<GameObjectHybridLink>().WithChangeFilter<AffectedTargetComponent>().ForEach(
+                (Entity actionEntity, int entityInQueryIndex, ref Translation transform, in LocalToWorld localToWorld, in AffectedTargetComponent affectedTarget) =>
                 {
-                    //Todo: hotfix bug cause crash on mobile, need to recheck 
-                    if(!HasComponent<LocalToWorld>(affectedTarget.Value)) return;
-                    var localToWorld = GetComponent<LocalToWorld>(affectedTarget.Value);
                     if (HasComponent<AttachToAffectedTarget>(actionEntity))
                     {
                         transform.Value = float3.zero;
@@ -34,16 +33,16 @@
                     {
                         transform.Value = localToWorld.Position;
                     }
-                    
+
                     if (HasComponent<PositionOffset>(actionEntity))
                     {
                         var offsetPos = GetComponent<PositionOffset>(actionEntity);
-                        transform.Value += new float3(offsetPos.Value.x * localToWorld.Forward.x,offsetPos.Value.y, offsetPos.Value.z * localToWorld.Forward.z);
+                        transform.Value += new float3(offsetPos.Value.x * localToWorld.Forward.x, offsetPos.Value.y, offsetPos.Value.z * localToWorld.Forward.z);
                     }
 
                     if (HasComponent<RandomPositionOffset>(actionEntity))
                     {
-                        var rnd                  = Random.CreateFromIndex((uint)entityInQueryIndex);
+                        var rnd                  = Random.CreateFromIndex((uint)(entityInQueryIndex + 1));
                         var randomPositionOffset = GetComponent<RandomPositionOffset>(actionEntity);
                         transform.Value += rnd.NextFloat3(randomPositionOffset.Min, randomPositionOffset.Max);
                     }

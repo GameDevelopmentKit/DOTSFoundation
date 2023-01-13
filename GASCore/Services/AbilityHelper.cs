@@ -8,6 +8,7 @@
     using Unity.Entities;
     using Unity.Mathematics;
     using Unity.Transforms;
+    using UnityEngine;
 
     public static class AbilityHelper
     {
@@ -31,6 +32,11 @@
                     case TargetType.Opponent:
                         foreach (var targetElement in targetableEntities)
                         {
+                            if (!team.HasComponent(targetElement.Value))
+                            {
+                                Debug.Log($"missing team component - {targetElement.Value}");
+                                continue;
+                            }
                             if (team[caster].Value != team[targetElement.Value].Value)
                                 result.Add(targetElement.Value);
                         }
@@ -39,6 +45,11 @@
                     case TargetType.Ally:
                         foreach (var targetElement in targetableEntities)
                         {
+                            if (!team.HasComponent(targetElement.Value))
+                            {
+                                Debug.Log($"missing team component - {targetElement.Value}");
+                                continue;
+                            }
                             if (team[caster].Value == team[targetElement.Value].Value)
                                 result.Add(targetElement.Value);
                         }
