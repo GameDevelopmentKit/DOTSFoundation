@@ -1,9 +1,10 @@
 ﻿namespace GASCore.Systems.TimelineSystems.Systems
 {
     using GASCore.Groups;
+    using GASCore.Services;
     using GASCore.Systems.AbilityMainFlow.Components;
-    using GASCore.Systems.CommonSystems.Components;
     using GASCore.Systems.LogicEffectSystems.Components;
+    using GASCore.Systems.TargetDetectionSystems.Components;
     using GASCore.Systems.TimelineSystems.Components;
     using Unity.Burst;
     using Unity.Collections;
@@ -19,7 +20,6 @@
         private EntityQuery                                abilityTimelineTriggerOnHitQuery;
         private ComponentLookup<TriggerOnHit>              triggerOnHitLookup;
         private ComponentLookup<ActivatedStateEntityOwner> ownerLookup;
-        private ComponentLookup<TriggerConditionCount>     triggerConditionComponentLookup;
         [BurstCompile]
         public void OnCreate(ref SystemState state)
         {
@@ -28,7 +28,6 @@
 
             this.triggerOnHitLookup              = state.GetComponentLookup<TriggerOnHit>(true);
             this.ownerLookup                     = state.GetComponentLookup<ActivatedStateEntityOwner>(true);
-            this.triggerConditionComponentLookup = state.GetComponentLookup<TriggerConditionCount>(true);
         }
 
         [BurstCompile]
@@ -39,7 +38,6 @@
         {
             this.triggerOnHitLookup.Update(ref state);
             this.ownerLookup.Update(ref state);
-            this.triggerConditionComponentLookup.Update(ref state);
             var triggerOnHits = this.abilityTimelineTriggerOnHitQuery.ToEntityArray(state.WorldUpdateAllocator);
 
             var ecbSingleton = SystemAPI.GetSingleton<EndSimulationEntityCommandBufferSystem.Singleton>();
@@ -51,7 +49,6 @@
                 TriggerOnHitEntities            = triggerOnHits,
                 TriggerOnHitLookup              = this.triggerOnHitLookup,
                 OwnerLookup                     = this.ownerLookup,
-                TriggerConditionComponentLookup = this.triggerConditionComponentLookup,
             };
 
             state.Dependency = listenOnHitEventJob.ScheduleParallel(state.Dependency);
@@ -66,7 +63,6 @@
         [ReadOnly] public NativeArray<Entity>                        TriggerOnHitEntities;
         [ReadOnly] public ComponentLookup<TriggerOnHit>              TriggerOnHitLookup;
         [ReadOnly] public ComponentLookup<ActivatedStateEntityOwner> OwnerLookup;
-        [ReadOnly] public ComponentLookup<TriggerConditionCount>     TriggerConditionComponentLookup;
         void Execute(Entity abilityActionEntity, [EntityInQueryIndex] int entityInQueryIndex, in AbilityEffectId effectId, in DynamicBuffer<StatefulTriggerEvent> triggerEventBuffer)
         {
             if (triggerEventBuffer.IsEmpty) return;
@@ -94,7 +90,7 @@
                     if (isHit)
                     {
                         //mark this condition was done
-                        this.Ecb.SetComponent(entityInQueryIndex, triggerOnHitEntity, new TriggerConditionCount() { Value = this.TriggerConditionComponentLookup[triggerOnHitEntity].Value - 1 });
+                        this.Ecb.MarkTriggerConditionComplete<TriggerOnHit>(triggerOnHitEntity, entityInQueryIndex);
                         if (triggerOnHit.IsDestroyAbilityEffectOnHit)
                             this.Ecb.AddComponent<ForceCleanupTag>(entityInQueryIndex, abilityActionEntity);
                     }

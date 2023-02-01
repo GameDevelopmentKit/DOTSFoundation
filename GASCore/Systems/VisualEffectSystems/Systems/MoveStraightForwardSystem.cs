@@ -1,11 +1,9 @@
 ﻿namespace GASCore.Systems.VisualEffectSystems.Systems
 {
-    using DOTSCore.CommonSystems.Components;
     using GASCore.Groups;
-    using GASCore.Systems.AbilityMainFlow.Components;
+    using GASCore.Systems.LogicEffectSystems.Components;
     using GASCore.Systems.VisualEffectSystems.Components;
     using Unity.Burst;
-    using Unity.Collections;
     using Unity.Entities;
     using Unity.Mathematics;
     using Unity.Transforms;

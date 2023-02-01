@@ -1,13 +1,11 @@
 ﻿namespace GASCore.Services
 {
     using GASCore.Blueprints;
-    using GASCore.Systems.AbilityMainFlow.Components;
-    using GASCore.Systems.CommonSystems.Components;
     using GASCore.Systems.LogicEffectSystems.Components;
+    using GASCore.Systems.TargetDetectionSystems.Components;
+    using GASCore.Systems.TimelineSystems.Components;
     using Unity.Collections;
     using Unity.Entities;
-    using Unity.Mathematics;
-    using Unity.Transforms;
     using UnityEngine;
 
     public static class AbilityHelper
@@ -59,38 +57,9 @@
             }
         }
 
-        // get all entity in AoE
-        private static NativeHashSet<Entity> GetEntitiesInAoE(in DynamicBuffer<TargetableElement> targetableEntities, in NativeArray<Entity> entities, in AoE aoe,
-            in ComponentLookup<LocalToWorld> localToWorld)
+        public static void MarkTriggerConditionComplete<T>(this EntityCommandBuffer.ParallelWriter ecb, Entity triggerEntity, int entityInQueryIndex)
         {
-            var listTargetInAoE = new NativeHashSet<Entity>(targetableEntities.Length, Allocator.Persistent);
-            foreach (var targetableEntity in targetableEntities)
-            {
-                foreach (var entity in entities)
-                {
-                    if (aoe.AoEType == AoEType.Single)
-                    {
-                        if (CheckInRange(targetableEntity.Value, entity, localToWorld, 1))
-                        {
-                            listTargetInAoE.Add(entity);
-                            break;
-                        }
-                    }
-                    else if (aoe.AoEType == AoEType.Round)
-                    {
-                        if (CheckInRange(targetableEntity.Value, entity, localToWorld, aoe.AoERange))
-                            listTargetInAoE.Add(entity);
-                    }
-                }
-            }
-
-            return listTargetInAoE;
-        }
-
-        private static bool CheckInRange(in Entity e1, in Entity e2, in ComponentLookup<LocalToWorld> localToWorld, float range)
-        {
-            var distancesq = math.distancesq(localToWorld[e1].Position, localToWorld[e2].Position);
-            return distancesq <= range * range;
+            ecb.AppendToBuffer(entityInQueryIndex, triggerEntity, new CompletedTriggerElement() { Index = TypeManager.GetTypeIndex<T>() });
         }
     }
 }

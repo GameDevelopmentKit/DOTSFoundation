@@ -21,11 +21,7 @@
                 {
                     abilityCostBuffer.Add(new CreateAbilityEffectElement() { EffectId = abilityEffectId });
                 }
-                
-                ecb.AddComponent<WaitingCreateEffect>(index, entity);
             }
         }
     }
-
-    public struct WaitingCreateEffect : IComponentData, IEnableableComponent { }
 }

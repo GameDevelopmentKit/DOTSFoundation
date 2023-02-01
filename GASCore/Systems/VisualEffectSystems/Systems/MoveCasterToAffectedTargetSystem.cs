@@ -1,13 +1,12 @@
 ﻿namespace GASCore.Systems.VisualEffectSystems.Systems
 {
-    using DOTSCore.CommonSystems.Components;
     using GASCore.Groups;
     using GASCore.Systems.AbilityMainFlow.Components;
+    using GASCore.Systems.LogicEffectSystems.Components;
     using GASCore.Systems.VisualEffectSystems.Components;
     using Unity.Burst;
     using Unity.Collections;
     using Unity.Entities;
-    using Unity.Mathematics;
     using Unity.Transforms;
 
     [UpdateInGroup(typeof(AbilityVisualEffectGroup))]
@@ -49,8 +48,7 @@
         [ReadOnly] public ComponentLookup<LocalToWorld> PositionLookup;
         void Execute([EntityInQueryIndex] int entityInQueryIndex, in CasterComponent caster,in AffectedTargetComponent affectedTarget)
         {
-            var dir = this.PositionLookup[affectedTarget.Value].Position - this.PositionLookup[caster.Value].Position;
-            this.Ecb.AddComponent(entityInQueryIndex, caster.Value, new MovementDirection() { Value = math.normalize(dir)});
+            this.Ecb.AddComponent(entityInQueryIndex, caster.Value, new TargetPosition() { Value = this.PositionLookup[affectedTarget.Value].Position});
         }
     }
 }

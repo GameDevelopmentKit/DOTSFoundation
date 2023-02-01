@@ -1,6 +1,7 @@
 ﻿namespace GASCore.Systems.TimelineSystems.Systems
 {
     using GASCore.Groups;
+    using GASCore.Services;
     using GASCore.Systems.AbilityMainFlow.Components;
     using GASCore.Systems.TimelineSystems.Components;
     using Unity.Burst;
@@ -14,10 +15,9 @@
     [BurstCompile]
     public partial struct WaitOnStatChangeSystem : ISystem
     {
-        private EntityQuery                            triggerOnStatChangeQuery;
-        private ComponentLookup<TriggerOnStatChanged>  triggerOnStatChangeComponentLookup;
-        private ComponentLookup<CasterComponent>       casterLookup;
-        private ComponentLookup<TriggerConditionCount> triggerConditionComponentLookup;
+        private EntityQuery                           triggerOnStatChangeQuery;
+        private ComponentLookup<TriggerOnStatChanged> triggerOnStatChangeComponentLookup;
+        private ComponentLookup<CasterComponent>      casterLookup;
 
         [BurstCompile]
         public void OnCreate(ref SystemState state)
@@ -27,20 +27,16 @@
 
             this.triggerOnStatChangeComponentLookup = state.GetComponentLookup<TriggerOnStatChanged>(true);
             this.casterLookup                       = state.GetComponentLookup<CasterComponent>(true);
-            this.triggerConditionComponentLookup    = state.GetComponentLookup<TriggerConditionCount>(true);
         }
 
         [BurstCompile]
-        public void OnDestroy(ref SystemState state)
-        {
-        }
+        public void OnDestroy(ref SystemState state) { }
 
         [BurstCompile]
         public void OnUpdate(ref SystemState state)
         {
             this.triggerOnStatChangeComponentLookup.Update(ref state);
             this.casterLookup.Update(ref state);
-            this.triggerConditionComponentLookup.Update(ref state);
 
             var triggerOnHits = this.triggerOnStatChangeQuery.ToEntityListAsync(state.WorldUpdateAllocator, out var getTriggerOnHitHandle);
 
@@ -53,7 +49,6 @@
                 TriggerOnStatChangeEntities        = triggerOnHits,
                 TriggerOnStatChangeComponentLookup = this.triggerOnStatChangeComponentLookup,
                 CasterLookup                       = this.casterLookup,
-                TriggerConditionComponentLookup    = this.triggerConditionComponentLookup
             };
 
             state.Dependency = listenOnHitEventJob.ScheduleParallel(getTriggerOnHitHandle);
@@ -64,11 +59,10 @@
     [BurstCompile]
     public partial struct ListenOnStatChangedJob : IJobEntity
     {
-        public            EntityCommandBuffer.ParallelWriter     Ecb;
-        [ReadOnly] public NativeList<Entity>                     TriggerOnStatChangeEntities;
-        [ReadOnly] public ComponentLookup<TriggerOnStatChanged>  TriggerOnStatChangeComponentLookup;
-        [ReadOnly] public ComponentLookup<CasterComponent>       CasterLookup;
-        [ReadOnly] public ComponentLookup<TriggerConditionCount> TriggerConditionComponentLookup;
+        public            EntityCommandBuffer.ParallelWriter    Ecb;
+        [ReadOnly] public NativeList<Entity>                    TriggerOnStatChangeEntities;
+        [ReadOnly] public ComponentLookup<TriggerOnStatChanged> TriggerOnStatChangeComponentLookup;
+        [ReadOnly] public ComponentLookup<CasterComponent>      CasterLookup;
 
         void Execute([EntityInQueryIndex] int entityInQueryIndex, in OnStatChange statChangeEvent)
         {
@@ -78,7 +72,7 @@
 
                 var triggerCondition = this.TriggerOnStatChangeComponentLookup[triggerEntity];
 
-                if (!triggerCondition.StatName.Equals(statChangeEvent.ChangedStat.StatName)) continue; // wrong stat name
+                if (!triggerCondition.StatName.Equals(statChangeEvent.ChangedStat.StatName)) continue; // wrong stat name 
 
                 var currentValue = triggerCondition.Percent
                     ? statChangeEvent.ChangedStat.CurrentValue / statChangeEvent.ChangedStat.OriginValue
@@ -88,7 +82,7 @@
                 {
                     // Debug.Log($"ListenOnStatChangedJob from stat {event_.ChangedStat.StatName}");
                     // mark this condition was done
-                    this.Ecb.SetComponent(entityInQueryIndex, triggerEntity, new TriggerConditionCount() { Value = this.TriggerConditionComponentLookup[triggerEntity].Value - 1 });
+                    this.Ecb.MarkTriggerConditionComplete<TriggerOnStatChanged>(triggerEntity, entityInQueryIndex);
                 }
             }
         }

@@ -4,8 +4,8 @@
     using GASCore.Groups;
     using GASCore.Services;
     using GASCore.Systems.AbilityMainFlow.Components;
-    using GASCore.Systems.CommonSystems.Components;
     using GASCore.Systems.LogicEffectSystems.Components;
+    using GASCore.Systems.TargetDetectionSystems.Components;
     using GASCore.Systems.TimelineSystems.Components;
     using Unity.Collections;
     using Unity.Entities;
@@ -13,7 +13,7 @@
     using UnityEngine;
 
     [UpdateInGroup(typeof(AbilityTimelineGroup))]
-    [UpdateAfter(typeof(DisableTriggerConditionCountSystem))]
+    [UpdateAfter(typeof(TrackingTriggerConditionProgressSystem))]
     [RequireMatchingQueriesForUpdate]
     public partial class InstantiateAbilityEffectFromPoolSystem : SystemBase
     {
@@ -40,8 +40,7 @@
             var localEffectPoolLookup     = effectPoolLookup.UpdateBufferLookup(this);
             var localTeamLookup           = teamLookup.UpdateComponentLookup(this);
 
-            Entities.WithAll<WaitingCreateEffect>()
-                .WithNone<TriggerConditionCount>()
+            Entities.WithAll<CompletedAllTriggerConditionTag>()
                 .WithReadOnly(localAffectedTargetLookup)
                 .WithReadOnly(localChildLookup)
                 .WithReadOnly(localEffectPoolLookup)
@@ -111,7 +110,6 @@
                     effectIdToEffectPrefab.Dispose();
                     excludeAffectedTargetBuffer.Clear();
                     targetableBuffer.Clear();
-                    ecbParallel.SetComponentEnabled<WaitingCreateEffect>(entityInQueryIndex, actionEntity, false);
                 }).ScheduleParallel();
 
             this.Dependency.Complete();

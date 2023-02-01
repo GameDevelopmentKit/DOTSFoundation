@@ -6,6 +6,7 @@
     public struct TriggerAfterSecond : IComponentData
     {
         public float Second;
+        public double EndTime;
 
         public class _ : ITriggerConditionActionConverter
         {

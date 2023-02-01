@@ -2,7 +2,6 @@
 {
     using GASCore.Groups;
     using GASCore.Systems.AbilityMainFlow.Components;
-    using GASCore.Systems.CommonSystems.Components;
     using GASCore.Systems.TimelineSystems.Components;
     using Unity.Burst;
     using Unity.Collections;
@@ -10,7 +9,7 @@
     using UnityEngine;
 
     [UpdateInGroup(typeof(AbilityTimelineGroup))]
-    [UpdateAfter(typeof(DisableTriggerConditionCountSystem))]
+    [UpdateAfter(typeof(TrackingTriggerConditionProgressSystem))]
     [RequireMatchingQueriesForUpdate]
     [BurstCompile]
     public partial struct ForceCleanupActivatedAbilitySystem : ISystem
@@ -39,8 +38,7 @@
     }
 
     [BurstCompile]
-    [WithNone(typeof(TriggerConditionCount))]
-    [WithAll(typeof(ForceCleanupActivatedAbilityTag))]
+    [WithAll(typeof(ForceCleanupActivatedAbilityTag), typeof(CompletedAllTriggerConditionTag))]
     public partial struct ForceCleanupActivatedAbilityJob : IJobEntity
     {
         public EntityCommandBuffer.ParallelWriter Ecb;

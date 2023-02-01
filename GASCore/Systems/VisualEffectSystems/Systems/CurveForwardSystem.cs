@@ -1,7 +1,6 @@
 ﻿namespace GASCore.Systems.VisualEffectSystems.Systems
 {
     using GASCore.Groups;
-    using GASCore.Systems.CommonSystems.Components;
     using GASCore.Systems.VisualEffectSystems.Components;
     using Unity.Burst;
     using Unity.Collections.LowLevel.Unsafe;

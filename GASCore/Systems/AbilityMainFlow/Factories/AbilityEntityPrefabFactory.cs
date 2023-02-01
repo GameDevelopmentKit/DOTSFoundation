@@ -66,7 +66,7 @@ namespace GASCore.Systems.AbilityMainFlow.Factories
             // ===== Ability Level Info ======
             var levelRecord = abilityFactoryModel.AbilityLevelRecord;
             ecbParallel.AddComponent(index, abilityEntity, new CastRangeComponent() { Value = levelRecord.CastRange });
-            ecbParallel.AddComponent(index, abilityEntity, new Cooldown() { Value = levelRecord.Cooldown });
+            ecbParallel.AddComponent(index, abilityEntity, new Cooldown() { Value           = levelRecord.Cooldown });
 
             // add ability cost buffer
             var abilityCostBuffer = ecbParallel.AddBuffer<AbilityCost>(index, abilityEntity);
@@ -93,8 +93,13 @@ namespace GASCore.Systems.AbilityMainFlow.Factories
                 //if component data contain any trigger condition, will be add TriggerConditionCount
                 if (count > 0)
                 {
-                    ecbParallel.AddComponent(index, abilityEntity, new TriggerConditionCount() { Value  = count });
                     ecbParallel.AddComponent(index, abilityEntity, new TriggerConditionAmount() { Value = count });
+                    ecbParallel.AddBuffer<CompletedTriggerElement>(index, abilityEntity);
+                    ecbParallel.AddComponent<InTriggerConditionResolveProcessTag>(index, abilityEntity);
+                }
+                else
+                {
+                    ecbParallel.AddComponent<CompletedAllTriggerConditionTag>(index, abilityEntity);
                 }
             }
 
@@ -111,7 +116,7 @@ namespace GASCore.Systems.AbilityMainFlow.Factories
                 effectPoolBuffer.Add(new AbilityEffectPoolComponent() { EffectPrefab = effectPrefab });
                 ecbParallel.SetParent(index, effectPrefab, abilityEntity);
             }
-            
+
             var cacheLinkEntityBuffer = ecbParallel.AddBuffer<LinkedEntityGroup>(index, abilityEntity);
             cacheLinkEntityBuffer.Add(new LinkedEntityGroup() { Value = abilityEntity });
 

@@ -1,7 +1,7 @@
 ﻿namespace GASCore.Systems.TimelineSystems.Systems
 {
     using GASCore.Groups;
-    using GASCore.Systems.CommonSystems.Components;
+    using GASCore.Services;
     using GASCore.Systems.TimelineSystems.Components;
     using Unity.Burst;
     using Unity.Entities;
@@ -34,17 +34,30 @@
     }
 
     [BurstCompile]
-    [WithNone(typeof(EndTimeComponent))]
     public partial struct SetEndTimeTriggerAfterSecondJob : IJobEntity
     {
         public EntityCommandBuffer.ParallelWriter Ecb;
         public double                             CurrentElapsedTime;
-        void Execute(Entity entity, [EntityInQueryIndex] int entityInQueryIndex, in TriggerAfterSecond triggerAfterSecond)
+        void Execute(Entity entity, [EntityInQueryIndex] int entityInQueryIndex, ref TriggerAfterSecond triggerAfterSecond, in DynamicBuffer<CompletedTriggerElement> completedTriggerBuffer)
         {
-            if (triggerAfterSecond.Second > 0)
+            if (completedTriggerBuffer.Length > 0)
             {
-                this.Ecb.AddComponent(entityInQueryIndex, entity, new EndTimeComponent() { Value = this.CurrentElapsedTime + triggerAfterSecond.Second });
-                this.Ecb.SetComponentEnabled<EndTimeComponent>(entityInQueryIndex, entity, true);
+                foreach (var completedTrigger in completedTriggerBuffer)
+                {
+                    // return if TriggerAfterSecond already completed
+                    if (completedTrigger.Index == TypeManager.GetTypeIndex<TriggerAfterSecond>()) return;
+                }
+            }
+
+            if (triggerAfterSecond.EndTime == 0)
+            {
+                triggerAfterSecond.EndTime = this.CurrentElapsedTime + triggerAfterSecond.Second;
+            }
+            
+            if (this.CurrentElapsedTime >= triggerAfterSecond.EndTime)
+            {
+                triggerAfterSecond.EndTime = 0;
+                this.Ecb.MarkTriggerConditionComplete<TriggerAfterSecond>(entity, entityInQueryIndex);
             }
         }
     }

@@ -33,7 +33,7 @@
                     }
 
                     var statAspect = SystemAPI.GetAspectRO<StatAspect>(sourceEntity);
-                    Debug.Log($"attributeBasedMagnitudeJob - source entity is {attributeBased.SourceType} - has {attributeBased.SourceStat} : {statAspect.HasStat(attributeBased.SourceStat)}");
+                    // Debug.Log($"attributeBasedMagnitudeJob - source entity is {attributeBased.SourceType} - has {attributeBased.SourceStat} : {statAspect.HasStat(attributeBased.SourceStat)}");
 
                     if (statAspect.HasStat(attributeBased.SourceStat))
                     {
@@ -44,7 +44,7 @@
                         statModifierData.ModifierMagnitude = attributeBased.Coefficient;
                     }
 
-                    Debug.Log($"attributeBasedMagnitudeJob magnitude = {statModifierData.ModifierMagnitude}");
+                    // Debug.Log($"attributeBasedMagnitudeJob magnitude = {statModifierData.ModifierMagnitude}");
                 }).ScheduleParallel(scalableFloatMagnitudeJob);
 
             Dependency = attributeBasedMagnitudeJob;

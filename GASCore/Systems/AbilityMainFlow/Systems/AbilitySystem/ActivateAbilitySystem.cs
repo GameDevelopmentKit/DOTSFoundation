@@ -2,8 +2,8 @@
 {
     using GASCore.Groups;
     using GASCore.Systems.AbilityMainFlow.Components;
-    using GASCore.Systems.CommonSystems.Components;
     using GASCore.Systems.LogicEffectSystems.Components;
+    using GASCore.Systems.TargetDetectionSystems.Components;
     using GASCore.Systems.TimelineSystems.Components;
     using Unity.Burst;
     using Unity.Collections;
@@ -27,7 +27,7 @@
         [BurstCompile]
         public void OnUpdate(ref SystemState state)
         {
-            var ecbSingleton = SystemAPI.GetSingleton<EndSimulationEntityCommandBufferSystem.Singleton>();
+            var ecbSingleton = SystemAPI.GetSingleton<BeginInitializationEntityCommandBufferSystem.Singleton>();
             var ecb          = ecbSingleton.CreateCommandBuffer(state.WorldUnmanaged).AsParallelWriter();
 
             this.childLookup.Update(ref state);
@@ -52,7 +52,7 @@
         [ReadOnly] public ComponentLookup<TriggerByAnotherTrigger> TriggerByAnotherTriggerLookup;
 
         void Execute(Entity abilityEntity, [EntityInQueryIndex] int entityInQueryIndex, in DynamicBuffer<AbilityEffectPoolComponent> effectPool, in AbilityTimelinePrefabComponent timelinePrefab,
-            in CasterComponent caster, in AbilityId abilityId, in Cooldown cooldown, in CastRangeComponent castRangeComponent, in DynamicBuffer<TargetTypeElement> targetTypeBuffer)
+            in CasterComponent caster, in AbilityId abilityId, in Cooldown cooldown, in CastRangeComponent castRangeComponent)
         {
             // set cooldownTime for ability if available
             if (cooldown.Value > 0)
@@ -76,12 +76,6 @@
             foreach (var effect in effectPool)
             {
                 abilityEffectPoolBuffer.Add(effect);
-            }
-
-            var targetTypeBufferClone = this.Ecb.AddBuffer<TargetTypeElement>(entityInQueryIndex, activatedStateEntity);
-            foreach (var targetType in targetTypeBuffer)
-            {
-                targetTypeBufferClone.Add(targetType);
             }
 
             var linkedEntityGroups = this.Ecb.AddBuffer<LinkedEntityGroup>(entityInQueryIndex, activatedStateEntity);

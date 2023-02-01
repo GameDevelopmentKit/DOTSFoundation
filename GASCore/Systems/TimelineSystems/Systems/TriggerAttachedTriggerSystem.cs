@@ -1,8 +1,10 @@
 ﻿namespace GASCore.Systems.TimelineSystems.Systems
 {
     using GASCore.Groups;
+    using GASCore.Services;
     using GASCore.Systems.AbilityMainFlow.Components;
     using GASCore.Systems.LogicEffectSystems.Components;
+    using GASCore.Systems.TargetDetectionSystems.Components;
     using GASCore.Systems.TimelineSystems.Components;
     using Unity.Burst;
     using Unity.Collections;
@@ -16,9 +18,8 @@
     [BurstCompile]
     public partial struct TriggerAttachedTriggerSystem : ISystem
     {
-        private ComponentLookup<TriggerConditionCount> triggerConditionLookup;
         [BurstCompile]
-        public void OnCreate(ref SystemState state) { this.triggerConditionLookup = state.GetComponentLookup<TriggerConditionCount>(true); }
+        public void OnCreate(ref SystemState state) { }
 
         [BurstCompile]
         public void OnDestroy(ref SystemState state) { }
@@ -26,25 +27,22 @@
         [BurstCompile]
         public void OnUpdate(ref SystemState state)
         {
-            this.triggerConditionLookup.Update(ref state);
             var ecbSingleton = SystemAPI.GetSingleton<EndSimulationEntityCommandBufferSystem.Singleton>();
             var ecb          = ecbSingleton.CreateCommandBuffer(state.WorldUnmanaged).AsParallelWriter();
 
             var setEndTimeTriggerAfterSecondJob = new TriggerAttachedTriggerJob()
             {
-                Ecb                    = ecb,
-                TriggerConditionLookup = this.triggerConditionLookup
+                Ecb                    = ecb
             };
             setEndTimeTriggerAfterSecondJob.ScheduleParallel();
         }
     }
 
     [BurstCompile]
-    [WithNone(typeof(TriggerConditionCount))]
+    [WithAll(typeof(CompletedAllTriggerConditionTag))]
     public partial struct TriggerAttachedTriggerJob : IJobEntity
     {
         public            EntityCommandBuffer.ParallelWriter     Ecb;
-        [ReadOnly] public ComponentLookup<TriggerConditionCount> TriggerConditionLookup;
         void Execute([EntityInQueryIndex] int entityInQueryIndex, in DynamicBuffer<WaitToTrigger> waitToTriggerBuffer, in ActivatedStateEntityOwner activatedStateEntity,
             in CasterComponent caster, in DynamicBuffer<TargetableElement> targetBuffer, in DynamicBuffer<ExcludeAffectedTargetElement> excludeAffectedTargetBuffer)
         {
@@ -55,10 +53,7 @@
                 this.Ecb.AddComponent(entityInQueryIndex, abilityTimelineAction, caster);
                 this.Ecb.RemoveComponent<Parent>(entityInQueryIndex, abilityTimelineAction);
                 this.Ecb.AppendToBuffer(entityInQueryIndex, activatedStateEntity.Value, new LinkedEntityGroup() { Value = abilityTimelineAction });
-                if (this.TriggerConditionLookup.TryGetComponent(waitToTrigger.TriggerEntity, out var triggerConditionCount))
-                {
-                    this.Ecb.SetComponent(entityInQueryIndex, abilityTimelineAction, new TriggerConditionCount() { Value = triggerConditionCount.Value - 1 });
-                }
+                this.Ecb.MarkTriggerConditionComplete<TriggerByAnotherTrigger>(abilityTimelineAction, entityInQueryIndex);
 
                 var targetBufferClone = this.Ecb.AddBuffer<TargetableElement>(entityInQueryIndex, abilityTimelineAction);
                 foreach (var targetType in targetBuffer)

@@ -10,6 +10,7 @@
     using GASCore.Systems.CasterSystems.Components;
     using Unity.Collections;
     using Unity.Entities;
+    using Unity.Mathematics;
     using Unity.Transforms;
     using UnityEngine;
     using Zenject;
@@ -163,6 +164,7 @@
                             if (requestRemoveAbility.Level == abilityContainerElement.Level)
                             {
                                 abilityContainerBuffer.RemoveAtSwapBack(index);
+                                index = math.max(index - 1, 0);
                                 ecb.DestroyEntity(entityInQueryIndex, abilityContainerElement.AbilityInstance);
                             }
                         }

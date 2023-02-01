@@ -16,7 +16,7 @@
             ecb.SetName(index, timelineEntity, "TimelineEntityPrefab");
 
             // parse json data to timeline action entity prefab
-            var listEntityActionPrefab = this.actionEntityPrefabFactory.CreateAbilityActionEntityPrefabsFromJson(ecb, index, data);
+            var listEntityActionPrefab = this.actionEntityPrefabFactory.CreateAbilityActionEntityPrefabsFromJson(ecb, index, data, true);
             ecb.AddChildren(index, timelineEntity, listEntityActionPrefab);
             ecb.AddComponent(index, timelineEntity, new AbilityTimelineEntitiesAmountComponent { Value = listEntityActionPrefab.Length });
         }

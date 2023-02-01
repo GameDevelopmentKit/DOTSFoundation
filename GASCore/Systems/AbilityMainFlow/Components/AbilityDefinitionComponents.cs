@@ -46,6 +46,7 @@
         public float Value;
     }
 
+    //Use for detect targetable objects of an ability
     public struct TargetTypeElement : IBufferElementData
     {
         public TargetType Value;

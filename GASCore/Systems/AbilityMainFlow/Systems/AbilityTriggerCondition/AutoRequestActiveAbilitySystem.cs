@@ -29,19 +29,17 @@
     }
 
     [BurstCompile]
-    [WithAll(typeof(AbilityId))]
+    [WithAll(typeof(AbilityId), typeof(CompletedAllTriggerConditionTag))]
     [WithNone(typeof(ManualActiveTag), typeof(RequestActivate))]
     public partial struct AutoRequestActiveAbilityJob : IJobEntity
     {
         public EntityCommandBuffer.ParallelWriter Ecb;
 
-        void Execute(Entity abilityEntity, [EntityInQueryIndex] int entityInQueryIndex, in TriggerConditionCount triggerConditionCount)
+        void Execute(Entity abilityEntity, [EntityInQueryIndex] int entityInQueryIndex)
         {
-            if (triggerConditionCount.Value <= 0)
-            {
-                // Debug.Log($"AutoRequestActiveAbilityJob ability Index {abilityEntity.Index}");
-                this.Ecb.SetComponentEnabled<RequestActivate>(entityInQueryIndex, abilityEntity, true);
-            }
+            // Debug.Log($"AutoRequestActiveAbilityJob ability Index {abilityEntity.Index}");
+            this.Ecb.SetComponentEnabled<CompletedAllTriggerConditionTag>(entityInQueryIndex, abilityEntity, false);
+            this.Ecb.SetComponentEnabled<RequestActivate>(entityInQueryIndex, abilityEntity, true);
         }
     }
 }

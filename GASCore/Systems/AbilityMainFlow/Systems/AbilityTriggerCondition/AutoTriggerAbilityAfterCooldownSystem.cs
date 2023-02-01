@@ -1,10 +1,11 @@
 ﻿namespace GASCore.Systems.AbilityMainFlow.Systems.AbilityTriggerCondition
 {
     using GASCore.Groups;
+    using GASCore.Services;
     using GASCore.Systems.AbilityMainFlow.Components;
-    using GASCore.Systems.TimelineSystems.Components;
     using Unity.Burst;
     using Unity.Entities;
+    using UnityEngine;
     using CountdownTimeSystem = GASCore.Systems.AbilityMainFlow.Systems.AbilitySystem.CountdownTimeSystem;
 
     [UpdateInGroup(typeof(AbilityMainFlowGroup))]
@@ -37,11 +38,10 @@
     {
         public EntityCommandBuffer.ParallelWriter Ecb;
 
-        void Execute(Entity abilityEntity, [EntityInQueryIndex] int entityInQueryIndex, in TriggerConditionCount triggerConditionCount)
+        void Execute(Entity abilityEntity, [EntityInQueryIndex] int entityInQueryIndex)
         {
-            //todo need to refactor set trigger condition
-            // Debug.Log($"AutoTriggerAbilityJob ability Index {abilityEntity.Index}");
-            this.Ecb.SetComponent(entityInQueryIndex, abilityEntity, new TriggerConditionCount() { Value = triggerConditionCount.Value - 1 });
+            // Debug.Log($"AutoTriggerAbilityAfterCooldownJob ability Index {abilityEntity.Index}");
+            this.Ecb.MarkTriggerConditionComplete<AutoActiveAfterCooldownTag>(abilityEntity, entityInQueryIndex);
         }
     }
 }

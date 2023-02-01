@@ -2,11 +2,6 @@
 {
     using Unity.Entities;
 
-    public struct TargetableElement : IBufferElementData
-    {
-        public Entity Value;
-    }
-    
     public struct AffectedTargetComponent : IComponentData
     {
         public Entity Value;
