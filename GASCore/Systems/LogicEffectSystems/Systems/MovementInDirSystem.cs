@@ -1,6 +1,5 @@
 namespace GASCore.Systems.LogicEffectSystems.Systems
 {
-    using DOTSCore.CommonSystems.Components;
     using GASCore.Groups;
     using GASCore.Systems.LogicEffectSystems.Components;
     using GASCore.Systems.StatSystems.Components;

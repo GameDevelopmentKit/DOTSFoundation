@@ -6,7 +6,8 @@
 
     public class EntityHasHealthStatView : BaseEntityStatView
     {
-        public UIHpBarView uiHpBarView;
+        [SerializeField] private UIHpBarView uiHpBarView;
+
         protected override void InitStatView(StatDataElement data)
         {
             if (data.StatName.Value == StatName.Health)

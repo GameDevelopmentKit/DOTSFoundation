@@ -3,8 +3,13 @@
     using Unity.Entities;
     using Unity.Mathematics;
 
-    public struct TargetPosition  : IComponentData
+    public struct TargetPosition : IComponentData
     {
         public float3 Value;
+    }
+
+    public struct ChaseTargetEntity : IComponentData
+    {
+        public Entity Value;
     }
 }

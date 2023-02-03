@@ -26,7 +26,7 @@
 
         public virtual void RegisterEvent(ListenerCollector listenerCollector) { listenerCollector.Subscribe<ChangeStatEvent>(this.OnEventTrigger); }
 
-        public void OnEventTrigger(ChangeStatEvent data)
+        public virtual void OnEventTrigger(ChangeStatEvent data)
         {
             var changeValue = data.ChangedStat.CurrentValue - this.currentStatData[data.ChangedStat.StatName].CurrentValue;
             if (changeValue != 0)
@@ -38,5 +38,15 @@
 
         protected virtual void InitStatView(StatDataElement data)                      { }
         protected virtual void ChangeStatView(float changeValue, StatDataElement data) { }
+
+        protected StatDataElement GetCurrentStatData(FixedString64Bytes statName)
+        {
+            if (this.currentStatData.TryGetValue(statName, out var statDataElement))
+            {
+                return statDataElement;
+            }
+
+            return default;
+        }
     }
 }

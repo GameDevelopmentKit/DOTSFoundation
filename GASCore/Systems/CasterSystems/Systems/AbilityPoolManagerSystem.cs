@@ -1,6 +1,5 @@
 ﻿namespace GASCore.Systems.CasterSystems.Systems
 {
-    using System;
     using DOTSCore.Extension;
     using GameFoundation.Scripts.Utilities.Extension;
     using GASCore.Blueprints;

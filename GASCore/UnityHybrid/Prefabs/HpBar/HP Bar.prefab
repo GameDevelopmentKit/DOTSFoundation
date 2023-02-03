@@ -67,9 +67,10 @@ MonoBehaviour:
   - {fileID: 7922059438621973050, guid: 849f36752ebf4eaf84a9371415f04d0b, type: 3}
   - {fileID: 3607762691354996036, guid: 89fbab66acc3402abfaa927d18f41071, type: 3}
   stepValue: 100
-  hpValue: 1000
+  hpValue: 100
   shieldValue: 0
-  maxHpValue: 0
+  maxHpValue: 100
+  shakeWhenTakingDmg: 0
 --- !u!114 &8572194909993470824
 MonoBehaviour:
   m_ObjectHideFlags: 0

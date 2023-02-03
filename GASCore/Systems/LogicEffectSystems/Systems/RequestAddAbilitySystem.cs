@@ -31,7 +31,7 @@
     }
 
     [BurstCompile]
-    [WithChangeFilter(typeof(AddAbilityElement))]
+    [WithNone(typeof(RequestAddOrUpgradeAbility))]
     public partial struct RequestAddAbilityJob : IJobEntity
     {
         public EntityCommandBuffer.ParallelWriter Ecb;

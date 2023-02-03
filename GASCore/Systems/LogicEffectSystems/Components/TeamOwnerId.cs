@@ -6,14 +6,18 @@
     public struct TeamOwnerId : IComponentData
     {
         public int Value;
-        
-        public class _: IAbilityActionComponentConverter
+
+        public class _ : IAbilityActionComponentConverter
         {
-            public int Value;
-            public void Convert(EntityCommandBuffer.ParallelWriter ecb, int index, Entity entity)
-            {
-                ecb.AddComponent(index, entity, new TeamOwnerId() { Value = this.Value });
-            }
+            public TeamType Value;
+            public void     Convert(EntityCommandBuffer.ParallelWriter ecb, int index, Entity entity) { ecb.AddComponent(index, entity, new TeamOwnerId() { Value = (int)this.Value }); }
         }
+    }
+
+    public enum TeamType
+    {
+        None     = 0,
+        Ally     = 1,
+        Opponent = 2
     }
 }

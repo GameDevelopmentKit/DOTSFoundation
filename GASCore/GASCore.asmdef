@@ -13,7 +13,9 @@
         "Unity.Physics",
         "Unity.Physics.Hybrid",
         "GameFoundation.Utilities",
-        "Zenject-Source"
+        "Zenject-Source",
+        "Unity.TextMeshPro",
+        "UniTask"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

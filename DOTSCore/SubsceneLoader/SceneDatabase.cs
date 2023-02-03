@@ -11,18 +11,19 @@
     /// <summary>
     /// This is used when the map is required inside a job
     /// </summary>
-    public struct EntityPrefabGuidResolver {
+    public struct EntityPrefabGuidResolver
+    {
         private NativeParallelHashMap<FixedString128Bytes, Hash128> map;
- 
-        public EntityPrefabGuidResolver(NativeParallelHashMap<FixedString128Bytes, Hash128> map) {
-            this.map = map;
-        }
- 
-        public Hash128 GetPrefabEntityGuid(FixedString128Bytes id) {
-            if (this.map.TryGetValue(id, out var prefabEntityGuid)) {
+
+        public EntityPrefabGuidResolver(NativeParallelHashMap<FixedString128Bytes, Hash128> map) { this.map = map; }
+
+        public Hash128 GetPrefabEntityGuid(FixedString128Bytes id)
+        {
+            if (this.map.TryGetValue(id, out var prefabEntityGuid))
+            {
                 return prefabEntityGuid;
             }
-         
+
             throw new Exception($"The prefab pool does not contain an entry for {id}");
         }
     }
@@ -30,27 +31,12 @@
     [CreateAssetMenu(order = 0, fileName = nameof(SceneDatabase), menuName = "DOTSCore/Create SceneDatabase")]
     public class SceneDatabase : SerializedScriptableObject
     {
-
-        private NativeParallelHashMap<FixedString128Bytes, Hash128> sceneNameToGuid;
-
-        public Hash128 GetGuidFromSceneName(string prefabName)
-        {
-            if (this.sceneNameToGuid.TryGetValue(prefabName, out var prefabEntityGuid)) {
-                return prefabEntityGuid;
-            }
-         
-            throw new Exception($"The prefab pool does not contain an entry for {prefabName}");
-        }
-        
-        public EntityPrefabGuidResolver SceneGuidResolver => new EntityPrefabGuidResolver(this.sceneNameToGuid);
-
 #if UNITY_EDITOR
         [FolderPath] [SerializeField] private string[] sceneDirectoryPaths;
-        [SerializeField][Sirenix.OdinInspector.ReadOnly] private Dictionary<UnityEditor.SceneAsset, string> SceneToGuidViewer;
+
         private void OnValidate()
         {
-           
-            this.SceneToGuidViewer = new Dictionary<UnityEditor.SceneAsset, string>();
+            this.sceneInfos = new List<SceneItem>();
             foreach (var path in this.sceneDirectoryPaths)
             {
                 var correctPath = path;
@@ -64,31 +50,58 @@
 
                 foreach (var fileInfo in fileInf)
                 {
-                    var fullPath   = fileInfo.FullName.Replace(@"\", "/");
-                    var assetPath  = "Assets" + fullPath.Replace(Application.dataPath, "");
+                    var fullPath  = fileInfo.FullName.Replace(@"\", "/");
+                    var assetPath = "Assets" + fullPath.Replace(Application.dataPath, "");
                     var sceneGuid = UnityEditor.AssetDatabase.AssetPathToGUID(assetPath);
 
                     if (string.IsNullOrEmpty(sceneGuid)) continue;
-                    this.SceneToGuidViewer.Add(UnityEditor.AssetDatabase.LoadAssetAtPath<UnityEditor.SceneAsset>(assetPath), sceneGuid);
+                    this.sceneInfos.Add(new SceneItem()
+                    {
+                        SceneName = Path.GetFileNameWithoutExtension(fileInfo.Name),
+                        Guid      = sceneGuid,
+                    });
                 }
-            }
-
-            if (this.sceneNameToGuid.IsCreated)
-            {
-                this.sceneNameToGuid.Dispose();
-            }
-            this.sceneNameToGuid = new NativeParallelHashMap<FixedString128Bytes, Hash128>(this.SceneToGuidViewer.Count, Allocator.Persistent);
-            foreach (var (prefab, guid) in this.SceneToGuidViewer)
-            {
-                this.sceneNameToGuid.Add(prefab.name, new Hash128(guid));
             }
         }
 
         [Button]
-        public void Refresh()
-        {
-            this.OnValidate();
-        }
+        public void Refresh() { this.OnValidate(); }
 #endif
+
+        private class SceneItem
+        {
+            public string SceneName;
+            public string Guid;
+        }
+
+        [SerializeField] [Sirenix.OdinInspector.ReadOnly]
+        private List<SceneItem> sceneInfos;
+
+        #region ecs handler
+
+        private NativeParallelHashMap<FixedString128Bytes, Hash128> sceneNameToGuid;
+
+        public Hash128 GetGuidFromSceneName(string prefabName)
+        {
+            if (this.sceneNameToGuid.IsEmpty)
+            {
+                this.sceneNameToGuid = new NativeParallelHashMap<FixedString128Bytes, Hash128>(this.sceneInfos.Count, Allocator.Persistent);
+                foreach (var sceneItem in this.sceneInfos)
+                {
+                    this.sceneNameToGuid.Add(sceneItem.SceneName, new Hash128(sceneItem.Guid));
+                }
+            }
+
+            if (this.sceneNameToGuid.TryGetValue(prefabName, out var prefabEntityGuid))
+            {
+                return prefabEntityGuid;
+            }
+
+            throw new Exception($"The prefab pool does not contain an entry for {prefabName}");
+        }
+
+        public EntityPrefabGuidResolver SceneGuidResolver => new EntityPrefabGuidResolver(this.sceneNameToGuid);
+
+        #endregion
     }
 }

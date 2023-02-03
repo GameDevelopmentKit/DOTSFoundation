@@ -8,10 +8,8 @@
         public bool Initialize(string defaultWorldName)
         {
             World.DefaultGameObjectInjectionWorld = new World(defaultWorldName, WorldFlags.None);
-            ;
             return true;
         }
-
 
         public static bool FilterUnitySystemType(Type type)
         {

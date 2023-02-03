@@ -5,12 +5,12 @@
 
     public struct MoveCasterToAffectedTarget : IComponentData
     {
+        public bool IsChase;
+
         public class _ : IAbilityActionComponentConverter
         {
-            public void Convert(EntityCommandBuffer.ParallelWriter ecb, int index, Entity entity)
-            {
-                ecb.AddComponent<MoveCasterToAffectedTarget>(index, entity);
-            }
+            public bool IsChase;
+            public void Convert(EntityCommandBuffer.ParallelWriter ecb, int index, Entity entity) { ecb.AddComponent(index, entity, new MoveCasterToAffectedTarget() { IsChase = this.IsChase }); }
         }
     }
 }

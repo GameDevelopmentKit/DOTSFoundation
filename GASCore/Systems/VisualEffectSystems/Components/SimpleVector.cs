@@ -67,4 +67,21 @@
 
         public static implicit operator int2(SimpleIntRange v) { return new int2(v.min, v.max); }
     }
+
+    [Serializable]
+    public struct SimpleBool3
+    {
+        [HorizontalGroup, LabelWidth(30)] public bool x;
+        [HorizontalGroup, LabelWidth(30)] public bool y;
+        [HorizontalGroup, LabelWidth(30)] public bool z;
+
+        public SimpleBool3(bool x, bool y, bool z)
+        {
+            this.x = x;
+            this.y = y;
+            this.z = z;
+        }
+
+        public static implicit operator bool3(SimpleBool3 v) => new(v.x, v.y, v.z);
+    }
 }

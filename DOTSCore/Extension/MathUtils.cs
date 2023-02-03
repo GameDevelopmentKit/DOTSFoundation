@@ -36,7 +36,7 @@
         /// <param name="v"></param>
         /// <param name="epsilon"></param>
         /// <returns></returns>
-        public static bool IsZero(float3 v, float epsilon = 0.000001f)
+        public static bool IsZero(this float3 v, float epsilon = 0.000001f)
         {
             return (IsZero(v.x, epsilon) && IsZero(v.y, epsilon) && IsZero(v.z, epsilon));
         }
