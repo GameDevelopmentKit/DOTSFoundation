@@ -13,7 +13,7 @@
     [UpdateAfter(typeof(SetupInitialPositionSystem))]
     [RequireMatchingQueriesForUpdate]
     [BurstCompile]
-    public partial struct MoveCasterToAffectedTargetSystem : ISystem
+    public partial struct MoveToAffectedTargetSystem : ISystem
     {
         ComponentLookup<LocalToWorld> positionLookup;
 
@@ -29,7 +29,7 @@
             var ecbSingleton = SystemAPI.GetSingleton<AbilityPresentEntityCommandBufferSystem.Singleton>();
             var ecb          = ecbSingleton.CreateCommandBuffer(state.WorldUnmanaged).AsParallelWriter();
             this.positionLookup.Update(ref state);
-            var lifeTimeJob = new MoveCasterToAffectedTargetJob()
+            var lifeTimeJob = new MoveToAffectedTargetJob()
             {
                 Ecb            = ecb,
                 PositionLookup = this.positionLookup
@@ -39,21 +39,16 @@
     }
 
     [BurstCompile]
-    [WithAll(typeof(MoveCasterToAffectedTarget))]
+    [WithAll(typeof(MoveToAffectedTarget))]
     [WithChangeFilter(typeof(AffectedTargetComponent))]
-    public partial struct MoveCasterToAffectedTargetJob : IJobEntity
+    public partial struct MoveToAffectedTargetJob : IJobEntity
     {
         public EntityCommandBuffer.ParallelWriter Ecb;
 
         [ReadOnly] public ComponentLookup<LocalToWorld> PositionLookup;
-        void Execute([EntityInQueryIndex] int entityInQueryIndex, in CasterComponent caster, in AffectedTargetComponent affectedTarget, in MoveCasterToAffectedTarget moveCasterToAffectedTarget)
+        void Execute([EntityInQueryIndex] int entityInQueryIndex, in AffectedTargetComponent affectedTarget, in SourceComponent source)
         {
-            if (moveCasterToAffectedTarget.IsChase)
-            {
-                this.Ecb.AddComponent(entityInQueryIndex, caster.Value, new ChaseTargetEntity() { Value = affectedTarget.Value });
-            }
-
-            this.Ecb.AddComponent(entityInQueryIndex, caster.Value, new TargetPosition() { Value = this.PositionLookup[affectedTarget.Value].Position });
+            this.Ecb.AddComponent(entityInQueryIndex, source.Value, new TargetPosition(this.PositionLookup[affectedTarget.Value].Position));
         }
     }
 }

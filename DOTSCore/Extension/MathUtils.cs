@@ -25,7 +25,7 @@
         /// <param name="a"></param>
         /// <param name="epsilon"></param>
         /// <returns></returns>
-        public static bool IsZero(float a, float epsilon = 0.0000001f)
+        public static bool IsZero(this float a, float epsilon = 0.0000001f)
         {
             return FloatEquals(a, 0.0f, epsilon);
         }

@@ -14,12 +14,7 @@ namespace GASCore.Systems.LogicEffectSystems.Systems
     {
         private void Execute(ref MovementDirection movementDirection, in LocalToWorld transform, in TargetPosition target)
         {
-            var vectorToTarget = target.Value - transform.Position;
-            movementDirection.Value = vectorToTarget.IsZero(0.05f)
-                ? float3.zero
-                :
-                // Normalize the vector to our target - this will be our movement direction
-                math.normalize(vectorToTarget);
+            movementDirection.Value = math.distancesq(transform.Position, target.Value).IsZero(target.RadiusSq) ? float3.zero : math.normalize(target.Value - transform.Position);
         }
     }
 
@@ -27,11 +22,17 @@ namespace GASCore.Systems.LogicEffectSystems.Systems
     public partial struct ChaseTargetJob : IJobEntity
     {
         [ReadOnly] public ComponentLookup<LocalToWorld> TransformLookup;
-        private void Execute(ref TargetPosition targetPosition, in ChaseTargetEntity chaseTargetEntity)
+        private void Execute(ref TargetPosition curTargetPosition, in Translation translation, in ChaseTargetEntity chaseTargetEntity)
         {
-            if (this.TransformLookup.TryGetComponent(chaseTargetEntity.Value, out var transform))
+            if (this.TransformLookup.TryGetComponent(chaseTargetEntity.Value, out var targetTransform))
             {
-                targetPosition.Value = transform.Position;
+                var resultPos = targetTransform.Position;
+
+                if (chaseTargetEntity.LockAxis.x) resultPos.x = translation.Value.x;
+                if (chaseTargetEntity.LockAxis.y) resultPos.y = translation.Value.y;
+                if (chaseTargetEntity.LockAxis.z) resultPos.z = translation.Value.z;
+                
+                curTargetPosition.Value = resultPos;
             }
         }
     }
