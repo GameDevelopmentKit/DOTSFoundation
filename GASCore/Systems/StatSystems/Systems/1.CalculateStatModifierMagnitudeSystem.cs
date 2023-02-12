@@ -2,6 +2,7 @@
 {
     using GASCore.Groups;
     using GASCore.Systems.AbilityMainFlow.Components;
+    using GASCore.Systems.LogicEffectSystems.Components;
     using GASCore.Systems.StatSystems.Components;
     using Unity.Burst;
     using Unity.Entities;

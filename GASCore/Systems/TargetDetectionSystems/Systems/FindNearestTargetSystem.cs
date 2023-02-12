@@ -5,6 +5,7 @@
     using GASCore.Services;
     using GASCore.Systems.AbilityMainFlow.Components;
     using GASCore.Systems.LogicEffectSystems.Components;
+    using GASCore.Systems.StatSystems.Components;
     using GASCore.Systems.TargetDetectionSystems.Components;
     using Unity.Burst;
     using Unity.Collections;
@@ -26,7 +27,7 @@
         protected override void OnCreate()
         {
             this.endSimEcbSystem = this.World.GetExistingSystemManaged<EndSimulationEntityCommandBufferSystem>();
-            this.teamQuery       = new EntityQueryBuilder(Allocator.Temp).WithAll<TeamOwnerId, Translation, LocalToWorld>().Build(this);
+            this.teamQuery       = new EntityQueryBuilder(Allocator.Temp).WithAll<StatDataElement,Translation, LocalToWorld>().Build(this);
 
             this.translationLookup = this.GetComponentLookup<LocalToWorld>(true);
             this.tagLookup         = this.GetComponentLookup<TagComponent>(true);

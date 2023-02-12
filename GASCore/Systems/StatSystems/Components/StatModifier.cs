@@ -7,6 +7,7 @@
     using GASCore.Interfaces;
     using GASCore.Services;
     using GASCore.Systems.AbilityMainFlow.Factories;
+    using GASCore.Systems.LogicEffectSystems.Components;
     using Unity.Collections;
     using Unity.Entities;
     using Zenject;
@@ -116,13 +117,7 @@
     }
 
     #endregion
-
-    public enum SourceType
-    {
-        Caster,
-        AffectedTarget
-    }
-
+    
     public enum ModifierOperatorType : uint
     {
         Add      = 0, // use negative number for sub

@@ -131,6 +131,7 @@
 
         public float CalculateStatValue(ModifierAggregatorData aggregator)
         {
+            //todo handle case override = 0
             return aggregator.Override != 0 ? aggregator.Override : (GetBaseValue(aggregator.TargetStat) + aggregator.Add) * aggregator.Multiply / aggregator.Division;
         }
     }
