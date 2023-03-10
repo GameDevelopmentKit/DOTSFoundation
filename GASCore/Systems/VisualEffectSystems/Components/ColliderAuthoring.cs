@@ -4,6 +4,7 @@
     using DOTSCore.UnityPhysicExtension.Utils;
     using GASCore.Interfaces;
     using Newtonsoft.Json;
+    using Sirenix.OdinInspector;
     using Unity.Entities;
     using Unity.Physics;
     using Unity.Physics.Authoring;
@@ -45,6 +46,7 @@
         public void Convert(EntityCommandBuffer.ParallelWriter ecb, int index, Entity entity)
         {
             ecb.AddBoxPhysicsCollider(index, entity, this.Size, this.Center, this.CollisionResponse, this.ColliderBelongsTo, this.ColliderCollidesWith);
+            ecb.AddBuffer<StatefulTriggerEvent>(index, entity);
         }
     }
 
@@ -63,11 +65,7 @@
         public void Convert(EntityCommandBuffer.ParallelWriter ecb, int index, Entity entity)
         {
             ecb.AddSpherePhysicsCollider(index, entity, this.Radius, this.Center, this.CollisionResponse, this.ColliderBelongsTo, this.ColliderCollidesWith);
+            ecb.AddBuffer<StatefulTriggerEvent>(index, entity);
         }
-    }
-
-    public class StatefulTriggerEventAuthoring : IAbilityActionComponentConverter
-    {
-        public void Convert(EntityCommandBuffer.ParallelWriter ecb, int index, Entity entity) { ecb.AddBuffer<StatefulTriggerEvent>(index, entity); }
     }
 }

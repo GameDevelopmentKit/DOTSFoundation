@@ -6,23 +6,26 @@ namespace GASCore.Systems.VisualEffectSystems.Components
 
     public struct FollowAffectedTarget : IComponentData
     {
+        public bool  ReverseOrder;
         public float Radius;
         public float RotateSpeed;
         public bool3 LockAxis;
 
         public class _ : IAbilityActionComponentConverter
         {
-            public float       Radius      = 1f;
-            public float       RotateSpeed = 5f;
-            public SimpleBool3 LockAxis    = new(false, true, false);
+            public bool        ReverseOrder = false;
+            public float       Radius       = 1f;
+            public float       RotateSpeed  = 5f;
+            public SimpleBool3 LockAxis     = new(false, true, false);
 
             public void Convert(EntityCommandBuffer.ParallelWriter ecb, int index, Entity entity)
             {
                 ecb.AddComponent(index, entity, new FollowAffectedTarget
                 {
-                    Radius      = this.Radius,
-                    RotateSpeed = this.RotateSpeed,
-                    LockAxis    = this.LockAxis,
+                    ReverseOrder = this.ReverseOrder,
+                    Radius       = this.Radius,
+                    RotateSpeed  = this.RotateSpeed,
+                    LockAxis     = this.LockAxis,
                 });
             }
         }

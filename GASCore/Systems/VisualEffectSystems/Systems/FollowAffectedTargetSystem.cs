@@ -13,10 +13,14 @@ namespace GASCore.Systems.VisualEffectSystems.Systems
     public partial struct FollowAffectedTargetSystem : ISystem
     {
         [BurstCompile]
-        public void OnCreate(ref SystemState state) { }
+        public void OnCreate(ref SystemState state)
+        {
+        }
 
         [BurstCompile]
-        public void OnDestroy(ref SystemState state) { }
+        public void OnDestroy(ref SystemState state)
+        {
+        }
 
         [BurstCompile]
         public void OnUpdate(ref SystemState state)
@@ -36,18 +40,27 @@ namespace GASCore.Systems.VisualEffectSystems.Systems
     {
         public EntityCommandBuffer.ParallelWriter Ecb;
 
-        private void Execute([EntityInQueryIndex] int entityInQueryIndex, in FollowAffectedTarget data, in SourceComponent source, in AffectedTargetComponent affectedTarget)
+        private void Execute([EntityIndexInQuery] int entityInQueryIndex, in FollowAffectedTarget data, in SourceComponent sourceComponent, in AffectedTargetComponent targetComponent)
         {
-            this.Ecb.AddComponent(entityInQueryIndex, source.Value, new ChaseTargetEntity()
+            var source = sourceComponent.Value;
+            var target = targetComponent.Value;
+            if (data.ReverseOrder)
             {
-                Value    = affectedTarget.Value,
+                (source, target) = (target, source);
+            }
+            this.Ecb.AddComponent(entityInQueryIndex, source, new ChaseTargetEntity()
+            {
+                Value    = target,
                 LockAxis = data.LockAxis
             });
-            this.Ecb.AddComponent(entityInQueryIndex, source.Value, new TargetPosition()
+            this.Ecb.AddComponent(entityInQueryIndex, source, new TargetPosition()
             {
                 RadiusSq = data.Radius * data.Radius
             });
-            this.Ecb.AddComponent(entityInQueryIndex, source.Value, new RotationSpeed() { Value = data.RotateSpeed });
+            this.Ecb.AddComponent(entityInQueryIndex, source, new RotationSpeed()
+            {
+                Value = data.RotateSpeed
+            });
         }
     }
 }
