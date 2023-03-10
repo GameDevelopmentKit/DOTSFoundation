@@ -7,11 +7,17 @@
 
     #region Ability status
 
-    public struct RequestActivate : IComponentData, IEnableableComponent { }
+    public struct RequestActivate : IComponentData, IEnableableComponent
+    {
+    }
 
-    public struct GrantedActivation : IComponentData, IEnableableComponent { }
+    public struct GrantedActivation : IComponentData, IEnableableComponent
+    {
+    }
 
-    public struct FinishedComponent : IComponentData, IEnableableComponent { }
+    public struct FinishedComponent : IComponentData, IEnableableComponent
+    {
+    }
 
     #endregion
 
@@ -21,9 +27,13 @@
         public FixedString64Bytes Value;
     }
 
-    public struct PassiveAbilityTag : IComponentData { }
+    public struct PassiveAbilityTag : IComponentData
+    {
+    }
 
-    public struct ActiveAbilityTag : IComponentData { }
+    public struct ActiveAbilityTag : IComponentData
+    {
+    }
 
     public struct AbilityCost : IBufferElementData
     {
@@ -33,7 +43,9 @@
 
     public struct CastRangeComponent : IComponentData
     {
-        public float Value;
+        public                          float Value;
+        public static implicit operator float(CastRangeComponent castRange) => castRange.Value;
+        public static implicit operator CastRangeComponent(float castRange) => new() { Value = castRange };
     }
 
     public struct Cooldown : IComponentData
@@ -41,15 +53,12 @@
         public float Value;
     }
 
-    public struct Duration : IComponentData, IEnableableComponent
-    {
-        public float Value;
-    }
-
     //Use for detect targetable objects of an ability
     public struct TargetTypeElement : IBufferElementData
     {
-        public TargetType Value;
+        public                          TargetType Value;
+        public static implicit operator TargetType(TargetTypeElement targetType) => targetType.Value;
+        public static implicit operator TargetTypeElement(TargetType targetType) => new() { Value = targetType };
     }
 
     public struct AbilityTimelinePrefabComponent : IComponentData
@@ -57,9 +66,14 @@
         public Entity Value;
     }
 
-    public struct AbilityEffectPoolComponent : IBufferElementData
+    public struct AbilityEffectElement : IBufferElementData
     {
         public Entity EffectPrefab;
+    }
+    
+    public struct AbilityEffectPoolComponent : IComponentData
+    {
+        public BlobAssetReference<NativeHashMap<FixedString64Bytes, Entity>> BlobValue;
     }
 
     [Serializable]
@@ -69,6 +83,8 @@
         public int     AoERange;
         public int     AoEWidth;
     }
-    
-    public struct MaxLevelTag: IComponentData{}
+
+    public struct MaxLevelTag : IComponentData
+    {
+    }
 }

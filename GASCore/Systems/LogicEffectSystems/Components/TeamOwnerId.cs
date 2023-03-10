@@ -10,7 +10,11 @@
         public class _ : IAbilityActionComponentConverter
         {
             public TeamType Value;
-            public void     Convert(EntityCommandBuffer.ParallelWriter ecb, int index, Entity entity) { ecb.AddComponent(index, entity, new TeamOwnerId() { Value = (int)this.Value }); }
+
+            public void Convert(EntityCommandBuffer.ParallelWriter ecb, int index, Entity entity)
+            {
+                ecb.AddComponent(index, entity, new TeamOwnerId() { Value = (int)this.Value });
+            }
         }
     }
 
@@ -18,6 +22,6 @@
     {
         None     = 0,
         Ally     = 1,
-        Opponent = 2
+        Opponent = 2,
     }
 }

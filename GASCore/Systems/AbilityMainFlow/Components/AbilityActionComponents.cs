@@ -4,21 +4,27 @@
 
     public struct AffectedTargetComponent : IComponentData
     {
-        public Entity Value;
+        public                          Entity Value;
+        public static implicit operator Entity(AffectedTargetComponent target) => target.Value;
+        public static implicit operator AffectedTargetComponent(Entity target) => new() { Value = target };
     }
-    
+
     public struct CasterComponent : IComponentData
     {
-        public Entity Value;
+        public                          Entity Value;
+        public static implicit operator Entity(CasterComponent caster) => caster.Value;
+        public static implicit operator CasterComponent(Entity caster) => new() { Value = caster };
     }
 
     public struct AbilityOwner : IComponentData
     {
         public Entity Value;
     }
-    
-    public struct ActivatedStateEntityOwner : IComponentData
+
+    public struct ActivatedStateEntityOwner : ICleanupComponentData
     {
-        public Entity Value;
+        public                          Entity Value;
+        public static implicit operator Entity(ActivatedStateEntityOwner owner) => owner.Value;
+        public static implicit operator ActivatedStateEntityOwner(Entity owner) => new() { Value = owner };
     }
 }
