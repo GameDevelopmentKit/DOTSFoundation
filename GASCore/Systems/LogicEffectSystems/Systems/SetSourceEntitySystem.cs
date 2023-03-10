@@ -4,7 +4,6 @@
     using GASCore.Systems.AbilityMainFlow.Components;
     using GASCore.Systems.LogicEffectSystems.Components;
     using Unity.Burst;
-    using Unity.Collections;
     using Unity.Entities;
 
     [BurstCompile]
@@ -12,7 +11,7 @@
     public partial struct SetSourceEntityJob : IJobEntity
     {
         public EntityCommandBuffer.ParallelWriter Ecb;
-        void Execute(Entity entity, [EntityInQueryIndex] int index, SourceTypeComponent sourceType, in AffectedTargetComponent affectedTarget, CasterComponent caster)
+        void Execute(Entity entity, [EntityIndexInQuery] int index, SourceTypeComponent sourceType, in AffectedTargetComponent affectedTarget, CasterComponent caster)
         {
             switch (sourceType.Value)
             {
@@ -36,10 +35,10 @@
     {
         public EntityCommandBuffer.ParallelWriter Ecb;
 
-        void Execute(Entity entity, [EntityInQueryIndex] int index) { this.Ecb.AddComponent(index, entity, new SourceComponent() { Value = entity }); }
+        void Execute(Entity entity, [EntityIndexInQuery] int index) { this.Ecb.AddComponent(index, entity, new SourceComponent() { Value = entity }); }
     }
 
-    [UpdateInGroup(typeof(AbilityCommonSystemGroup))]
+    [UpdateInGroup(typeof(GameAbilityBeginSimulationSystemGroup))]
     [RequireMatchingQueriesForUpdate]
     [BurstCompile]
     public partial struct SetSourceEntitySystem : ISystem
@@ -53,14 +52,11 @@
         [BurstCompile]
         public void OnUpdate(ref SystemState state)
         {
-            var ecb         = new EntityCommandBuffer(Allocator.TempJob);
-            var ecbParallel = ecb.AsParallelWriter();
+            var ecbSingleton = SystemAPI.GetSingleton<BeginSimulationEntityCommandBufferSystem.Singleton>();
+            var ecb          = ecbSingleton.CreateCommandBuffer(state.WorldUnmanaged).AsParallelWriter();
 
-            state.Dependency = new SetSourceEntityJob() { Ecb        = ecbParallel }.ScheduleParallel(state.Dependency);
-            state.Dependency = new SetDefaultSourceEntityJob() { Ecb = ecbParallel }.ScheduleParallel(state.Dependency);
-            state.Dependency.Complete();
-            ecb.Playback(state.EntityManager);
-            ecb.Dispose();
+            state.Dependency = new SetSourceEntityJob() { Ecb        = ecb }.ScheduleParallel(state.Dependency);
+            state.Dependency = new SetDefaultSourceEntityJob() { Ecb = ecb }.ScheduleParallel(state.Dependency);
         }
     }
 }

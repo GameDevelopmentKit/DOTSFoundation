@@ -10,40 +10,36 @@
     using Unity.Collections;
     using Unity.Entities;
     using Unity.Transforms;
-    using UnityEngine;
 
-    [UpdateInGroup(typeof(AbilityTimelineGroup))]
-    [UpdateAfter(typeof(TrackingTriggerConditionProgressSystem))]
+    [UpdateInGroup(typeof(GameAbilityInitializeSystemGroup))]
     [RequireMatchingQueriesForUpdate]
     public partial class InstantiateAbilityEffectFromPoolSystem : SystemBase
     {
-        ComponentLookup<TeamOwnerId>             teamLookup;
-        BufferLookup<AffectedTargetTypeElement>  affectedTargetTypeLookup;
-        BufferLookup<Child>                      childLookup;
-        BufferLookup<AbilityEffectPoolComponent> effectPoolLookup;
+        ComponentLookup<TeamOwnerId>            teamLookup;
+        BufferLookup<AffectedTargetTypeElement> affectedTargetTypeLookup;
+        BufferLookup<Child>                     childLookup;
 
+        private EndInitializationEntityCommandBufferSystem endInitEcbSystem;
         protected override void OnCreate()
         {
             affectedTargetTypeLookup = this.GetBufferLookup<AffectedTargetTypeElement>(true);
             childLookup              = this.GetBufferLookup<Child>(true);
-            effectPoolLookup         = this.GetBufferLookup<AbilityEffectPoolComponent>(true);
             teamLookup               = this.GetComponentLookup<TeamOwnerId>(true);
+
+            this.endInitEcbSystem = this.World.GetExistingSystemManaged<EndInitializationEntityCommandBufferSystem>();
         }
 
         protected override void OnUpdate()
         {
-            EntityCommandBuffer                ecb         = new EntityCommandBuffer(Allocator.TempJob);
-            EntityCommandBuffer.ParallelWriter ecbParallel = ecb.AsParallelWriter();
+            var ecbParallel = this.endInitEcbSystem.CreateCommandBuffer().AsParallelWriter();
 
             var localAffectedTargetLookup = affectedTargetTypeLookup.UpdateBufferLookup(this);
             var localChildLookup          = childLookup.UpdateBufferLookup(this);
-            var localEffectPoolLookup     = effectPoolLookup.UpdateBufferLookup(this);
             var localTeamLookup           = teamLookup.UpdateComponentLookup(this);
 
             Entities.WithAll<CompletedAllTriggerConditionTag>()
                 .WithReadOnly(localAffectedTargetLookup)
                 .WithReadOnly(localChildLookup)
-                .WithReadOnly(localEffectPoolLookup)
                 .WithReadOnly(localTeamLookup)
                 .ForEach((Entity actionEntity,
                     int entityInQueryIndex,
@@ -53,14 +49,7 @@
                     in ActivatedStateEntityOwner activatedAbilityEntity,
                     in CasterComponent caster) =>
                 {
-                    var effectPoolBuffer       = localEffectPoolLookup[activatedAbilityEntity.Value];
-                    var effectIdToEffectPrefab = new NativeHashMap<FixedString64Bytes, Entity>(effectPoolBuffer.Length, Allocator.Temp);
-
-                    foreach (var effectPoolComponent in effectPoolBuffer)
-                    {
-                        var effectPrefab = effectPoolComponent.EffectPrefab;
-                        effectIdToEffectPrefab.Add(GetComponent<AbilityEffectId>(effectPrefab).Value, effectPrefab);
-                    }
+                    var effectIdToEffectPrefab = SystemAPI.GetComponent<AbilityEffectPoolComponent>(activatedAbilityEntity.Value).BlobValue.Value.AsReadOnly();
 
                     foreach (var effectId in abilityEffectIds)
                     {
@@ -72,14 +61,14 @@
                             //Find all affected targets
                             NativeHashSet<Entity> affectedTargetEntities = new NativeHashSet<Entity>(targetableBuffer.Capacity, Allocator.Temp);
 
-                            if (!HasComponent<AffectedTargetComponent>(actionEntity))
+                            if (!SystemAPI.HasComponent<AffectedTargetComponent>(actionEntity))
                             {
                                 affectedTargetEntities.AddAllAffectedTarget(caster.Value, targetableBuffer, affectTargetTypes, localTeamLookup);
                             }
                             else
                             {
                                 // effect entity already has affected target, take this one
-                                affectedTargetEntities.Add(GetComponent<AffectedTargetComponent>(actionEntity).Value);
+                                affectedTargetEntities.Add(SystemAPI.GetComponent<AffectedTargetComponent>(actionEntity).Value);
                             }
 
                             //Filter exclude affected target
@@ -107,14 +96,11 @@
                         }
                     }
 
-                    effectIdToEffectPrefab.Dispose();
                     excludeAffectedTargetBuffer.Clear();
                     targetableBuffer.Clear();
                 }).ScheduleParallel();
 
-            this.Dependency.Complete();
-            ecb.Playback(this.EntityManager);
-            ecb.Dispose();
+            this.endInitEcbSystem.AddJobHandleForProducer(this.Dependency);
         }
     }
 }

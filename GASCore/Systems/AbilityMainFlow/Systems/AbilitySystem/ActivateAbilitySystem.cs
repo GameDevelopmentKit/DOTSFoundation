@@ -16,27 +16,23 @@
     [BurstCompile]
     public partial struct ActivateAbilitySystem : ISystem
     {
-        private BufferLookup<Child>                      childLookup;
-        private ComponentLookup<TriggerByAnotherTrigger> triggerByAnotherTriggerLookup;
         [BurstCompile]
         public void OnCreate(ref SystemState state)
         {
-            this.childLookup                   = state.GetBufferLookup<Child>(true);
-            this.triggerByAnotherTriggerLookup = state.GetComponentLookup<TriggerByAnotherTrigger>(true);
+            state.RequireForUpdate<GrantedActivation>();
         }
+
         [BurstCompile]
         public void OnUpdate(ref SystemState state)
         {
             var ecbSingleton = SystemAPI.GetSingleton<BeginInitializationEntityCommandBufferSystem.Singleton>();
             var ecb          = ecbSingleton.CreateCommandBuffer(state.WorldUnmanaged).AsParallelWriter();
 
-            this.childLookup.Update(ref state);
-            this.triggerByAnotherTriggerLookup.Update(ref state);
             new ActivateAbilityJob()
             {
                 Ecb                           = ecb,
-                ChildLookup                   = this.childLookup,
-                TriggerByAnotherTriggerLookup = this.triggerByAnotherTriggerLookup
+                ChildLookup                   = SystemAPI.GetBufferLookup<Child>(true),
+                TriggerByAnotherTriggerLookup = SystemAPI.GetComponentLookup<TriggerByAnotherTrigger>(true)
             }.ScheduleParallel();
         }
         [BurstCompile]
@@ -51,7 +47,7 @@
         [ReadOnly] public BufferLookup<Child>                      ChildLookup;
         [ReadOnly] public ComponentLookup<TriggerByAnotherTrigger> TriggerByAnotherTriggerLookup;
 
-        void Execute(Entity abilityEntity, [EntityInQueryIndex] int entityInQueryIndex, in DynamicBuffer<AbilityEffectPoolComponent> effectPool, in AbilityTimelinePrefabComponent timelinePrefab,
+        void Execute(Entity abilityEntity, [EntityIndexInQuery] int entityInQueryIndex, in AbilityEffectPoolComponent effectPool, in AbilityTimelinePrefabComponent timelinePrefab,
             in CasterComponent caster, in AbilityId abilityId, in Cooldown cooldown, in CastRangeComponent castRangeComponent)
         {
             // set cooldownTime for ability if available
@@ -72,11 +68,7 @@
             this.Ecb.AddComponent(entityInQueryIndex, activatedStateEntity, castRangeComponent);
             this.Ecb.AddComponent(entityInQueryIndex, activatedStateEntity, new AbilityOwner() { Value = abilityEntity });
             this.Ecb.AddBuffer<OnDestroyAbilityActionElement>(entityInQueryIndex, activatedStateEntity);
-            var abilityEffectPoolBuffer = this.Ecb.AddBuffer<AbilityEffectPoolComponent>(entityInQueryIndex, activatedStateEntity);
-            foreach (var effect in effectPool)
-            {
-                abilityEffectPoolBuffer.Add(effect);
-            }
+            this.Ecb.AddComponent(entityInQueryIndex, activatedStateEntity, effectPool);
 
             var linkedEntityGroups = this.Ecb.AddBuffer<LinkedEntityGroup>(entityInQueryIndex, activatedStateEntity);
             linkedEntityGroups.Add(new LinkedEntityGroup() { Value = activatedStateEntity });
@@ -122,7 +114,7 @@
                         }
                     }
                 }
-                
+
                 foreach (var kvPair in triggerIndexToAttachedTrigger)
                 {
                     triggerIndexToAttachedTrigger[kvPair.Key].Dispose();

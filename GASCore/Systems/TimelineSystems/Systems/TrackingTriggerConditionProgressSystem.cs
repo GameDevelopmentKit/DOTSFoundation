@@ -6,7 +6,8 @@
     using Unity.Collections;
     using Unity.Entities;
 
-    [UpdateInGroup(typeof(AbilityTimelineGroup))]
+    [UpdateInGroup(typeof(GameAbilityPresentSystemGroup))]
+    [UpdateBefore(typeof(AbilityCleanupSystemGroup))]
     [RequireMatchingQueriesForUpdate]
     [BurstCompile]
     public partial struct TrackingTriggerConditionProgressSystem : ISystem
@@ -32,10 +33,11 @@
 
     [WithNone(typeof(CompletedAllTriggerConditionTag))]
     [WithChangeFilter(typeof(CompletedTriggerElement))]
+    [BurstCompile]
     public partial struct TrackingTriggerConditionProgressJob : IJobEntity
     {
         public EntityCommandBuffer.ParallelWriter Ecb;
-        void Execute(Entity entity, [EntityInQueryIndex] int entityInQueryIndex, ref DynamicBuffer<CompletedTriggerElement> completedTriggerBuffer, in TriggerConditionAmount conditionAmount)
+        void Execute(Entity entity, [EntityIndexInQuery] int entityInQueryIndex, ref DynamicBuffer<CompletedTriggerElement> completedTriggerBuffer, in TriggerConditionAmount conditionAmount)
         {
             if (conditionAmount.Value == 0 || (conditionAmount.Value == 1 && completedTriggerBuffer.Length == 1))
             {

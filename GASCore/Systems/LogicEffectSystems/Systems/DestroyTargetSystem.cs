@@ -12,7 +12,10 @@
     public partial struct DestroyTargetSystem : ISystem
     {
         [BurstCompile]
-        public void OnCreate(ref SystemState state) { }
+        public void OnCreate(ref SystemState state)
+        {
+            state.RequireForUpdate<DestroyTargetTag>();
+        }
 
         [BurstCompile]
         public void OnDestroy(ref SystemState state) { }
@@ -23,20 +26,15 @@
             var ecbSingleton = SystemAPI.GetSingleton<BeginInitializationEntityCommandBufferSystem.Singleton>();
             var ecb          = ecbSingleton.CreateCommandBuffer(state.WorldUnmanaged).AsParallelWriter();
 
-            var setEndTimeTriggerAfterSecondJob = new DestroyTargetJob()
-            {
-                Ecb = ecb,
-            };
-            setEndTimeTriggerAfterSecondJob.ScheduleParallel();
+            new DestroyTargetJob() { Ecb = ecb}.ScheduleParallel();
         }
     }
 
     [BurstCompile]
-    [WithChangeFilter(typeof(DestroyTargetTag))]
     [WithAll(typeof(DestroyTargetTag))]
     public partial struct DestroyTargetJob : IJobEntity
     {
         public EntityCommandBuffer.ParallelWriter Ecb;
-        void Execute([EntityInQueryIndex] int entityInQueryIndex, in AffectedTargetComponent affectedTarget) { this.Ecb.DestroyEntity(entityInQueryIndex, affectedTarget.Value); }
+        void Execute([EntityIndexInQuery] int entityInQueryIndex, in AffectedTargetComponent affectedTarget) { this.Ecb.DestroyEntity(entityInQueryIndex, affectedTarget.Value); }
     }
 }

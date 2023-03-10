@@ -10,16 +10,19 @@
     using Unity.Collections;
     using Unity.Entities;
     using Unity.Transforms;
-    using UnityEngine;
 
-    [UpdateInGroup(typeof(AbilityTimelineGroup))]
+    [UpdateInGroup(typeof(GameAbilityInitializeSystemGroup))]
     [UpdateBefore(typeof(InstantiateAbilityEffectFromPoolSystem))]
     [RequireMatchingQueriesForUpdate]
     [BurstCompile]
     public partial struct TriggerAttachedTriggerSystem : ISystem
     {
         [BurstCompile]
-        public void OnCreate(ref SystemState state) { }
+        public void OnCreate(ref SystemState state)
+        {
+            using var entityQuery = new EntityQueryBuilder(Allocator.Temp).WithAll<WaitToTrigger, CompletedAllTriggerConditionTag>();
+            state.RequireForUpdate(state.GetEntityQuery(entityQuery));
+        }
 
         [BurstCompile]
         public void OnDestroy(ref SystemState state) { }
@@ -32,7 +35,7 @@
 
             var setEndTimeTriggerAfterSecondJob = new TriggerAttachedTriggerJob()
             {
-                Ecb                    = ecb
+                Ecb = ecb
             };
             setEndTimeTriggerAfterSecondJob.ScheduleParallel();
         }
@@ -42,8 +45,8 @@
     [WithAll(typeof(CompletedAllTriggerConditionTag))]
     public partial struct TriggerAttachedTriggerJob : IJobEntity
     {
-        public            EntityCommandBuffer.ParallelWriter     Ecb;
-        void Execute([EntityInQueryIndex] int entityInQueryIndex, in DynamicBuffer<WaitToTrigger> waitToTriggerBuffer, in ActivatedStateEntityOwner activatedStateEntity,
+        public EntityCommandBuffer.ParallelWriter Ecb;
+        void Execute([EntityIndexInQuery] int entityInQueryIndex, in DynamicBuffer<WaitToTrigger> waitToTriggerBuffer, in ActivatedStateEntityOwner activatedStateEntity,
             in CasterComponent caster, in DynamicBuffer<TargetableElement> targetBuffer, in DynamicBuffer<ExcludeAffectedTargetElement> excludeAffectedTargetBuffer)
         {
             foreach (var waitToTrigger in waitToTriggerBuffer)

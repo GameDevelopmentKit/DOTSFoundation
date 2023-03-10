@@ -3,16 +3,20 @@
     using GASCore.Groups;
     using GASCore.Systems.TimelineSystems.Components;
     using Unity.Burst;
+    using Unity.Collections;
     using Unity.Entities;
 
-    [UpdateInGroup(typeof(AbilityTimelineGroup))]
-    [UpdateAfter(typeof(InstantiateAbilityEffectFromPoolSystem))]
+    [UpdateInGroup(typeof(GameAbilityInitializeSystemGroup))]
     [RequireMatchingQueriesForUpdate]
     [BurstCompile]
     public partial struct RecycleTriggerEntitySystem : ISystem
     {
         [BurstCompile]
-        public void OnCreate(ref SystemState state) { }
+        public void OnCreate(ref SystemState state)
+        {
+            using var entityQuery = new EntityQueryBuilder(Allocator.Temp).WithAll<RecycleTriggerEntityTag,CompletedAllTriggerConditionTag>();
+            state.RequireForUpdate(state.GetEntityQuery(entityQuery));
+        }
 
         [BurstCompile]
         public void OnDestroy(ref SystemState state) { }
@@ -32,7 +36,7 @@
     public partial struct RecycleTriggerEntityJob : IJobEntity
     {
         public EntityCommandBuffer.ParallelWriter Ecb;
-        void Execute(Entity entity, [EntityInQueryIndex] int entityInQueryIndex, ref DynamicBuffer<CompletedTriggerElement> completedTriggerBuffer)
+        void Execute(Entity entity, [EntityIndexInQuery] int entityInQueryIndex, ref DynamicBuffer<CompletedTriggerElement> completedTriggerBuffer)
         {
             this.Ecb.SetComponentEnabled<CompletedAllTriggerConditionTag>(entityInQueryIndex, entity, false);
             this.Ecb.SetComponentEnabled<InTriggerConditionResolveProcessTag>(entityInQueryIndex, entity, true);

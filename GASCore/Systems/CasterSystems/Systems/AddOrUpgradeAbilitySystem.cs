@@ -1,82 +1,42 @@
 ﻿namespace GASCore.Systems.CasterSystems.Systems
 {
     using DOTSCore.Extension;
-    using GameFoundation.Scripts.Utilities.Extension;
-    using GASCore.Blueprints;
     using GASCore.Groups;
     using GASCore.Systems.AbilityMainFlow.Components;
-    using GASCore.Systems.AbilityMainFlow.Factories;
+    using GASCore.Systems.AbilityMainFlow.Systems.AbilitySystem;
     using GASCore.Systems.CasterSystems.Components;
+    using Unity.Burst;
     using Unity.Collections;
     using Unity.Entities;
-    using Unity.Mathematics;
     using Unity.Transforms;
     using UnityEngine;
-    using Zenject;
 
-    [UpdateInGroup(typeof(AbilityMainFlowGroup))]
+    [UpdateInGroup(typeof(AbilityCleanupSystemGroup))]
+    [UpdateBefore(typeof(CleanupUnusedAbilityEntitiesSystem))]
     [RequireMatchingQueriesForUpdate]
-    public partial class AbilityPoolManagerSystem : SystemBase
+    [BurstCompile]
+    public partial class AddOrUpgradeAbilitySystem : SystemBase
     {
-        private AbilityBlueprint           abilityBlueprint;
-        private AbilityEntityPrefabFactory abilityPrefabFactory;
-
-        private BeginSimulationEntityCommandBufferSystem beginSimEcbSystem;
+        private BeginInitializationEntityCommandBufferSystem beginInitEcbSystem;
 
         [NativeDisableParallelForRestriction] private BufferLookup<AbilityContainerElement> abilityContainerLookup;
-
-        [Inject]
-        public void Inject(AbilityBlueprint abilityBlueprintParam, AbilityEntityPrefabFactory abilityEntityPrefabFactory)
-        {
-            this.abilityBlueprint     = abilityBlueprintParam;
-            this.abilityPrefabFactory = abilityEntityPrefabFactory;
-            this.beginSimEcbSystem    = this.World.GetExistingSystemManaged<BeginSimulationEntityCommandBufferSystem>();
-        }
 
         protected override void OnCreate()
         {
             this.RequireForUpdate<AbilityPrefabPool>();
-
-            this.GetCurrentContainer().Inject(this);
-            var abilityNameToLevelPrefabs = new NativeParallelHashMap<FixedString64Bytes, Entity>(this.abilityBlueprint.Count, Allocator.Persistent);
-            var abilityPrefabHolderEntity = EntityManager.CreateEntity(EntityManager.CreateArchetype(typeof(LocalToWorld), typeof(Translation), typeof(Rotation)));
-            EntityManager.SetName(abilityPrefabHolderEntity, "AbilityPrefabHolder");
-
-            foreach (var abilityRecord in this.abilityBlueprint.Values)
-            {
-                foreach (var abilityLevelRecord in abilityRecord.LevelRecords)
-                {
-                    var abilityEntityPrefab = this.abilityPrefabFactory.CreateEntity(EntityManager, new AbilityFactoryModel()
-                    {
-                        AbilityRecord      = abilityRecord,
-                        AbilityLevelRecord = abilityLevelRecord
-                    });
-                    var levelIndex = abilityLevelRecord.LevelIndex + 1;
-                    abilityNameToLevelPrefabs.Add($"{abilityRecord.Id}_{levelIndex}", abilityEntityPrefab);
-
-                    if (levelIndex == abilityRecord.LevelRecords.Count)
-                    {
-                        EntityManager.AddComponent<MaxLevelTag>(abilityEntityPrefab);
-                    }
-
-                    EntityManager.SetParent(abilityEntityPrefab, abilityPrefabHolderEntity);
-                }
-            }
-
-            EntityManager.AddComponentData(abilityPrefabHolderEntity, new AbilityPrefabPool() { AbilityNameToLevelPrefabs = abilityNameToLevelPrefabs.CreateReference() });
-
             abilityContainerLookup = SystemAPI.GetBufferLookup<AbilityContainerElement>(true);
+            this.beginInitEcbSystem = this.World.GetExistingSystemManaged<BeginInitializationEntityCommandBufferSystem>();
         }
 
 
         protected override void OnUpdate()
         {
-            var ecb                       = this.beginSimEcbSystem.CreateCommandBuffer().AsParallelWriter();
-            var abilityNameToLevelPrefabs = this.GetSingleton<AbilityPrefabPool>().AbilityNameToLevelPrefabs.Value;
+            var ecb                       = this.beginInitEcbSystem.CreateCommandBuffer().AsParallelWriter();
+            var abilityNameToLevelPrefabs = SystemAPI.GetSingleton<AbilityPrefabPool>().AbilityNameToLevelPrefabs.Value;
             var temp                      = abilityContainerLookup.UpdateBufferLookup(this);
 
             // Manage adding ability flow
-            Entities.WithEntityQueryOptions(EntityQueryOptions.IncludePrefab).WithReadOnly(temp).WithReadOnly(abilityNameToLevelPrefabs).WithChangeFilter<RequestAddOrUpgradeAbility>().ForEach(
+            Entities.WithBurst().WithEntityQueryOptions(EntityQueryOptions.IncludePrefab).WithReadOnly(temp).WithReadOnly(abilityNameToLevelPrefabs).WithChangeFilter<RequestAddOrUpgradeAbility>().ForEach(
                 (Entity casterEntity, int entityInQueryIndex, ref DynamicBuffer<RequestAddOrUpgradeAbility> requestAddOrUpgradeAbilities) =>
                 {
                     // try get ability container buffer
@@ -148,31 +108,8 @@
 
                     listAbilityEntity.Dispose();
                 }).ScheduleParallel();
-
-            //Manage removing ability flow
-            this.Entities.WithChangeFilter<RequestRemoveAbility>().ForEach(
-                (int entityInQueryIndex, ref DynamicBuffer<RequestRemoveAbility> requestRemoveAbilities, ref DynamicBuffer<AbilityContainerElement> abilityContainerBuffer) =>
-                {
-                    foreach (var requestRemoveAbility in requestRemoveAbilities)
-                    {
-                        Debug.Log($"remove ability {requestRemoveAbility.AbilityId}_Lv{requestRemoveAbility.Level}");
-                        for (var index = 0; index < abilityContainerBuffer.Length; index++)
-                        {
-                            var abilityContainerElement = abilityContainerBuffer[index];
-                            if (!requestRemoveAbility.AbilityId.Equals(abilityContainerElement.AbilityId)) continue;
-                            if (requestRemoveAbility.Level == abilityContainerElement.Level)
-                            {
-                                abilityContainerBuffer.RemoveAtSwapBack(index);
-                                index = math.max(index - 1, 0);
-                                ecb.DestroyEntity(entityInQueryIndex, abilityContainerElement.AbilityInstance);
-                            }
-                        }
-                    }
-
-                    requestRemoveAbilities.Clear();
-                }).ScheduleParallel();
-
-            this.beginSimEcbSystem.AddJobHandleForProducer(this.Dependency);
+            
+            this.beginInitEcbSystem.AddJobHandleForProducer(this.Dependency);
         }
     }
 }

@@ -14,9 +14,12 @@
     [BurstCompile]
     public partial struct ForceCleanupActivatedAbilitySystem : ISystem
     {
-        private BufferLookup<LinkedEntityGroup> linkedEntityBufferLookup;
         [BurstCompile]
-        public void OnCreate(ref SystemState state) { this.linkedEntityBufferLookup = state.GetBufferLookup<LinkedEntityGroup>(true); }
+        public void OnCreate(ref SystemState state)
+        {
+            using var entityQuery = new EntityQueryBuilder(Allocator.Temp).WithAll<ForceCleanupActivatedAbilityTag,CompletedAllTriggerConditionTag>();
+            state.RequireForUpdate(state.GetEntityQuery(entityQuery));
+        }
 
         [BurstCompile]
         public void OnDestroy(ref SystemState state) { }
@@ -24,16 +27,14 @@
         [BurstCompile]
         public void OnUpdate(ref SystemState state)
         {
-            this.linkedEntityBufferLookup.Update(ref state);
             var ecbSingleton    = SystemAPI.GetSingleton<EndSimulationEntityCommandBufferSystem.Singleton>();
             var ecb             = ecbSingleton.CreateCommandBuffer(state.WorldUnmanaged).AsParallelWriter();
 
-            var setEndTimeTriggerAfterSecondJob = new ForceCleanupActivatedAbilityJob()
+            new ForceCleanupActivatedAbilityJob()
             {
                 Ecb                = ecb,
-                LinkedEntityBufferLookup = this.linkedEntityBufferLookup
-            };
-            setEndTimeTriggerAfterSecondJob.ScheduleParallel();
+                LinkedEntityBufferLookup = SystemAPI.GetBufferLookup<LinkedEntityGroup>(true)
+            }.ScheduleParallel();
         }
     }
 
@@ -44,7 +45,7 @@
         public EntityCommandBuffer.ParallelWriter Ecb;
 
         [ReadOnly] public BufferLookup<LinkedEntityGroup> LinkedEntityBufferLookup;
-        void Execute([EntityInQueryIndex] int entityInQueryIndex, in ActivatedStateEntityOwner activatedStateEntityOwner)
+        void Execute([EntityIndexInQuery] int entityInQueryIndex, in ActivatedStateEntityOwner activatedStateEntityOwner)
         {
             Debug.Log("ForceCleanupActivatedAbilityJob");
             if (this.LinkedEntityBufferLookup.TryGetBuffer(activatedStateEntityOwner.Value, out var linkedEntityGroups))

@@ -38,7 +38,7 @@
     {
         public EntityCommandBuffer.ParallelWriter Ecb;
         public double                             CurrentElapsedTime;
-        void Execute(Entity entity, [EntityInQueryIndex] int entityInQueryIndex, ref TriggerAfterSecond triggerAfterSecond, in DynamicBuffer<CompletedTriggerElement> completedTriggerBuffer)
+        void Execute(Entity entity, [EntityIndexInQuery] int entityInQueryIndex, ref TriggerAfterSecond triggerAfterSecond, in DynamicBuffer<CompletedTriggerElement> completedTriggerBuffer)
         {
             if (completedTriggerBuffer.Length > 0)
             {
