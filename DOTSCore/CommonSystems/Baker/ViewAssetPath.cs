@@ -4,6 +4,7 @@
     using Unity.Entities;
     using UnityEngine;
 
+    [DisallowMultipleComponent]
     public class ViewAssetPath : MonoBehaviour
     {
         public string AddressablePath;
