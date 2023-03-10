@@ -16,11 +16,11 @@
             }
         }
 
-        protected override void ChangeStatView(float changeValue, StatDataElement data)
+        protected override void ChangeStatView(StatDataElement changedStat, float changedValue)
         {
-            if (data.StatName.Value == StatName.Health)
+            if (changedStat.StatName.Value == StatName.Health)
             {
-                this.uiHpBarView.UpdateHealBar(data.CurrentValue, 0);
+                this.uiHpBarView.UpdateHealBar(changedStat.CurrentValue, 0);
             }
         }
     }
