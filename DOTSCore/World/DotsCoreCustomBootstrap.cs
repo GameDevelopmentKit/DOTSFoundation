@@ -1,6 +1,7 @@
 ﻿namespace DOTSCore.World
 {
     using System;
+    using DOTSCore.EntityFactory;
     using Unity.Entities;
 
     public class DefaultCustomBootstrap : ICustomBootstrap
@@ -18,11 +19,15 @@
         }
     }
 
+    
     public class GameWorldController
     {
-        public World WorldInstance { get; set; }
+        public           World                  WorldInstance { get; set; }
+        private readonly GameStateEntityFactory gameStateEntityFactory;
 
-        public virtual void Initialize(string worldName, bool isDefault = true)
+        public GameWorldController(GameStateEntityFactory gameStateEntityFactory) { this.gameStateEntityFactory = gameStateEntityFactory; }
+
+        public virtual void Initialize(string worldName, string gameState ,bool isDefault = true)
         {
             this.WorldInstance = new World(worldName, WorldFlags.Game);
 
@@ -30,6 +35,9 @@
             {
                 World.DefaultGameObjectInjectionWorld = this.WorldInstance;
             }
+
+            //Init game state entity
+            this.gameStateEntityFactory.CreateEntity(this.WorldInstance.EntityManager, gameState);
 
             var allSystems = DefaultWorldInitialization.GetAllSystems(WorldSystemFilterFlags.Default);
             DefaultWorldInitialization.AddSystemsToRootLevelSystemGroups(this.WorldInstance, allSystems);
