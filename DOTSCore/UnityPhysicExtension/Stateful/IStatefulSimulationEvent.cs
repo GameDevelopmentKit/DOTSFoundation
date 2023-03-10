@@ -2,6 +2,8 @@ using Unity.Entities;
 
 namespace Unity.Physics.Stateful
 {
+    using System;
+
     /// <summary>
     /// Describes an event state.
     /// Event state is set to:
@@ -10,12 +12,13 @@ namespace Unity.Physics.Stateful
     ///    2) Stay, when 2 bodies are interacting in the current frame, and they also interacted in the previous frame
     ///    3) Exit, when 2 bodies are not interacting in the current frame, but they did interact in the previous frame
     /// </summary>
-    public enum StatefulEventState : byte
+    [Flags]
+    public enum StatefulEventState
     {
-        Undefined,
-        Enter,
-        Stay,
-        Exit
+        Undefined = 0,
+        Enter     = 1 << 1,
+        Stay      = 1 << 2,
+        Exit      = 1 << 3
     }
 
     /// <summary>

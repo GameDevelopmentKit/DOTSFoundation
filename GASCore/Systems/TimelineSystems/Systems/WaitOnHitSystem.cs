@@ -9,25 +9,20 @@
     using Unity.Burst;
     using Unity.Collections;
     using Unity.Entities;
+    using Unity.Jobs;
     using Unity.Physics.Stateful;
-    using UnityEngine;
 
     [UpdateInGroup(typeof(AbilityTimelineGroup))]
     [RequireMatchingQueriesForUpdate]
     [BurstCompile]
     public partial struct WaitOnHitSystem : ISystem
     {
-        private EntityQuery                                abilityTimelineTriggerOnHitQuery;
-        private ComponentLookup<TriggerOnHit>              triggerOnHitLookup;
-        private ComponentLookup<ActivatedStateEntityOwner> ownerLookup;
+        private EntityQuery abilityTimelineTriggerOnHitQuery;
         [BurstCompile]
         public void OnCreate(ref SystemState state)
         {
-            using var queryBuilder = new EntityQueryBuilder(Allocator.Temp).WithAll<TriggerOnHit>().WithNone<OnHitTargetElement>();
+            using var queryBuilder = new EntityQueryBuilder(Allocator.Temp).WithAll<TriggerOnHit, ActivatedStateEntityOwner>();
             this.abilityTimelineTriggerOnHitQuery = state.GetEntityQuery(queryBuilder);
-
-            this.triggerOnHitLookup              = state.GetComponentLookup<TriggerOnHit>(true);
-            this.ownerLookup                     = state.GetComponentLookup<ActivatedStateEntityOwner>(true);
         }
 
         [BurstCompile]
@@ -36,22 +31,23 @@
         [BurstCompile]
         public void OnUpdate(ref SystemState state)
         {
-            this.triggerOnHitLookup.Update(ref state);
-            this.ownerLookup.Update(ref state);
-            var triggerOnHits = this.abilityTimelineTriggerOnHitQuery.ToEntityArray(state.WorldUpdateAllocator);
-
+            var triggerOnHitEntities = this.abilityTimelineTriggerOnHitQuery.ToEntityListAsync(state.WorldUpdateAllocator, state.Dependency, out var getEntitiesJob);
+            var triggerOnHitComponents =
+                this.abilityTimelineTriggerOnHitQuery.ToComponentDataListAsync<TriggerOnHit>(state.WorldUpdateAllocator, state.Dependency, out var getTriggerOnHitComponentJob);
+            var activatedStateOwnerComponents =
+                this.abilityTimelineTriggerOnHitQuery.ToComponentDataListAsync<ActivatedStateEntityOwner>(state.WorldUpdateAllocator, state.Dependency, out var getActivatedStateOwnerComponentJob);
             var ecbSingleton = SystemAPI.GetSingleton<EndSimulationEntityCommandBufferSystem.Singleton>();
             var ecb          = ecbSingleton.CreateCommandBuffer(state.WorldUnmanaged).AsParallelWriter();
 
-            var listenOnHitEventJob = new ListenOnHitEventJob()
+            var listenOnHitEventJob = new ListenOnHitEventJob
             {
-                Ecb                             = ecb,
-                TriggerOnHitEntities            = triggerOnHits,
-                TriggerOnHitLookup              = this.triggerOnHitLookup,
-                OwnerLookup                     = this.ownerLookup,
+                Ecb                           = ecb,
+                TriggerOnHitEntities          = triggerOnHitEntities,
+                TriggerOnHitComponents        = triggerOnHitComponents,
+                ActivatedStateOwnerComponents = activatedStateOwnerComponents,
             };
 
-            state.Dependency = listenOnHitEventJob.ScheduleParallel(state.Dependency);
+            state.Dependency = listenOnHitEventJob.ScheduleParallel(JobHandle.CombineDependencies(getEntitiesJob, getTriggerOnHitComponentJob, getActivatedStateOwnerComponentJob));
         }
     }
 
@@ -59,44 +55,39 @@
     [WithChangeFilter(typeof(StatefulTriggerEvent))]
     public partial struct ListenOnHitEventJob : IJobEntity
     {
-        public            EntityCommandBuffer.ParallelWriter         Ecb;
-        [ReadOnly] public NativeArray<Entity>                        TriggerOnHitEntities;
-        [ReadOnly] public ComponentLookup<TriggerOnHit>              TriggerOnHitLookup;
-        [ReadOnly] public ComponentLookup<ActivatedStateEntityOwner> OwnerLookup;
-        void Execute(Entity abilityActionEntity, [EntityInQueryIndex] int entityInQueryIndex, in AbilityEffectId effectId, in DynamicBuffer<StatefulTriggerEvent> triggerEventBuffer)
+        public            EntityCommandBuffer.ParallelWriter    Ecb;
+        [ReadOnly] public NativeList<Entity>                    TriggerOnHitEntities;
+        [ReadOnly] public NativeList<TriggerOnHit>              TriggerOnHitComponents;
+        [ReadOnly] public NativeList<ActivatedStateEntityOwner> ActivatedStateOwnerComponents;
+
+        void Execute(Entity abilityActionEntity, [EntityIndexInQuery] int entityInQueryIndex, in AbilityEffectId effectId, in DynamicBuffer<StatefulTriggerEvent> triggerEventBuffer, in ActivatedStateEntityOwner activatedStateEntityOwner)
         {
             if (triggerEventBuffer.IsEmpty) return;
-            foreach (var triggerOnHitEntity in this.TriggerOnHitEntities)
+            for (var index = 0; index < this.TriggerOnHitEntities.Length; index++)
             {
-                var triggerOnHit = this.TriggerOnHitLookup[triggerOnHitEntity];
-                if (this.OwnerLookup[triggerOnHitEntity].Value.Equals(this.OwnerLookup[abilityActionEntity].Value) &&
-                    triggerOnHit.FromAbilityEffectId.Equals(effectId.Value))
+                var triggerOnHitEntity    = this.TriggerOnHitEntities[index];
+                var triggerOnHitComponent = this.TriggerOnHitComponents[index];
+                if (!this.ActivatedStateOwnerComponents[index].Value.Equals(activatedStateEntityOwner.Value) ||
+                    !triggerOnHitComponent.FromAbilityEffectId.Equals(effectId.Value)) continue;
+                var isHit = false;
+                //set target entity for activated state entity for common access
+                foreach (var triggerEvent in triggerEventBuffer)
                 {
-                    // Debug.Log($"ListenOnHitEventJob - add hit target to {triggerOnHitEntity.Index}, effectId.Value = {effectId.Value}");
-
-                    var isHit = false;
-                    //set target entity for activated state entity for common access
-                    for (var i = 0; i < triggerEventBuffer.Length; i++)
-                    {
-                        var triggerEvent = triggerEventBuffer[i];
-                        if (triggerEvent.State == StatefulEventState.Enter)
-                        {
-                            isHit = true;
-                            var otherEntity = triggerEvent.GetOtherEntity(abilityActionEntity);
-                            this.Ecb.AppendToBuffer(entityInQueryIndex, triggerOnHitEntity, new TargetableElement() { Value = otherEntity });
-                        }
-                    }
-
-                    if (isHit)
-                    {
-                        //mark this condition was done
-                        this.Ecb.MarkTriggerConditionComplete<TriggerOnHit>(triggerOnHitEntity, entityInQueryIndex);
-                        if (triggerOnHit.IsDestroyAbilityEffectOnHit)
-                            this.Ecb.AddComponent<ForceCleanupTag>(entityInQueryIndex, abilityActionEntity);
-                    }
-
-                    break;
+                    if ((triggerOnHitComponent.StateType & triggerEvent.State) != triggerEvent.State) continue;
+                    isHit = true;
+                    var otherEntity = triggerEvent.GetOtherEntity(abilityActionEntity);
+                    this.Ecb.AppendToBuffer(entityInQueryIndex, triggerOnHitEntity, new TargetableElement() { Value = otherEntity });
                 }
+
+                if (isHit)
+                {
+                    //mark this condition was done
+                    this.Ecb.MarkTriggerConditionComplete<TriggerOnHit>(triggerOnHitEntity, entityInQueryIndex);
+                    if (triggerOnHitComponent.IsDestroyAbilityEffectOnHit)
+                        this.Ecb.AddComponent<ForceCleanupTag>(entityInQueryIndex, abilityActionEntity);
+                }
+
+                break;
             }
         }
     }
