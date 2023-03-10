@@ -20,6 +20,6 @@
         }
 
 
-        public void Update() { this.transform.rotation = this.camTransform.rotation * this.originalRotation; }
+        public void LateUpdate() { this.transform.rotation = this.camTransform.rotation * this.originalRotation; }
     }
 }

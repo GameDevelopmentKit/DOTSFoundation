@@ -2,7 +2,6 @@ namespace GASCore.UnityHybrid.HealthBar
 {
     using System.Collections.Generic;
     using System.Linq;
-    using DG.Tweening;
     using GameFoundation.Scripts.Utilities.ObjectPool;
     using Sirenix.OdinInspector;
     using UnityEngine;
@@ -18,7 +17,6 @@ namespace GASCore.UnityHybrid.HealthBar
         [SerializeField] private float hpValue;
         [SerializeField] private float shieldValue;
         [SerializeField] private float maxHpValue;
-        [SerializeField] private bool  shakeWhenTakingDmg = true;
 
         public Image ImgHpBar     => this.hpBar;
         public Image ImgShieldBar => this.shieldBar;
@@ -40,19 +38,9 @@ namespace GASCore.UnityHybrid.HealthBar
 
         public void UpdateHealBar(float healVal, float shieldVal)
         {
-            if (healVal < this.hpValue && this.shakeWhenTakingDmg)
-            {
-                this.ShakeHpBar();
-            }
-
             this.hpValue     = healVal;
             this.shieldValue = shieldVal;
             this.SetupHealthBar();
-        }
-
-        private void ShakeHpBar()
-        {
-            this.transform.DOShakePosition(0.5f);
         }
 
         [Button]

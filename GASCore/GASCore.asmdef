@@ -15,7 +15,8 @@
         "GameFoundation.Utilities",
         "Zenject-Source",
         "Unity.TextMeshPro",
-        "UniTask"
+        "UniTask",
+        "DOTween.Modules"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],
