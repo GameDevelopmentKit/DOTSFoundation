@@ -36,7 +36,7 @@
     {
         public EntityCommandBuffer.ParallelWriter Ecb;
 
-        void Execute(Entity entity,[EntityInQueryIndex] int entityInQueryIndex, in DynamicBuffer<AddAbilityElement> addAbilityElements)
+        void Execute(Entity entity,[EntityIndexInQuery] int entityInQueryIndex, in DynamicBuffer<AddAbilityElement> addAbilityElements)
         {
             var requestAddAbilities = this.Ecb.AddBuffer<RequestAddOrUpgradeAbility>(entityInQueryIndex, entity);
 

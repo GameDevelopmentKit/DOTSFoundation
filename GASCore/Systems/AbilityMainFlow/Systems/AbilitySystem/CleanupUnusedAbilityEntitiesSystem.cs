@@ -38,7 +38,7 @@
             this.onDestroyAbilityActionElementLookup.Update(ref state);
             var ecbSingleton = SystemAPI.GetSingleton<BeginInitializationEntityCommandBufferSystem.Singleton>();
             var ecb          = ecbSingleton.CreateCommandBuffer(state.WorldUnmanaged).AsParallelWriter();
-
+            
             new CleanupAbilityActionEntitiesJob()
             {
                 Ecb = ecb, OnDestroyAbilityActionElementLookup = this.onDestroyAbilityActionElementLookup
@@ -59,11 +59,12 @@
         public            EntityCommandBuffer.ParallelWriter          Ecb;
         [ReadOnly] public BufferLookup<OnDestroyAbilityActionElement> OnDestroyAbilityActionElementLookup;
         [BurstCompile]
-        void Execute(Entity abilityActionEntity, [EntityInQueryIndex] int entityInQueryIndex, in ActivatedStateEntityOwner activatedStateEntityOwner)
+        void Execute(Entity abilityActionEntity, [EntityIndexInQuery] int entityInQueryIndex, in ActivatedStateEntityOwner activatedStateEntityOwner)
         {
             if (this.OnDestroyAbilityActionElementLookup.HasBuffer(activatedStateEntityOwner.Value))
                 this.Ecb.AppendToBuffer(entityInQueryIndex, activatedStateEntityOwner.Value, new OnDestroyAbilityActionElement() { AbilityActionEntity = abilityActionEntity });
 
+            this.Ecb.RemoveComponent<ActivatedStateEntityOwner>(entityInQueryIndex, abilityActionEntity);
             this.Ecb.DestroyEntity(entityInQueryIndex, abilityActionEntity);
         }
     }
@@ -75,7 +76,7 @@
     {
         public EntityCommandBuffer.ParallelWriter Ecb;
 
-        void Execute(Entity abilityActivatedStateEntity, [EntityInQueryIndex] int entityInQueryIndex, ref DynamicBuffer<LinkedEntityGroup> linkedEntityGroups,
+        void Execute(Entity abilityActivatedStateEntity, [EntityIndexInQuery] int entityInQueryIndex, ref DynamicBuffer<LinkedEntityGroup> linkedEntityGroups,
             ref DynamicBuffer<OnDestroyAbilityActionElement> onDestroyAbilityActionBuffer)
         {
             foreach (var onDestroyAbilityActionElement in onDestroyAbilityActionBuffer)

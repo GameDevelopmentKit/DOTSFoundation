@@ -29,7 +29,7 @@
     {
         public EntityCommandBuffer.ParallelWriter Ecb;
 
-        void Execute(Entity gameStateEntity, [EntityInQueryIndex] int entityInQueryIndex, in RequestChangeGameState requestChangeGameState, ref CurrentGameState currentGameState,
+        void Execute(Entity gameStateEntity, [EntityIndexInQuery] int entityInQueryIndex, in RequestChangeGameState requestChangeGameState, ref CurrentGameState currentGameState,
             ref PreviousGameState previousGameState)
         {
             if (!requestChangeGameState.IsForce && currentGameState.Value == requestChangeGameState.NextState) return;

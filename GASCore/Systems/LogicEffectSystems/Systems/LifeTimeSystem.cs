@@ -38,7 +38,7 @@
     {
         public EntityCommandBuffer.ParallelWriter Ecb;
         public double                             CurrentElapsedTime;
-        void Execute(Entity entity, [EntityInQueryIndex] int entityInQueryIndex, in LifeTime lifeTime)
+        void Execute(Entity entity, [EntityIndexInQuery] int entityInQueryIndex, in LifeTime lifeTime)
         {
             if (lifeTime.Value > 0)
             {

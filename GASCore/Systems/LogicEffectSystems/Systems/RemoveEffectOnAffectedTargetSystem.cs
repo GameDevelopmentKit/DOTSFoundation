@@ -60,7 +60,7 @@
         [ReadOnly] public ComponentLookup<AbilityEffectId>         AbilityEffectIdLookup;
         [ReadOnly] public ComponentLookup<AffectedTargetComponent> AffectedTargetLookup;
         [ReadOnly] public BufferLookup<CreateAbilityEffectElement> CreateAbilityEffectLookup;
-        void Execute([EntityInQueryIndex] int entityInQueryIndex, in ActivatedStateEntityOwner activatedStateEntityOwner, in AffectedTargetComponent affectedTarget,
+        void Execute([EntityIndexInQuery] int entityInQueryIndex, in ActivatedStateEntityOwner activatedStateEntityOwner, in AffectedTargetComponent affectedTarget,
             in RemoveEffectOnAffectedTarget removeEffectOnAffectedTarget)
         {
             if (this.LinkedEntityLookup.TryGetBuffer(activatedStateEntityOwner.Value, out var linkedEntityGroups))

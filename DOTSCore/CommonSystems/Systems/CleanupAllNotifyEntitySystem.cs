@@ -13,7 +13,7 @@
     public partial struct CleanupAllNotifyEntitySystem : ISystem
     {
         [BurstCompile]
-        public void OnCreate(ref SystemState state) { }
+        public void OnCreate(ref SystemState state) { state.RequireForUpdate<NotifyComponentTag>(); }
 
         [BurstCompile]
         public void OnDestroy(ref SystemState state) { }
@@ -33,6 +33,6 @@
     {
         public EntityCommandBuffer.ParallelWriter Ecb;
 
-        void Execute(Entity abilityActionEntity, [EntityInQueryIndex] int entityInQueryIndex) { this.Ecb.DestroyEntity(entityInQueryIndex, abilityActionEntity); }
+        void Execute(Entity abilityActionEntity, [EntityIndexInQuery] int entityInQueryIndex) { this.Ecb.DestroyEntity(entityInQueryIndex, abilityActionEntity); }
     }
 }

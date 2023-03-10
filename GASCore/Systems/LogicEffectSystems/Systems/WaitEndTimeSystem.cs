@@ -37,7 +37,7 @@
         public EntityCommandBuffer.ParallelWriter Ecb;
         public double                             CurrentElapsedTime;
         
-        void Execute(Entity entity, [EntityInQueryIndex] int entityInQueryIndex,in EndTimeComponent endTime)
+        void Execute(Entity entity, [EntityIndexInQuery] int entityInQueryIndex,in EndTimeComponent endTime)
         {
             if (this.CurrentElapsedTime >= endTime.Value)
             {
