@@ -11,9 +11,8 @@ namespace DOTSCore.EntityFactory
         /// </summary>
         /// <param name="entityManager"></param>
         /// <param name="data"></param>
-        /// <param name="types">The types of components to add to the new entity</param>
         /// <returns>Entity</returns>
-        Entity CreateEntity(EntityManager entityManager, TData data, params ComponentType[] types);
+        Entity CreateEntity(EntityManager entityManager, TData data);
     }
 
     public interface IEntityFactoryByEcb<in TData> : IEntityFactory
@@ -26,6 +25,6 @@ namespace DOTSCore.EntityFactory
         /// <param name="data"></param>
         /// <param name="types"></param>
         /// <returns></returns>
-        Entity CreateEntity(EntityCommandBuffer.ParallelWriter ecb, int index, TData data, params ComponentType[] types);
+        Entity CreateEntity(EntityCommandBuffer.ParallelWriter ecb, int index, TData data);
     }
 }

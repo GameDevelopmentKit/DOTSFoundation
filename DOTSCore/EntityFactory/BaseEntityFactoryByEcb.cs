@@ -13,9 +13,12 @@ namespace DOTSCore.EntityFactory
         protected World CurrentWorld;
         public BaseEntityFactoryByEcb() { this.CurrentWorld = World.DefaultGameObjectInjectionWorld; }
 
-        public virtual Entity CreateEntity(EntityCommandBuffer.ParallelWriter ecb, int index, TData data, params ComponentType[] types)
+        public virtual Entity CreateEntity(EntityCommandBuffer.ParallelWriter ecb, int index, TData data)
         {
-            var entity = ecb.CreateEntity(index, this.CurrentWorld.EntityManager.CreateArchetype(types));
+            var entity = ecb.CreateEntity(index);
+            ecb.AddComponent(index, entity, LocalTransform.Identity);
+            ecb.AddComponent(index, entity, WorldTransform.Identity);
+            ecb.AddComponent(index, entity, new LocalToWorld() { Value = float4x4.identity });
             this.InitComponents(ref ecb, index, ref entity, data);
             return entity;
         }
@@ -51,14 +54,10 @@ namespace DOTSCore.EntityFactory
 
     public abstract class BaseEntityPrefabFactoryByEcb<TData> : BaseEntityFactoryByEcb<TData>
     {
-        public override Entity CreateEntity(EntityCommandBuffer.ParallelWriter ecb, int index, TData data, params ComponentType[] types)
+        public override Entity CreateEntity(EntityCommandBuffer.ParallelWriter ecb, int index, TData data)
         {
-            var entity = ecb.CreateEntity(index, this.CurrentWorld.EntityManager.CreateArchetype(types));
-            ecb.AddComponent(index, entity, typeof(Prefab));
-            ecb.AddComponent(index, entity, new Rotation() { Value     = quaternion.identity });
-            ecb.AddComponent(index, entity, new Translation() { Value  = float3.zero });
-            ecb.AddComponent(index, entity, new LocalToWorld() { Value = float4x4.identity });
-            this.InitComponents(ref ecb, index, ref entity, data);
+            var entity = base.CreateEntity(ecb, index, data);
+            ecb.AddComponent<Prefab>(index, entity);
             return entity;
         }
     }

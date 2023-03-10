@@ -2,6 +2,7 @@ namespace DOTSCore.PrefabWorkflow
 {
     using System;
     using System.Collections.Generic;
+    using DOTSCore.Extension;
     using GameFoundation.Scripts.Utilities.Extension;
     using Unity.Burst;
     using Unity.Entities;
@@ -49,12 +50,11 @@ namespace DOTSCore.PrefabWorkflow
                 .WithNone<PrefabSpawnedSignal>().ForEach((Entity entity, int entityInQueryIndex, in PrefabEntitySpawnerComponent spawner, in PrefabLoadResult prefab) =>
                 {
                     var instance = ecb.Instantiate(entityInQueryIndex, prefab.PrefabRoot);
-                    ecb.SetComponent(entityInQueryIndex, instance, new Translation() { Value = spawner.Position });
+                    ecb.SetComponent(entityInQueryIndex, instance, LocalTransform.FromPosition(spawner.Position));
                     ecb.SetName(entityInQueryIndex, instance, spawner.PrefabName);
                     if (temp2.TryGetComponent(entity, out var componentData))
                     {
-                        ecb.AddComponent(entityInQueryIndex, instance, new Parent() { Value = componentData.ParentEntity });
-                        ecb.AddComponent(entityInQueryIndex, instance, new LocalToParent());
+                        ecb.SetParent(entityInQueryIndex, instance, componentData.ParentEntity);
                     }
 
                     ecb.AddComponent(entityInQueryIndex, entity, new PrefabSpawnedSignal() { PrefabEntity = instance, PrefabName = spawner.PrefabName });
@@ -89,6 +89,7 @@ namespace DOTSCore.PrefabWorkflow
                     listCallback = new List<Action<Entity>>();
                     this.prefabNameToListCallback.Add(name, listCallback);
                 }
+
                 listCallback.Add(callback);
 
                 var spawnerEntity = this.EntityManager.CreateEntity(typeof(PrefabEntitySpawnerComponent));

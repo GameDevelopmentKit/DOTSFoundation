@@ -7,10 +7,12 @@ namespace DOTSCore.EntityFactory
 
     public abstract class BaseEntityFactory<TData> : IEntityFactory<TData>
     {
-        public virtual Entity CreateEntity(EntityManager entityManager, TData data, params ComponentType[] types)
+        public virtual Entity CreateEntity(EntityManager entityManager, TData data)
         {
-            var entity = entityManager.CreateEntity(types);
-
+            var entity = entityManager.CreateEntity();
+            entityManager.AddComponentData(entity, LocalTransform.Identity);
+            entityManager.AddComponentData(entity, WorldTransform.Identity);
+            entityManager.AddComponentData(entity, new LocalToWorld() { Value = float4x4.identity });
             this.InitComponents(entityManager, entity, data);
 
             return entity;
@@ -21,9 +23,11 @@ namespace DOTSCore.EntityFactory
 
     public abstract class BaseEntityPrefabFactory<TData> : BaseEntityFactory<TData>
     {
-        public override Entity CreateEntity(EntityManager ecb, TData data, params ComponentType[] types)
+        public override Entity CreateEntity(EntityManager entityManager, TData data)
         {
-            return base.CreateEntity(ecb, data, typeof(Prefab), typeof(Translation), typeof(LocalToWorld), typeof(Rotation));
+            var entity = base.CreateEntity(entityManager, data);
+            entityManager.AddComponent<Prefab>(entity);
+            return entity;
         }
     }
 }

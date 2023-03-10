@@ -42,7 +42,7 @@
     {
         public            EntityCommandBuffer.ParallelWriter       Ecb;
         [ReadOnly] public ComponentLookup<AnimationStateComponent> AnimationStateLookup;
-        void Execute([EntityInQueryIndex] int entityInQueryIndex, in PlayAnimation playAnimation, AffectedTargetComponent affectedTarget)
+        void Execute([EntityIndexInQuery] int entityInQueryIndex, in PlayAnimation playAnimation, AffectedTargetComponent affectedTarget)
         {
             if (this.AnimationStateLookup.TryGetComponent(affectedTarget.Value, out var animationState))
             {

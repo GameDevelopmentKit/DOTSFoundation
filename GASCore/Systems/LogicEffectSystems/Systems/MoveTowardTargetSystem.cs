@@ -12,9 +12,15 @@ namespace GASCore.Systems.LogicEffectSystems.Systems
     [BurstCompile]
     public partial struct UpdateMoveDirJob : IJobEntity
     {
-        private void Execute(ref MovementDirection movementDirection, in LocalToWorld transform, in TargetPosition target)
+        private void Execute(ref MovementDirection movementDirection, ref LocalTransform transform, in TargetPosition target)
         {
-            movementDirection.Value = math.distancesq(transform.Position, target.Value).IsZero(target.RadiusSq) ? float3.zero : math.normalize(target.Value - transform.Position);
+            if (math.distancesq(transform.Position, target.Value).IsZero(target.RadiusSq))
+            {
+                movementDirection.Value = float3.zero;
+                if (target.RadiusSq <= 0.01f) transform.Position = target.Value;
+            }
+            else
+                movementDirection.Value = math.normalize(target.Value - transform.Position);
         }
     }
 
@@ -22,16 +28,16 @@ namespace GASCore.Systems.LogicEffectSystems.Systems
     public partial struct ChaseTargetJob : IJobEntity
     {
         [ReadOnly] public ComponentLookup<LocalToWorld> TransformLookup;
-        private void Execute(ref TargetPosition curTargetPosition, in Translation translation, in ChaseTargetEntity chaseTargetEntity)
+        private void Execute(ref TargetPosition curTargetPosition, in LocalTransform translation, in ChaseTargetEntity chaseTargetEntity)
         {
             if (this.TransformLookup.TryGetComponent(chaseTargetEntity.Value, out var targetTransform))
             {
                 var resultPos = targetTransform.Position;
 
-                if (chaseTargetEntity.LockAxis.x) resultPos.x = translation.Value.x;
-                if (chaseTargetEntity.LockAxis.y) resultPos.y = translation.Value.y;
-                if (chaseTargetEntity.LockAxis.z) resultPos.z = translation.Value.z;
-                
+                if (chaseTargetEntity.LockAxis.x) resultPos.x = translation.Position.x;
+                if (chaseTargetEntity.LockAxis.y) resultPos.y = translation.Position.y;
+                if (chaseTargetEntity.LockAxis.z) resultPos.z = translation.Position.z;
+
                 curTargetPosition.Value = resultPos;
             }
         }
@@ -44,7 +50,7 @@ namespace GASCore.Systems.LogicEffectSystems.Systems
     {
         public EntityCommandBuffer.ParallelWriter Ecb;
 
-        private void Execute(Entity entity, [EntityInQueryIndex] int index) { this.Ecb.AddComponent<MovementDirection>(index, entity); }
+        private void Execute(Entity entity, [EntityIndexInQuery] int index) { this.Ecb.AddComponent<MovementDirection>(index, entity); }
     }
 
 
@@ -52,10 +58,8 @@ namespace GASCore.Systems.LogicEffectSystems.Systems
     [BurstCompile]
     public partial struct MoveTowardTargetSystem : ISystem
     {
-        private ComponentLookup<LocalToWorld> localToWorldLookup;
-
         [BurstCompile]
-        public void OnCreate(ref SystemState state) { this.localToWorldLookup = state.GetComponentLookup<LocalToWorld>(true); }
+        public void OnCreate(ref SystemState state) { }
 
         [BurstCompile]
         public void OnDestroy(ref SystemState state) { }
@@ -63,14 +67,12 @@ namespace GASCore.Systems.LogicEffectSystems.Systems
         [BurstCompile]
         public void OnUpdate(ref SystemState state)
         {
-            this.localToWorldLookup.Update(ref state);
-
             var ecbSingleton = SystemAPI.GetSingleton<EndSimulationEntityCommandBufferSystem.Singleton>();
             var ecb          = ecbSingleton.CreateCommandBuffer(state.WorldUnmanaged).AsParallelWriter();
 
             new ChaseTargetJob()
             {
-                TransformLookup = this.localToWorldLookup
+                TransformLookup = SystemAPI.GetComponentLookup<LocalToWorld>(true)
             }.ScheduleParallel();
 
             new AddMoveDirComponentJob()

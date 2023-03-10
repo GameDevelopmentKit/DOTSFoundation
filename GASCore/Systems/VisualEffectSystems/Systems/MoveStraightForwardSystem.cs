@@ -9,7 +9,6 @@
     using Unity.Transforms;
 
     [UpdateInGroup(typeof(AbilityVisualEffectGroup))]
-    [UpdateAfter(typeof(SetupInitialPositionSystem))]
     [RequireMatchingQueriesForUpdate]
     [BurstCompile]
     public partial struct MoveStraightForwardSystem : ISystem
@@ -41,9 +40,9 @@
     public partial struct MoveStraightForwardJob : IJobEntity
     {
         public EntityCommandBuffer.ParallelWriter Ecb;
-        void Execute(Entity entity, [EntityInQueryIndex] int entityInQueryIndex, in Rotation rotation)
+        void Execute(Entity entity, [EntityIndexInQuery] int entityInQueryIndex, in LocalTransform transform)
         {
-            this.Ecb.AddComponent(entityInQueryIndex, entity, new MovementDirection() { Value = math.forward(rotation.Value) });
+            this.Ecb.AddComponent(entityInQueryIndex, entity, new MovementDirection() { Value = math.forward(transform.Rotation) });
         }
     }
 }

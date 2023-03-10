@@ -12,10 +12,10 @@ namespace GASCore.Systems.LogicEffectSystems.Systems
     public partial struct MovementEntityInDirJob : IJobEntity
     {
         public float DeltaTime;
-        void Execute(ref Translation transform, in MovementDirection direction, in StatAspect statAspect)
+        void Execute(ref LocalTransform transform, in MovementDirection direction, in StatAspect statAspect)
         {
             if (direction.Value.Equals(float3.zero)) return;
-            transform.Value +=  direction.Value * statAspect.GetCurrentValue(StatName.MovementSpeed) * this.DeltaTime;
+            transform.Position +=  direction.Value * statAspect.GetCurrentValue(StatName.MovementSpeed) * this.DeltaTime;
         }
     }
 

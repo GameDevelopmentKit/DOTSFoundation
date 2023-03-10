@@ -1,28 +1,47 @@
 ﻿namespace GASCore.Groups
 {
-    using DOTSCore.Group;
     using Unity.Collections;
     using Unity.Collections.LowLevel.Unsafe;
     using Unity.Entities;
+    using Unity.Transforms;
 
-    public partial class GameAbilitySystemGroup : StateSystemGroup { }
+    #region GameAbilityInitializeSystemGroup
 
-    public partial class GameAbilityPresentSystemGroup : StateSystemGroup { }
+    [UpdateInGroup(typeof(InitializationSystemGroup))]
+    public partial class GameAbilityInitializeSystemGroup { }
 
-    [UpdateInGroup(typeof(GameAbilitySystemGroup))]
+    [UpdateInGroup(typeof(GameAbilityInitializeSystemGroup))]
     public class AbilityMainFlowGroup : ComponentSystemGroup { }
 
-    [UpdateInGroup(typeof(GameAbilitySystemGroup))]
-    [UpdateAfter(typeof(AbilityMainFlowGroup))]
+    #endregion
+
+    #region GameAbilitySimulationSystemGroup
+
+    [UpdateInGroup(typeof(SimulationSystemGroup), OrderFirst = true)]
+    [UpdateBefore(typeof(TransformSystemGroup))]
+    public partial class GameAbilityBeginSimulationSystemGroup { }
+
+    [UpdateInGroup(typeof(LateSimulationSystemGroup))]
+    public partial class GameAbilityLateSimulationSystemGroup { }
+
+    [UpdateInGroup(typeof(GameAbilityLateSimulationSystemGroup))]
     public class AbilityTimelineGroup : ComponentSystemGroup { }
 
-    [UpdateInGroup(typeof(GameAbilitySystemGroup))]
+    [UpdateInGroup(typeof(GameAbilityLateSimulationSystemGroup))]
     [UpdateAfter(typeof(AbilityTimelineGroup))]
     public class AbilityCommonSystemGroup : ComponentSystemGroup { }
 
-    [UpdateInGroup(typeof(GameAbilitySystemGroup))]
+    [UpdateInGroup(typeof(GameAbilityLateSimulationSystemGroup))]
     [UpdateAfter(typeof(AbilityCommonSystemGroup))]
     public class AbilityLogicEffectGroup : ComponentSystemGroup { }
+
+    #endregion
+
+    #region GameAbilityPresentSystemGroup
+
+    [UpdateInGroup(typeof(PresentationSystemGroup))]
+    public partial class GameAbilityPresentSystemGroup { }
+
 
     [UpdateInGroup(typeof(GameAbilityPresentSystemGroup))]
     public class AbilityVisualEffectGroup : ComponentSystemGroup { }
@@ -72,23 +91,14 @@
             public void SetAllocator(Allocator allocatorIn) { allocator = allocatorIn; }
         }
 
-        internal ref UnsafeList<EntityCommandBuffer> PendingBuffers
-        {
-            get
-            {
-                unsafe
-                {
-                    return ref *this.m_PendingBuffers;
-                }
-            }
-        }
-
         /// <inheritdoc cref="EntityCommandBufferSystem.OnCreate"/>
         protected override void OnCreate()
         {
             base.OnCreate();
 
-            this.RegisterSingleton<Singleton>(ref PendingBuffers, World.Unmanaged, $"{nameof(AbilityPresentEntityCommandBufferSystem)} {nameof(Singleton)}");
+            this.RegisterSingleton<Singleton>(ref PendingBuffers, World.Unmanaged);
         }
     }
+
+    #endregion
 }

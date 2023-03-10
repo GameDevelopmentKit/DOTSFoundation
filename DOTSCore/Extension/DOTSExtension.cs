@@ -64,19 +64,19 @@ namespace DOTSCore.Extension
         public static void SetParent(this EntityManager entityManager, Entity entity, Entity parentEntity)
         {
             entityManager.AddComponentData(entity, new Parent() { Value = parentEntity });
-            entityManager.AddComponentData(entity, new LocalToParent());
+            entityManager.AddComponent<ParentTransform>(entity);
         }
 
         public static void SetParent(this EntityCommandBuffer.ParallelWriter ecb, int index, Entity entity, Entity parentEntity)
         {
             ecb.AddComponent(index, entity, new Parent() { Value = parentEntity });
-            ecb.AddComponent(index, entity, new LocalToParent());
+            ecb.AddComponent<ParentTransform>(index, entity);
         }
 
         public static void RemoveParent(this EntityCommandBuffer.ParallelWriter ecb, int index, Entity entity)
         {
             ecb.RemoveComponent<Parent>(index, entity);
-            ecb.RemoveComponent<LocalToParent>(index, entity);
+            ecb.RemoveComponent<ParentTransform>(index, entity);
         }
 
         public static void AddChildren(this EntityCommandBuffer.ParallelWriter ecb, int index, Entity rootEntity, NativeList<Entity> children)

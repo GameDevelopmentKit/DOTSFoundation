@@ -14,7 +14,7 @@
         {
             public override void Bake(PrefabPoolAuthoring authoring)
             {
-                this.AddComponent(new Translation() { Value = float3.zero });
+                this.AddComponent<LocalTransform>();
 
                 if (authoring.PoolData == null || authoring.PoolData.ListPrefab == null || authoring.PoolData.ListPrefab.Count == 0)
                     return;

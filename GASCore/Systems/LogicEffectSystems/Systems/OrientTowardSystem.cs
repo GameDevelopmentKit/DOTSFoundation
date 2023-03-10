@@ -12,11 +12,11 @@
     {
         public float  DeltaTime;
         public float3 UpVector;
-        void Execute(ref Rotation rot, in MovementDirection movementDirection, in RotationSpeed speed)
+        void Execute(ref LocalTransform transform, in MovementDirection movementDirection, in RotationSpeed speed)
         {
             if (movementDirection.Value.Equals(float3.zero)) return;
             var toRotation        = quaternion.LookRotation(movementDirection.Value, this.UpVector);
-            rot.Value = math.slerp(rot.Value, toRotation, speed.Value * this.DeltaTime);
+            transform.Rotation = math.slerp(transform.Rotation, toRotation, speed.Value * this.DeltaTime);
         }
     }
 

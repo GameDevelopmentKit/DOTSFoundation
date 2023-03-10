@@ -10,7 +10,6 @@
     using Unity.Transforms;
 
     [UpdateInGroup(typeof(AbilityVisualEffectGroup))]
-    [UpdateAfter(typeof(SetupInitialPositionSystem))]
     [RequireMatchingQueriesForUpdate]
     [BurstCompile]
     public partial struct MoveToAffectedTargetSystem : ISystem
@@ -46,7 +45,7 @@
         public EntityCommandBuffer.ParallelWriter Ecb;
 
         [ReadOnly] public ComponentLookup<LocalToWorld> PositionLookup;
-        void Execute([EntityInQueryIndex] int entityInQueryIndex, in AffectedTargetComponent affectedTarget, in SourceComponent source)
+        void Execute([EntityIndexInQuery] int entityInQueryIndex, in AffectedTargetComponent affectedTarget, in SourceComponent source)
         {
             this.Ecb.AddComponent(entityInQueryIndex, source.Value, new TargetPosition(this.PositionLookup[affectedTarget.Value].Position));
         }
