@@ -7,7 +7,10 @@
 
     public struct TargetWithStatElement : IBufferElementData
     {
-        public FixedString64Bytes Value;
+        public                          FixedString64Bytes Value;
+        public static implicit operator FixedString64Bytes(TargetWithStatElement statName) => statName.Value;
+        public static implicit operator TargetWithStatElement(FixedString64Bytes statName) => new() { Value = statName };
+        public static implicit operator TargetWithStatElement(string statName)             => new() { Value = statName };
     }
 
     public class FindTargetWithStats : ITriggerConditionActionConverter
@@ -19,7 +22,7 @@
             var statNames = ecb.AddBuffer<TargetWithStatElement>(index, entity);
             foreach (var statName in this.StatNames)
             {
-                statNames.Add(new TargetWithStatElement { Value = statName });
+                statNames.Add(statName);
             }
         }
     }

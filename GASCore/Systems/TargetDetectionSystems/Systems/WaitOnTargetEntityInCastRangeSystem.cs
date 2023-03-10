@@ -59,7 +59,7 @@
     public partial struct SetupAbilityTrackingEntityInCastRange : IJobEntity
     {
         public EntityCommandBuffer.ParallelWriter Ecb;
-        void Execute([EntityInQueryIndex] int entityInQueryIndex, in ActivatedStateEntityOwner activatedStateEntityOwner)
+        void Execute([EntityIndexInQuery] int entityInQueryIndex, in ActivatedStateEntityOwner activatedStateEntityOwner)
         {
             this.Ecb.AddComponent<NeedToTrackingTargetInCastRange>(entityInQueryIndex, activatedStateEntityOwner.Value);
             this.Ecb.AddBuffer<EntityInAbilityRangeElement>(entityInQueryIndex, activatedStateEntityOwner.Value);
@@ -72,7 +72,7 @@
         public            EntityCommandBuffer.ParallelWriter       Ecb;
         [ReadOnly] public ComponentLookup<TriggerOnInAbilityRange> TriggerOnInAbilityRangeLookup;
         [ReadOnly] public BufferLookup<LinkedEntityGroup>          LinkedEntityLookup;
-        void Execute([EntityInQueryIndex] int entityInQueryIndex, in OnInAbilityRange onInAbilityRange)
+        void Execute([EntityIndexInQuery] int entityInQueryIndex, in OnInAbilityRange onInAbilityRange)
         {
             // Debug.Log($"WaitOnTargetEntityInCastRangeJob onInAbilityRange.TargetEntity.Index = {onInAbilityRange.TargetEntity.Index}");
 

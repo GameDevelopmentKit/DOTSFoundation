@@ -52,7 +52,7 @@
         public            EntityCommandBuffer.ParallelWriter        Ecb;
         [ReadOnly] public ComponentLookup<TriggerOnOutAbilityRange> TriggerOnOutAbilityRangeLookup;
         [ReadOnly] public BufferLookup<LinkedEntityGroup>           LinkedEntityLookup;
-        void Execute([EntityInQueryIndex] int entityInQueryIndex, in OnOutAbilityRange onOutAbilityRange)
+        void Execute([EntityIndexInQuery] int entityInQueryIndex, in OnOutAbilityRange onOutAbilityRange)
         {
             // Debug.Log($"WaitOnTargetEntityOutCastRangeJob onOutAbilityRange.TargetEntity.Index = {onOutAbilityRange.TargetEntity.Index}");
 

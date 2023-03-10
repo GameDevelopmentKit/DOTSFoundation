@@ -9,13 +9,11 @@
     using Unity.Burst;
     using Unity.Collections;
     using Unity.Entities;
-    using UnityEngine;
-
 
     [UpdateInGroup(typeof(AbilityTimelineGroup))]
     [RequireMatchingQueriesForUpdate]
     [BurstCompile]
-    public partial struct FilterTargetableSystem : ISystem
+    public partial struct FilterTargetableWithTypeSystem : ISystem
     {
         private ComponentLookup<TeamOwnerId> teamLookup;
 
@@ -30,13 +28,13 @@
         {
             this.teamLookup.Update(ref state);
 
-            new FilterTargetableJob() { TeamLookup = this.teamLookup }.ScheduleParallel();
+            new FilterTargetablewithTypeJob() { TeamLookup = this.teamLookup }.ScheduleParallel();
         }
     }
 
     [BurstCompile]
     [WithChangeFilter(typeof(TargetableElement))]
-    public partial struct FilterTargetableJob : IJobEntity
+    public partial struct FilterTargetablewithTypeJob : IJobEntity
     {
         [ReadOnly] public ComponentLookup<TeamOwnerId> TeamLookup;
 

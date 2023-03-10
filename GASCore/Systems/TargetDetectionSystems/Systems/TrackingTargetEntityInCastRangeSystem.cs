@@ -24,7 +24,7 @@
         protected override void OnCreate()
         {
             this.endSimEcbSystem = this.World.GetExistingSystemManaged<EndSimulationEntityCommandBufferSystem>();
-            using var queryBuilder = new EntityQueryBuilder(Allocator.Temp).WithAll<TeamOwnerId, Translation, MovementDirection>();
+            using var queryBuilder = new EntityQueryBuilder(Allocator.Temp).WithAll<TeamOwnerId, WorldTransform, MovementDirection>();
             this.teamQuery = this.GetEntityQuery(queryBuilder);
         }
 
@@ -32,18 +32,18 @@
         {
             var ecb        = this.endSimEcbSystem.CreateCommandBuffer().AsParallelWriter();
             var entityList = this.teamQuery.ToEntityListAsync(this.WorldUpdateAllocator, out var getTargetEntityJobHandle);
-            var positions  = this.teamQuery.ToComponentDataListAsync<Translation>(this.WorldUpdateAllocator, out var getPositionJobHandle);
+            var transforms = this.teamQuery.ToComponentDataListAsync<WorldTransform>(this.WorldUpdateAllocator, out var getPositionJobHandle);
             var jobCombine = JobHandle.CombineDependencies(new NativeArray<JobHandle>(4, Allocator.Temp)
                 { [0] = getTargetEntityJobHandle, [1] = getPositionJobHandle, [2] = this.Dependency });
 
-            this.Dependency = Entities.WithBurst().WithAll<NeedToTrackingTargetInCastRange>().WithReadOnly(entityList).WithReadOnly(positions)
+            this.Dependency = Entities.WithBurst().WithAll<NeedToTrackingTargetInCastRange>().WithReadOnly(entityList).WithReadOnly(transforms)
                 .ForEach((Entity activatedStateAbilityEntity, int entityInQueryIndex, ref DynamicBuffer<EntityInAbilityRangeElement> entityInRangeBuffer,
                     in CastRangeComponent castRange, in CasterComponent caster) =>
                 {
-                    var casterPosition = GetComponent<Translation>(caster.Value).Value;
+                    var casterPosition = SystemAPI.GetComponent<WorldTransform>(caster.Value).Position;
                     var sqrRange       = castRange.Value * castRange.Value;
 
-                    for (int i = 0; i < positions.Length; i++)
+                    for (int i = 0; i < transforms.Length; i++)
                     {
                         // search index of entity in entityInRangeBuffer
                         int indexInEntityRangeBuffer = -1;
@@ -57,7 +57,7 @@
                             }
                         }
 
-                        var sqrDist = math.distancesq(casterPosition, positions[i].Value);
+                        var sqrDist = math.distancesq(casterPosition, transforms[i].Position);
 
                         // Debug.Log($" TrackingTargetEntityInCastRangeSystem {targetEntity.Index}, indexInEntityRangeBuffer = {indexInEntityRangeBuffer}, sqrDist = {sqrDist}, sqrRange = {sqrRange}");
                         //Check if entity is not exist in entityInRangeBuffer and position in range of this caster

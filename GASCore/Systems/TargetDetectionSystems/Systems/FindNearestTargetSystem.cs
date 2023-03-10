@@ -27,7 +27,7 @@
         protected override void OnCreate()
         {
             this.endSimEcbSystem = this.World.GetExistingSystemManaged<EndSimulationEntityCommandBufferSystem>();
-            this.teamQuery       = new EntityQueryBuilder(Allocator.Temp).WithAll<StatDataElement,Translation, LocalToWorld>().Build(this);
+            this.teamQuery       = new EntityQueryBuilder(Allocator.Temp).WithAll<StatDataElement, LocalToWorld>().Build(this);
 
             this.translationLookup = this.GetComponentLookup<LocalToWorld>(true);
             this.tagLookup         = this.GetComponentLookup<TagComponent>(true);
