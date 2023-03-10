@@ -1,6 +1,7 @@
-﻿namespace GASCore.Systems.VisualEffectSystems.Components
+﻿namespace GASCore.Systems.EntityGeneratorSystems.Components
 {
     using GASCore.Interfaces;
+    using GASCore.Systems.VisualEffectSystems.Components;
     using Unity.Entities;
     using Unity.Mathematics;
 
@@ -33,6 +34,8 @@
                     Min = this.Min,
                     Max = this.Max
                 });
+                
+                ecb.AddComponent<PositionOffset>(index, entity);
             }
         }
     }
