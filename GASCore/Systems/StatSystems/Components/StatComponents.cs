@@ -1,14 +1,12 @@
-﻿namespace GASCore.Systems.StatSystems.Components
-{
-    using System;
-    using System.Collections.Generic;
-    using DOTSCore.Extension;
-    using GASCore.Interfaces;
-    using GASCore.Systems.TimelineSystems.Components;
-    using Unity.Collections;
-    using Unity.Entities;
-    using UnityEngine;
+﻿using System;
+using System.Collections.Generic;
+using GASCore.Interfaces;
+using GASCore.Systems.TimelineSystems.Components;
+using Unity.Collections;
+using Unity.Entities;
 
+namespace GASCore.Systems.StatSystems.Components
+{
     public struct StatDataElement : IBufferElementData
     {
         public FixedString64Bytes StatName;
@@ -34,8 +32,6 @@
         public void Convert(EntityCommandBuffer.ParallelWriter ecb, int index, Entity entity)
         {
             var statBuffer  = ecb.AddBuffer<StatDataElement>(index, entity);
-            var statToIndex = new NativeHashMap<FixedString64Bytes, int>(Value.Count, Allocator.Persistent);
-
 
             for (var i = 0; i < this.Value.Count; i++)
             {
@@ -47,10 +43,7 @@
                     BaseValue   = stat.BaseValue,
                     AddedValue  = 0
                 });
-                statToIndex.Add(stat.StatName, i);
             }
-
-            ecb.AddComponent(index, entity, new StatNameToIndex() { BlobValue = statToIndex.CreateReference() });
         }
     }
 
@@ -84,9 +77,9 @@
             this.statDataBuffer.Insert(statIndex, statData);
             return true;
         }
-        
+
         public int GetStatCount() { return this.statDataBuffer.Length; }
-        
+
         public float GetBaseValue(FixedString64Bytes statName)
         {
             if (this.statNameToIndex.ValueRO.BlobValue.Value.TryGetValue(statName, out var statIndex))
@@ -94,7 +87,7 @@
 
             return 0;
         }
-        
+
         public float GetCurrentValue(FixedString64Bytes statName)
         {
             if (this.statNameToIndex.ValueRO.BlobValue.Value.TryGetValue(statName, out var statIndex))
@@ -112,27 +105,23 @@
 
             return -1;
         }
-        
+
         public void NotifyStatChange(EntityCommandBuffer.ParallelWriter ecb, int entityInQueryIndex, FixedString64Bytes statName)
         {
             if (!this.statNameToIndex.ValueRO.BlobValue.Value.TryGetValue(statName, out var statIndex)) return;
-            var notifyEntity = ecb.CreateNotifyEntity(entityInQueryIndex);
-            ecb.AddComponent(entityInQueryIndex, notifyEntity, new OnStatChange()
+            ecb.SetComponentEnabled<OnStatChange>(entityInQueryIndex, this.sourceEntity, true);
+            ecb.AppendToBuffer(entityInQueryIndex, this.sourceEntity, new OnStatChange()
             {
-                Source      = this.sourceEntity,
                 ChangedStat = this.statDataBuffer[statIndex]
             });
         }
 
-        public bool HasStat(FixedString64Bytes statName)
-        {
-            return this.statNameToIndex.ValueRO.BlobValue.Value.ContainsKey(statName);
-        }
+        public bool HasStat(FixedString64Bytes statName) { return this.statNameToIndex.ValueRO.BlobValue.Value.ContainsKey(statName); }
 
         public float CalculateStatValue(ModifierAggregatorData aggregator)
         {
             //todo handle case override = 0
-            return aggregator.Override != 0 ? aggregator.Override : (GetBaseValue(aggregator.TargetStat) + aggregator.Add) * aggregator.Multiply / aggregator.Division;
+            return aggregator.Override != 0 ? aggregator.Override : (GetBaseValue(aggregator.TargetStat) + aggregator.Add) * aggregator.Multiply / aggregator.Divide;
         }
     }
 }

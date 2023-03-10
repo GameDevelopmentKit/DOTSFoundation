@@ -35,7 +35,6 @@
 
                         // Calculate base damage from aggregator
                         var damage = casterStatAspect.CalculateStatValue(aggregatorData);
-
                         // critical or not
                         var random = Random.CreateFromIndex((uint)entityInQueryIndex);
                         if (random.NextFloat() < casterStatAspect.GetCurrentValue(StatName.CriticalStrikeChance))
@@ -52,7 +51,7 @@
                             TargetStat = StatName.Health,
                             Add        = -damage,
                             Multiply   = 1,
-                            Division   = 1
+                            Divide   = 1
                         });
                         
                         modifierAggregatorBuffer.RemoveAtSwapBack(index);

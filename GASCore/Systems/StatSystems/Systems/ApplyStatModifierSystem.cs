@@ -66,7 +66,7 @@
         public            EntityCommandBuffer.ParallelWriter   Ecb;
         public            bool                                 IsChangeBaseValue;
         [ReadOnly] public BufferLookup<ModifierAggregatorData> ModifierAggregatorLookup;
-        void Execute([EntityInQueryIndex] int entityInQueryIndex, in AffectedTargetComponent affectedTarget, in DynamicBuffer<ModifierAggregatorData> modifierAggregatorBuffer)
+        void Execute([EntityIndexInQuery] int entityInQueryIndex, in AffectedTargetComponent affectedTarget, in DynamicBuffer<ModifierAggregatorData> modifierAggregatorBuffer)
         {
             if (!ModifierAggregatorLookup.HasBuffer(affectedTarget.Value)) Ecb.AddBuffer<ModifierAggregatorData>(entityInQueryIndex, affectedTarget.Value);
 
@@ -83,7 +83,7 @@
     public partial struct CalculateStatValueJob : IJobEntity
     {
         public EntityCommandBuffer.ParallelWriter Ecb;
-        void Execute([EntityInQueryIndex] int entityInQueryIndex, ref StatAspect statAspect, ref DynamicBuffer<ModifierAggregatorData> modifierAggregatorBuffer)
+        void Execute([EntityIndexInQuery] int entityInQueryIndex, ref StatAspect statAspect, ref DynamicBuffer<ModifierAggregatorData> modifierAggregatorBuffer)
         {
             if (modifierAggregatorBuffer.Length <= 0) return;
             var changedStats = new NativeHashSet<FixedString64Bytes>(statAspect.GetStatCount(), Allocator.Temp);

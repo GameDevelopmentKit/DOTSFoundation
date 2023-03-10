@@ -14,9 +14,12 @@
     {
         protected override void OnUpdate()
         {
-            Entities.WithoutBurst().ForEach((in OnStatChange onStatChange) =>
+            Entities.WithoutBurst().ForEach((Entity entity, in DynamicBuffer<OnStatChange> onStatChangeBuffer) =>
             {
-                EntityManager.TryEnqueueViewEvent(onStatChange.Source, new ChangeStatEvent(){ChangedStat = onStatChange.ChangedStat});
+                foreach (var onStatChange in onStatChangeBuffer)
+                {
+                    EntityManager.TryEnqueueViewEvent(entity, new ChangeStatEvent() { ChangedStat = onStatChange.ChangedStat });
+                }
             }).Run();
         }
     }

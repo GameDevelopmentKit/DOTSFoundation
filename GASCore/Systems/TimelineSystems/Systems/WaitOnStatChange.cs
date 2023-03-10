@@ -64,25 +64,28 @@
         [ReadOnly] public ComponentLookup<TriggerOnStatChanged> TriggerOnStatChangeComponentLookup;
         [ReadOnly] public ComponentLookup<CasterComponent>      CasterLookup;
 
-        void Execute([EntityInQueryIndex] int entityInQueryIndex, in OnStatChange statChangeEvent)
+        void Execute(Entity sourceStatChangeEntity, [EntityIndexInQuery] int entityInQueryIndex, in DynamicBuffer<OnStatChange> statChangeEventBuffer)
         {
             foreach (var triggerEntity in this.TriggerOnStatChangeEntities)
             {
-                if (!this.CasterLookup[triggerEntity].Value.Equals(statChangeEvent.Source)) continue; // wrong entity
+                if (!this.CasterLookup[triggerEntity].Value.Equals(sourceStatChangeEntity)) continue; // wrong entity
 
                 var triggerCondition = this.TriggerOnStatChangeComponentLookup[triggerEntity];
 
-                if (!triggerCondition.StatName.Equals(statChangeEvent.ChangedStat.StatName)) continue; // wrong stat name 
-
-                var currentValue = triggerCondition.Percent
-                    ? statChangeEvent.ChangedStat.CurrentValue / statChangeEvent.ChangedStat.OriginValue
-                    : statChangeEvent.ChangedStat.CurrentValue;
-                if (triggerCondition.Above && currentValue >= triggerCondition.Value
-                    || !triggerCondition.Above && currentValue <= triggerCondition.Value)
+                foreach (var onStatChange in statChangeEventBuffer)
                 {
-                    // Debug.Log($"ListenOnStatChangedJob from stat {event_.ChangedStat.StatName}");
-                    // mark this condition was done
-                    this.Ecb.MarkTriggerConditionComplete<TriggerOnStatChanged>(triggerEntity, entityInQueryIndex);
+                    if (!triggerCondition.StatName.Equals(onStatChange.ChangedStat.StatName)) continue; // wrong stat name 
+
+                    var currentValue = triggerCondition.Percent
+                        ? onStatChange.ChangedStat.CurrentValue / onStatChange.ChangedStat.OriginValue
+                        : onStatChange.ChangedStat.CurrentValue;
+                    if (triggerCondition.Above && currentValue >= triggerCondition.Value
+                        || !triggerCondition.Above && currentValue <= triggerCondition.Value)
+                    {
+                        // Debug.Log($"ListenOnStatChangedJob from stat {event_.ChangedStat.StatName}");
+                        // mark this condition was done
+                        this.Ecb.MarkTriggerConditionComplete<TriggerOnStatChanged>(triggerEntity, entityInQueryIndex);
+                    }
                 }
             }
         }

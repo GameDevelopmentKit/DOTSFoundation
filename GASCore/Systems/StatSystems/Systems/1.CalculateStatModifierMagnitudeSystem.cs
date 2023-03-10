@@ -5,62 +5,86 @@
     using GASCore.Systems.LogicEffectSystems.Components;
     using GASCore.Systems.StatSystems.Components;
     using Unity.Burst;
+    using Unity.Collections;
     using Unity.Entities;
-    using Unity.Jobs;
+    using Unity.Mathematics;
     using Unity.Transforms;
-    using UnityEngine;
 
     [UpdateInGroup(typeof(AbilityLogicEffectGroup), OrderFirst = true)]
     [RequireMatchingQueriesForUpdate]
     [BurstCompile]
-    public partial class CalculateStatModifierMagnitudeSystem : SystemBase
+    public partial struct CalculateStatModifierMagnitudeSystem : ISystem
     {
+        private StatAspect.Lookup statAspectLookup;
 
-        protected override void OnUpdate()
+        [BurstCompile]
+        public void OnCreate(ref SystemState state) { this.statAspectLookup = new StatAspect.Lookup(ref state, true); }
+
+        [BurstCompile]
+        public void OnDestroy(ref SystemState state) { }
+
+        [BurstCompile]
+        public void OnUpdate(ref SystemState state)
         {
-            var scalableFloatMagnitudeJob = new CalculateScalableFloatMagnitudeJob().ScheduleParallel(Dependency);
+            this.statAspectLookup.Update(ref state);
+            var random = new Random((uint)(SystemAPI.Time.DeltaTime * 100000));
 
-            var attributeBasedMagnitudeJob = Entities.WithBurst().WithChangeFilter<StatBasedMagnitudeCalculation>().WithNone<PeriodEffectInstanceTag>().ForEach(
-                (ref StatModifierData statModifierData, in StatBasedMagnitudeCalculation attributeBased, in Parent effectEntity) =>
-                {
-                    Entity sourceEntity = default;
-                    if (attributeBased.SourceType == SourceType.AffectedTarget)
-                    {
-                        sourceEntity = GetComponent<AffectedTargetComponent>(effectEntity.Value).Value;
-                    }
-                    else if (attributeBased.SourceType == SourceType.Caster)
-                    {
-                        sourceEntity = GetComponent<CasterComponent>(effectEntity.Value).Value;
-                    }
+            state.Dependency = new CalculateScalableFloatMagnitudeJob().ScheduleParallel(state.Dependency);
 
-                    var statAspect = SystemAPI.GetAspectRO<StatAspect>(sourceEntity);
-                    // Debug.Log($"attributeBasedMagnitudeJob - source entity is {attributeBased.SourceType} - has {attributeBased.SourceStat} : {statAspect.HasStat(attributeBased.SourceStat)}");
+            state.Dependency = new CalculateRandomIntInRangeMagnitudeJob()
+            {
+                Random = random,
+            }.ScheduleParallel(state.Dependency);
 
-                    if (statAspect.HasStat(attributeBased.SourceStat))
-                    {
-                        statModifierData.ModifierMagnitude = attributeBased.Coefficient * statAspect.GetCurrentValue(attributeBased.SourceStat);
-                    }
-                    else
-                    {
-                        statModifierData.ModifierMagnitude = attributeBased.Coefficient;
-                    }
-
-                    // Debug.Log($"attributeBasedMagnitudeJob magnitude = {statModifierData.ModifierMagnitude}");
-                }).ScheduleParallel(scalableFloatMagnitudeJob);
-
-            Dependency = attributeBasedMagnitudeJob;
+            state.Dependency = new CalculateStatBasedMagnitudeJob()
+            {
+                CasterLookup         = SystemAPI.GetComponentLookup<CasterComponent>(true),
+                AffectedTargetLookup = SystemAPI.GetComponentLookup<AffectedTargetComponent>(true),
+                StatAspectLookup     = this.statAspectLookup,
+            }.ScheduleParallel(state.Dependency);
         }
     }
 
-    [BurstCompile]
     [WithChangeFilter(typeof(ScalableFloatMagnitudeCalculation))]
     [WithNone(typeof(PeriodEffectInstanceTag))]
+    [BurstCompile]
     public partial struct CalculateScalableFloatMagnitudeJob : IJobEntity
     {
-        void Execute(in ScalableFloatMagnitudeCalculation scalableFloat, ref StatModifierData statModifierData)
+        private void Execute(in ScalableFloatMagnitudeCalculation scalableFloat, ref StatModifierData statModifierData) { statModifierData.ModifierMagnitude = scalableFloat.Value; }
+    }
+
+    [WithChangeFilter(typeof(RandomIntInRangeMagnitudeCalculation))]
+    [WithNone(typeof(PeriodEffectInstanceTag))]
+    [BurstCompile]
+    public partial struct CalculateRandomIntInRangeMagnitudeJob : IJobEntity
+    {
+        public Random Random;
+
+        private void Execute(in RandomIntInRangeMagnitudeCalculation range, ref StatModifierData statModifierData) { statModifierData.ModifierMagnitude = this.Random.NextInt(range.Min, range.Max); }
+    }
+
+    [WithChangeFilter(typeof(StatBasedMagnitudeCalculation))]
+    [WithNone(typeof(PeriodEffectInstanceTag))]
+    [BurstCompile]
+    public partial struct CalculateStatBasedMagnitudeJob : IJobEntity
+    {
+        [ReadOnly] public ComponentLookup<CasterComponent>         CasterLookup;
+        [ReadOnly] public ComponentLookup<AffectedTargetComponent> AffectedTargetLookup;
+        [ReadOnly] public StatAspect.Lookup                        StatAspectLookup;
+
+        private void Execute(ref StatModifierData statModifierData, in StatBasedMagnitudeCalculation attributeBased, in Parent effectEntity)
         {
-            statModifierData.ModifierMagnitude = scalableFloat.Value;
-            // Debug.Log($"CalculateScalableFloatMagnitudeJob magnitude = {statModifierData.ModifierMagnitude}");
+            var sourceEntity = attributeBased.SourceType switch
+            {
+                SourceType.Caster => this.CasterLookup[effectEntity.Value].Value,
+                SourceType.AffectedTarget => this.AffectedTargetLookup[effectEntity.Value].Value,
+                _ => default
+            };
+            var statAspect = this.StatAspectLookup[sourceEntity];
+
+            statModifierData.ModifierMagnitude = statAspect.HasStat(attributeBased.SourceStat)
+                ? attributeBased.Coefficient * statAspect.GetCurrentValue(attributeBased.SourceStat)
+                : attributeBased.Coefficient;
         }
     }
 }

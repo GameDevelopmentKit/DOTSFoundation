@@ -34,9 +34,8 @@
     }
 
     // signal on stat change
-    public struct OnStatChange : IComponentData
+    public struct OnStatChange : IBufferElementData, IEnableableComponent
     {
-        public Entity          Source;
         public StatDataElement ChangedStat;
     }
 }

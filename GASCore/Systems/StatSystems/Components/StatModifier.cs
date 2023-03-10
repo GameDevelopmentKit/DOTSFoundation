@@ -8,6 +8,7 @@
     using GASCore.Services;
     using GASCore.Systems.AbilityMainFlow.Factories;
     using GASCore.Systems.LogicEffectSystems.Components;
+    using GASCore.Systems.VisualEffectSystems.Components;
     using Unity.Collections;
     using Unity.Entities;
     using Zenject;
@@ -16,28 +17,31 @@
     {
         public FixedString64Bytes TargetStat;
 
-        public float              Add;
-        public float              Multiply;
-        public float              Division;
-        public float              Override;
-        
+        public float Add;
+        public float Multiply;
+        public float Divide;
+        public float Override;
+
         public bool IsChangeBaseValue;
     }
 
     public struct StatModifierEntityElement : IBufferElementData
     {
-        public Entity Value;
+        public                          Entity Value;
+        public static implicit operator Entity(StatModifierEntityElement element) => element.Value;
+        public static implicit operator StatModifierEntityElement(Entity element) => new() { Value = element };
     }
 
     public class StatModifierEntityAuthoring : IAbilityActionComponentConverter
     {
         [Inject] private AbilityActionEntityPrefabFactory actionEntityPrefabFactory;
-        
+
         public List<EntityConverter.EntityData<IStatModifierComponentConverter>> StatModifiersData;
 
         public virtual void Convert(EntityCommandBuffer.ParallelWriter ecb, int index, Entity entity)
         {
             ZenjectUtils.GetCurrentContainer()?.Inject(this);
+            ecb.AddBuffer<ModifierAggregatorData>(index, entity);
             var statModifierBuffers = ecb.AddBuffer<StatModifierEntityElement>(index, entity);
             var temp = this.StatModifiersData.Select(data =>
             {
@@ -54,7 +58,7 @@
             ecb.AddChildren(index, entity, listEntityActionPrefab);
         }
     }
-    
+
     #region stat modifier data
 
     public struct StatModifierData : IComponentData
@@ -68,6 +72,7 @@
         {
             public string               Stat;
             public ModifierOperatorType ModifierOperator;
+
             public void Convert(EntityCommandBuffer.ParallelWriter ecb, int index, Entity entity)
             {
                 ecb.AddComponent(index, entity, new StatModifierData()
@@ -88,7 +93,28 @@
         public class _ : IStatModifierComponentConverter
         {
             public float Value;
-            public void  Convert(EntityCommandBuffer.ParallelWriter ecb, int index, Entity entity) { ecb.AddComponent(index, entity, new ScalableFloatMagnitudeCalculation() { Value = this.Value }); }
+
+            public void Convert(EntityCommandBuffer.ParallelWriter ecb, int index, Entity entity) { ecb.AddComponent(index, entity, new ScalableFloatMagnitudeCalculation() { Value = this.Value }); }
+        }
+    }
+
+    public struct RandomIntInRangeMagnitudeCalculation : IMagnitudeCalculation
+    {
+        public int Min;
+        public int Max;
+
+        public class _ : IStatModifierComponentConverter
+        {
+            public SimpleIntRange Range;
+
+            public void Convert(EntityCommandBuffer.ParallelWriter ecb, int index, Entity entity)
+            {
+                ecb.AddComponent(index, entity, new RandomIntInRangeMagnitudeCalculation()
+                {
+                    Min = this.Range.min,
+                    Max = this.Range.max,
+                });
+            }
         }
     }
 
@@ -104,25 +130,26 @@
             public float      Coefficient = 1.0f;
             public string     SourceStat;
             public SourceType SourceType;
+
             public void Convert(EntityCommandBuffer.ParallelWriter ecb, int index, Entity entity)
             {
                 ecb.AddComponent(index, entity, new StatBasedMagnitudeCalculation()
                 {
-                    Coefficient     = this.Coefficient,
-                    SourceStat = this.SourceStat,
-                    SourceType      = this.SourceType,
+                    Coefficient = this.Coefficient,
+                    SourceStat  = this.SourceStat,
+                    SourceType  = this.SourceType,
                 });
             }
         }
     }
 
     #endregion
-    
+
     public enum ModifierOperatorType : uint
     {
         Add      = 0, // use negative number for sub
         Multiply = 1,
-        Division = 2,
+        Divide   = 2,
         Override = 3
     }
 }

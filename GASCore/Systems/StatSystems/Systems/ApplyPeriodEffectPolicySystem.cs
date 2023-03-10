@@ -9,7 +9,7 @@
     using UnityEngine;
 
     [UpdateInGroup(typeof(AbilityLogicEffectGroup))]
-    [UpdateAfter(typeof(ApplyInfiniteEffectPolicySystem))]
+    [UpdateAfter(typeof(ApplyTempEffectPolicySystem))]
     [RequireMatchingQueriesForUpdate]
     [BurstCompile]
     public partial struct ApplyPeriodEffectPolicySystem : ISystem
@@ -49,7 +49,7 @@
         public EntityCommandBuffer.ParallelWriter Ecb;
         public double                             CurrentElapsedTime;
 
-        void Execute(Entity statModifierEntity, [EntityInQueryIndex] int entityInQueryIndex, in PeriodEffect periodEffect)
+        void Execute(Entity statModifierEntity, [EntityIndexInQuery] int entityInQueryIndex, in PeriodEffect periodEffect)
         {
             //wait period in second
             this.Ecb.AddComponent(entityInQueryIndex, statModifierEntity, new EndTimeComponent() { Value = this.CurrentElapsedTime + periodEffect.Value });
@@ -69,9 +69,8 @@
     {
         public EntityCommandBuffer.ParallelWriter Ecb;
 
-        void Execute([EntityInQueryIndex] int entityInQueryIndex, in AffectedTargetComponent affectedTarget, in DynamicBuffer<ModifierAggregatorData> statModifierEntityElementBuffers, in ActivatedStateEntityOwner activatedStateEntityOwner)
+        void Execute([EntityIndexInQuery] int entityInQueryIndex, in AffectedTargetComponent affectedTarget, in DynamicBuffer<ModifierAggregatorData> statModifierEntityElementBuffers, in ActivatedStateEntityOwner activatedStateEntityOwner)
         {
-            Debug.Log("ApplyPeriodEffectPolicyJob");
             // create a period instance effect
             var periodInstanceEntity = this.Ecb.CreateEntity(entityInQueryIndex);
             this.Ecb.AddComponent<PeriodEffectInstanceTag>(entityInQueryIndex, periodInstanceEntity);
