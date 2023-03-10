@@ -6,6 +6,7 @@ namespace GASCore.Systems.AbilityMainFlow.Factories
     using GASCore.Interfaces;
     using GASCore.Services;
     using GASCore.Systems.AbilityMainFlow.Components;
+    using GASCore.Systems.LogicEffectSystems.Components;
     using GASCore.Systems.LogicEffectSystems.Factories;
     using GASCore.Systems.TimelineSystems.Components;
     using GASCore.Systems.TimelineSystems.Factories;
@@ -109,11 +110,11 @@ namespace GASCore.Systems.AbilityMainFlow.Factories
             ecbParallel.AddComponent(index, abilityEntity, new AbilityTimelinePrefabComponent() { Value = timelineEntity });
 
             // setup ability effect pool
-            var effectPoolBuffer = ecbParallel.AddBuffer<AbilityEffectPoolComponent>(index, abilityEntity);
+            var effectPoolBuffer = ecbParallel.AddBuffer<AbilityEffectElement>(index, abilityEntity);
             foreach (var effect in levelRecord.AbilityEffectPool)
             {
                 var effectPrefab = this.abilityEffectEntityPrefabFactory.CreateEntity(ecbParallel, index, effect);
-                effectPoolBuffer.Add(new AbilityEffectPoolComponent() { EffectPrefab = effectPrefab });
+                effectPoolBuffer.Add(new AbilityEffectElement() { EffectPrefab = effectPrefab });
                 ecbParallel.SetParent(index, effectPrefab, abilityEntity);
             }
 
