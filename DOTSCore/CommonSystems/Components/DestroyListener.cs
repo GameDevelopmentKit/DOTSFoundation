@@ -5,9 +5,9 @@
 
     public class DestroyListener : MonoBehaviour
     {
-        private int deadTrigger = Animator.StringToHash(Components.AnimationState.Dead.ToString());
+        private int deadTrigger = Animator.StringToHash(Components.AnimationTrigger.Dead.ToString());
         
-        public void DestroyGameObject(GameObjectHybridLink gameObjectHybridLink)
+        public virtual void DestroyGameObject(GameObjectHybridLink gameObjectHybridLink)
         {
             gameObjectHybridLink.Animator.SetTrigger(this.deadTrigger);
         }

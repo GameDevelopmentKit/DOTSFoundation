@@ -37,13 +37,13 @@
             if (this.EntityManager.HasComponent<AssetPathComponent>(entity))
             {
                 tmpObject.transform.localScale = new Vector3(transform.Scale, transform.Scale, transform.Scale);
-                var listEntityViewMono = tmpObject.GetComponentsInChildren<IEntityViewMono>(true);
+                var listEntityViewMono = tmpObject.GetComponentsInChildren<IEntityViewMono>();
                 foreach (var viewMono in listEntityViewMono)
                 {
                     viewMono.BindEntity(this.EntityManager, entity);
                 }
 
-                var listViewMonoListener = tmpObject.GetComponentsInChildren<IViewMonoListener>(true);
+                var listViewMonoListener = tmpObject.GetComponentsInChildren<IViewMonoListener>();
 
                 if (listViewMonoListener.Length > 0)
                 {
