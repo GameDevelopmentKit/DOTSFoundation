@@ -7,16 +7,15 @@
     using Unity.Burst;
     using Unity.Collections;
     using Unity.Entities;
-    using UnityEngine;
 
     [UpdateInGroup(typeof(AbilityVisualEffectGroup))]
     [RequireMatchingQueriesForUpdate]
     [BurstCompile]
     public partial struct ChangeAnimationStateSystem : ISystem
     {
-        ComponentLookup<AnimationStateComponent> animationStateLookup;
+        ComponentLookup<AnimationTriggerComponent> animationStateLookup;
         [BurstCompile]
-        public void OnCreate(ref SystemState state) { animationStateLookup = state.GetComponentLookup<AnimationStateComponent>(true); }
+        public void OnCreate(ref SystemState state) { animationStateLookup = state.GetComponentLookup<AnimationTriggerComponent>(true); }
 
         [BurstCompile]
         public void OnDestroy(ref SystemState state) { }
@@ -41,12 +40,12 @@
     public partial struct ChangeAnimationStateJob : IJobEntity
     {
         public            EntityCommandBuffer.ParallelWriter       Ecb;
-        [ReadOnly] public ComponentLookup<AnimationStateComponent> AnimationStateLookup;
+        [ReadOnly] public ComponentLookup<AnimationTriggerComponent> AnimationStateLookup;
         void Execute([EntityIndexInQuery] int entityInQueryIndex, in PlayAnimation playAnimation, AffectedTargetComponent affectedTarget)
         {
             if (this.AnimationStateLookup.TryGetComponent(affectedTarget.Value, out var animationState))
             {
-                animationState.ChangeState(playAnimation.Value);
+                animationState.Value = playAnimation.Value;
                 this.Ecb.SetComponent(entityInQueryIndex, affectedTarget.Value, animationState);
             }
         }
