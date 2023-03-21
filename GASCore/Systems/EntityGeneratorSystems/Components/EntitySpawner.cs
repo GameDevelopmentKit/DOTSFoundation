@@ -19,6 +19,7 @@
         public bool IsDrop;
         public bool IsSetChild;
         public bool IsLookSpawnerRotation;
+        public bool IsResetRotationAfterSpawn;
 
         public float SpawnerRadius;
 
@@ -36,11 +37,11 @@
 
         [Range(0f, 1f)] public float SpawnChance = 1f;
 
-        public bool IsDrop                       = false;
-        public bool IsSetChild                   = false;
-        public bool IsLookSpawnerRotation = false;
-
-        public float SpawnerRadius = 0;
+        public bool  IsDrop                    = false;
+        public bool  IsSetChild                = false;
+        public bool  IsLookSpawnerRotation     = false;
+        public bool  IsResetRotationAfterSpawn = false;
+        public float SpawnerRadius             = 0;
         
         public SimpleIntRange   AmountRange     = new() { min = 1, max = 1 };
         public SimpleFloatRange StartAngleRange = new() { min = 0, max = 0 };
@@ -58,14 +59,13 @@
             ecb.SetParent(index, entityPrefab, entity);
             ecb.AddComponent(index, entity, new EntitySpawner()
             {
-                EntityPrefab = entityPrefab,
-                SpawnChance  = this.SpawnChance,
-
-                IsDrop = this.IsDrop,
-                IsSetChild = this.IsSetChild,
-                IsLookSpawnerRotation = this.IsLookSpawnerRotation,
-                
-                SpawnerRadius = this.SpawnerRadius,
+                EntityPrefab              = entityPrefab,
+                SpawnChance               = this.SpawnChance,
+                IsDrop                    = this.IsDrop,
+                IsSetChild                = this.IsSetChild,
+                IsLookSpawnerRotation     = this.IsLookSpawnerRotation,
+                IsResetRotationAfterSpawn = this.IsResetRotationAfterSpawn,
+                SpawnerRadius             = this.SpawnerRadius,
                 
                 AmountRange           = this.AmountRange,
                 StartAngleRange       = new SimpleFloatRange() { min = math.radians(this.StartAngleRange.min), max = math.radians(this.StartAngleRange.max) },

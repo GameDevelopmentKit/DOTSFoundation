@@ -77,8 +77,8 @@
                 spawnData.Clockwise    = this.Random.NextBool() ? 1 : -1;
             }
 
-            var amount = this.Random.NextInt(spawnData.AmountRange.min, spawnData.AmountRange.max);
-
+            var amount        = this.Random.NextInt(spawnData.AmountRange.min, spawnData.AmountRange.max);
+            var startEntitySpawnerRotation = spawnData.CurrentAngle;
             while (amount-- > 0)
             {
                 var newEntity = this.Ecb.Instantiate(index, spawnData.EntityPrefab);
@@ -112,6 +112,12 @@
                     this.Ecb.AddComponent(index, newEntity, this.TeamLookup[caster.Value]);
                 }
             }
+
+            if (spawnData.IsResetRotationAfterSpawn)
+            {
+                spawnData.CurrentAngle = startEntitySpawnerRotation;
+            }
+            
         }
     }
 }
