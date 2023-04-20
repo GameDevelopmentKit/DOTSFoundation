@@ -9,8 +9,8 @@
         public float  RadiusSq;
         public TargetPosition(float3 value, float radiusSq = 0.01f)
         {
-            this.Value    = value;
-            this.RadiusSq = radiusSq;
+            this.Value              = value;
+            this.RadiusSq           = radiusSq;
         }
     }
 
