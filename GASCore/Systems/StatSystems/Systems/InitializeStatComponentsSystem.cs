@@ -14,15 +14,14 @@
     public partial struct InitializeStatComponentsSystem : ISystem
     {
         [BurstCompile]
-        public void OnCreate(ref SystemState state) { }
-        [BurstCompile]
-        public void OnDestroy(ref SystemState state) { }
+        public void OnCreate(ref SystemState state) { state.RequireForUpdate(SystemAPI.QueryBuilder().WithAll<StatDataElement>().WithNone<StatNameToIndex>().Build()); }
+
         [BurstCompile]
         public void OnUpdate(ref SystemState state)
         {
             var ecbSingleton = SystemAPI.GetSingleton<EndSimulationEntityCommandBufferSystem.Singleton>();
             var ecb          = ecbSingleton.CreateCommandBuffer(state.WorldUnmanaged).AsParallelWriter();
-            new InitializeStatComponentsJob() { Ecb    = ecb }.ScheduleParallel();
+            new InitializeStatComponentsJob() { Ecb = ecb }.ScheduleParallel();
         }
     }
 
@@ -41,8 +40,8 @@
                 statToIndex.Add(statDataElements[i].StatName, i);
             }
 
-            Ecb.AddComponent(entityInQueryIndex, entity, new StatNameToIndex() { BlobValue = statToIndex.CreateReference() });
-            
+            Ecb.AddComponent(entityInQueryIndex, entity, new StatNameToIndex() { Value = statToIndex });
+
             Ecb.AddBuffer<OnStatChange>(entityInQueryIndex, entity);
             this.Ecb.SetComponentEnabled<OnStatChange>(entityInQueryIndex, entity, false);
         }

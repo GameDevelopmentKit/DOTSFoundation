@@ -23,10 +23,7 @@
             using var entityQuery = new EntityQueryBuilder(Allocator.Temp).WithAll<WaitToTrigger, CompletedAllTriggerConditionTag>();
             state.RequireForUpdate(state.GetEntityQuery(entityQuery));
         }
-
-        [BurstCompile]
-        public void OnDestroy(ref SystemState state) { }
-
+        
         [BurstCompile]
         public void OnUpdate(ref SystemState state)
         {
@@ -35,7 +32,8 @@
 
             var setEndTimeTriggerAfterSecondJob = new TriggerAttachedTriggerJob()
             {
-                Ecb = ecb
+                Ecb = ecb,
+                TriggerLookup = SystemAPI.GetComponentLookup<TriggerByAnotherTrigger>(true)
             };
             setEndTimeTriggerAfterSecondJob.ScheduleParallel();
         }
@@ -45,7 +43,8 @@
     [WithAll(typeof(CompletedAllTriggerConditionTag))]
     public partial struct TriggerAttachedTriggerJob : IJobEntity
     {
-        public EntityCommandBuffer.ParallelWriter Ecb;
+        public            EntityCommandBuffer.ParallelWriter       Ecb;
+        [ReadOnly] public ComponentLookup<TriggerByAnotherTrigger> TriggerLookup;
         void Execute([EntityIndexInQuery] int entityInQueryIndex, in DynamicBuffer<WaitToTrigger> waitToTriggerBuffer, in ActivatedStateEntityOwner activatedStateEntity,
             in CasterComponent caster, in DynamicBuffer<TargetableElement> targetBuffer, in DynamicBuffer<ExcludeAffectedTargetElement> excludeAffectedTargetBuffer)
         {
@@ -58,17 +57,20 @@
                 this.Ecb.AppendToBuffer(entityInQueryIndex, activatedStateEntity.Value, new LinkedEntityGroup() { Value = abilityTimelineAction });
                 this.Ecb.MarkTriggerConditionComplete<TriggerByAnotherTrigger>(abilityTimelineAction, entityInQueryIndex);
 
-                var targetBufferClone = this.Ecb.AddBuffer<TargetableElement>(entityInQueryIndex, abilityTimelineAction);
+                var targetBufferClone                = this.Ecb.AddBuffer<TargetableElement>(entityInQueryIndex, abilityTimelineAction);
+                var triggerByAnother                 = this.TriggerLookup[waitToTrigger.TriggerEntity];
+                var excludeAffectedTargetBufferClone = this.Ecb.AddBuffer<ExcludeAffectedTargetElement>(entityInQueryIndex, abilityTimelineAction);
+                if (!triggerByAnother.IsCloneTarget) continue;
                 foreach (var targetType in targetBuffer)
                 {
                     targetBufferClone.Add(targetType);
                 }
-
-                var excludeAffectedTargetBufferClone = this.Ecb.AddBuffer<ExcludeAffectedTargetElement>(entityInQueryIndex, abilityTimelineAction);
+                
                 foreach (var excludeAffectedTargetElement in excludeAffectedTargetBuffer)
                 {
                     excludeAffectedTargetBufferClone.Add(excludeAffectedTargetElement);
                 }
+
             }
         }
     }

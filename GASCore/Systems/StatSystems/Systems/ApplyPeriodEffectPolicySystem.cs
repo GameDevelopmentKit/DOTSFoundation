@@ -6,7 +6,6 @@
     using GASCore.Systems.StatSystems.Components;
     using Unity.Burst;
     using Unity.Entities;
-    using UnityEngine;
 
     [UpdateInGroup(typeof(AbilityLogicEffectGroup))]
     [UpdateAfter(typeof(ApplyTempEffectPolicySystem))]

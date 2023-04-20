@@ -27,7 +27,7 @@
         public void OnUpdate(ref SystemState state)
         {
             this.statAspectLookup.Update(ref state);
-            var random = new Random((uint)(SystemAPI.Time.DeltaTime * 100000));
+            var random = new Random((uint)(SystemAPI.Time.ElapsedTime * 100000));
 
             state.Dependency = new CalculateScalableFloatMagnitudeJob().ScheduleParallel(state.Dependency);
 

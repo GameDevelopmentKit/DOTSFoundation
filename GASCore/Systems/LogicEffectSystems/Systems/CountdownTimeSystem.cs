@@ -28,8 +28,6 @@
                 DeltaTime = deltaTime
             }.ScheduleParallel();
         }
-        [BurstCompile]
-        public void OnDestroy(ref SystemState state) { }
     }
 
     [BurstCompile]

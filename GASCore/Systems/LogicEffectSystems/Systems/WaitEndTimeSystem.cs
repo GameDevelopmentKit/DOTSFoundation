@@ -11,33 +11,30 @@
     public partial struct WaitEndTimeSystem : ISystem
     {
         [BurstCompile]
-        public void OnCreate(ref SystemState state)  {  }
-        
-        [BurstCompile]
-        public void OnDestroy(ref SystemState state) { }
-        
+        public void OnCreate(ref SystemState state) { state.RequireForUpdate<EndTimeComponent>(); }
+
         [BurstCompile]
         public void OnUpdate(ref SystemState state)
         {
             var ecbSingleton       = SystemAPI.GetSingleton<EndSimulationEntityCommandBufferSystem.Singleton>();
             var ecb                = ecbSingleton.CreateCommandBuffer(state.WorldUnmanaged).AsParallelWriter();
             var currentElapsedTime = SystemAPI.Time.ElapsedTime;
-            
+
             new WaitEndTimeJob()
             {
-                Ecb = ecb ,
+                Ecb                = ecb,
                 CurrentElapsedTime = currentElapsedTime
             }.ScheduleParallel();
         }
     }
-    
+
     [BurstCompile]
     public partial struct WaitEndTimeJob : IJobEntity
     {
         public EntityCommandBuffer.ParallelWriter Ecb;
         public double                             CurrentElapsedTime;
-        
-        void Execute(Entity entity, [EntityIndexInQuery] int entityInQueryIndex,in EndTimeComponent endTime)
+
+        void Execute(Entity entity, [EntityIndexInQuery] int entityInQueryIndex, in EndTimeComponent endTime)
         {
             if (this.CurrentElapsedTime >= endTime.Value)
             {

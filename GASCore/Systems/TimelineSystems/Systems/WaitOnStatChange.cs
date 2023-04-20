@@ -7,7 +7,6 @@
     using Unity.Burst;
     using Unity.Collections;
     using Unity.Entities;
-    using UnityEngine;
 
     //This system should be update in AbilityVisualEffectGroup, to listen the OnStatChange notify before it's destroyed
     [UpdateInGroup(typeof(AbilityVisualEffectGroup))]
@@ -15,29 +14,19 @@
     [BurstCompile]
     public partial struct WaitOnStatChangeSystem : ISystem
     {
-        private EntityQuery                           triggerOnStatChangeQuery;
-        private ComponentLookup<TriggerOnStatChanged> triggerOnStatChangeComponentLookup;
-        private ComponentLookup<CasterComponent>      casterLookup;
+        private EntityQuery triggerOnStatChangeQuery;
 
         [BurstCompile]
         public void OnCreate(ref SystemState state)
         {
             using var queryBuilder = new EntityQueryBuilder(Allocator.Temp).WithAll<TriggerOnStatChanged>();
             this.triggerOnStatChangeQuery = state.GetEntityQuery(queryBuilder);
-
-            this.triggerOnStatChangeComponentLookup = state.GetComponentLookup<TriggerOnStatChanged>(true);
-            this.casterLookup                       = state.GetComponentLookup<CasterComponent>(true);
+            state.RequireForUpdate<OnStatChange>();
         }
-
-        [BurstCompile]
-        public void OnDestroy(ref SystemState state) { }
 
         [BurstCompile]
         public void OnUpdate(ref SystemState state)
         {
-            this.triggerOnStatChangeComponentLookup.Update(ref state);
-            this.casterLookup.Update(ref state);
-
             var triggerOnHits = this.triggerOnStatChangeQuery.ToEntityListAsync(state.WorldUpdateAllocator, out var getTriggerOnHitHandle);
 
             var ecbSingleton = SystemAPI.GetSingleton<AbilityPresentEntityCommandBufferSystem.Singleton>();
@@ -47,8 +36,8 @@
             {
                 Ecb                                = ecb,
                 TriggerOnStatChangeEntities        = triggerOnHits,
-                TriggerOnStatChangeComponentLookup = this.triggerOnStatChangeComponentLookup,
-                CasterLookup                       = this.casterLookup,
+                TriggerOnStatChangeComponentLookup = SystemAPI.GetComponentLookup<TriggerOnStatChanged>(true),
+                CasterLookup                       = SystemAPI.GetComponentLookup<CasterComponent>(true),
             };
 
             state.Dependency = listenOnHitEventJob.ScheduleParallel(getTriggerOnHitHandle);

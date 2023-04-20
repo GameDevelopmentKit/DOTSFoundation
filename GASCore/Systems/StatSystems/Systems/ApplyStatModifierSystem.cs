@@ -20,11 +20,11 @@
         public void OnCreate(ref SystemState state)
         {
             this.modifierAggregatorLookup = state.GetBufferLookup<ModifierAggregatorData>(true);
-            using var queryBuilder = new EntityQueryBuilder(Allocator.Temp).WithAll<ModifierAggregatorData>().WithAny<InstantEffect, PeriodEffectInstanceTag>();
+            using var queryBuilder = new EntityQueryBuilder(Allocator.Temp).WithAll<ModifierAggregatorData,AffectedTargetComponent>().WithAny<InstantEffect, PeriodEffectInstanceTag>();
             this.instantEffectEntityQuery = state.GetEntityQuery(queryBuilder);
 
             queryBuilder.Reset();
-            queryBuilder.WithAll<ModifierAggregatorData>().WithAny<DurationEffect, InfiniteEffect>().WithNone<PeriodEffect>();
+            queryBuilder.WithAll<ModifierAggregatorData,AffectedTargetComponent>().WithAny<DurationEffect, InfiniteEffect>().WithNone<PeriodEffect>();
             this.tempEffectEntityQuery = state.GetEntityQuery(queryBuilder);
             this.tempEffectEntityQuery.SetChangedVersionFilter(ComponentType.ReadOnly<ModifierAggregatorData>());
         }
@@ -51,7 +51,6 @@
                 ModifierAggregatorLookup = this.modifierAggregatorLookup,
                 IsChangeBaseValue        = false
             }.ScheduleParallel(tempEffectEntityQuery, applyInstantEffectJob);
-            ;
 
             state.Dependency = new CalculateStatValueJob()
             {
@@ -88,9 +87,8 @@
             if (modifierAggregatorBuffer.Length <= 0) return;
             var changedStats = new NativeHashSet<FixedString64Bytes>(statAspect.GetStatCount(), Allocator.Temp);
             // Apply stat modifier for base value first
-            for (var index = 0; index < modifierAggregatorBuffer.Length; index++)
+            foreach (var aggregator in modifierAggregatorBuffer)
             {
-                var aggregator = modifierAggregatorBuffer[index];
                 if (!aggregator.IsChangeBaseValue) continue;
                 if (statAspect.SetBaseValue(aggregator.TargetStat, statAspect.CalculateStatValue(aggregator))) changedStats.Add(aggregator.TargetStat);
             }

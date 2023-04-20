@@ -11,10 +11,7 @@
     public partial struct LifeTimeSystem : ISystem
     {
         [BurstCompile]
-        public void OnCreate(ref SystemState state) { }
-
-        [BurstCompile]
-        public void OnDestroy(ref SystemState state) { }
+        public void OnCreate(ref SystemState state) { state.RequireForUpdate(SystemAPI.QueryBuilder().WithAll<LifeTime>().WithNone<EndTimeComponent>().Build()); }
 
         [BurstCompile]
         public void OnUpdate(ref SystemState state)
@@ -34,6 +31,7 @@
 
     [BurstCompile]
     [WithChangeFilter(typeof(LifeTime))]
+    [WithNone(typeof(EndTimeComponent))]
     public partial struct LifeTimeJob : IJobEntity
     {
         public EntityCommandBuffer.ParallelWriter Ecb;
