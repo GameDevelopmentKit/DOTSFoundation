@@ -22,7 +22,7 @@ namespace GASCore.UnityHybrid.Baker
         {
             public override void Bake(WorldBorder authoring)
             {
-                this.AddComponent(new WorldBorderComponent()
+                this.AddComponent(this.GetEntity(TransformUsageFlags.Dynamic), new WorldBorderComponent()
                 {
                     Left  = authoring.left.position.x + 1,
                     Right = authoring.right.position.x - 1,

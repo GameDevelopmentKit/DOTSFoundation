@@ -5,81 +5,80 @@
     using DOTSCore.CommonSystems.Components;
     using GASCore.Systems.StatSystems.Components;
     using GASCore.Systems.StatSystems.Systems;
+    using Sirenix.Utilities;
     using Unity.Collections;
     using Unity.Entities;
     using UnityEngine;
 
     public abstract class BaseEntityStatView : MonoBehaviour, IEntityViewMono, IViewMonoListener
     {
-        protected readonly Dictionary<FixedString64Bytes, StatDataElement>                StatData            = new();
-        protected readonly Dictionary<FixedString64Bytes, Action<StatDataElement, float>> OnStatChangeActions = new();
+        protected          EntityManager                                   entityManager;
+        protected          Entity                                          entity;
+        protected readonly Dictionary<FixedString64Bytes, StatDataElement> statsData = new();
 
-        public virtual void BindEntity(EntityManager entityManager, Entity entity)
+        private readonly Dictionary<FixedString64Bytes, Action<StatDataElement>>        initStatViewActions   = new();
+        private readonly Dictionary<FixedString64Bytes, Action<StatDataElement, float>> updateStatViewActions = new();
+
+        public void BindEntity(EntityManager entityManager, Entity entity)
         {
-            this.InitStatData(entityManager.GetBuffer<StatDataElement>(entity));
-            this.InitOnStatChangeActions();
+            this.entityManager = entityManager;
+            this.entity        = entity;
+            this.InitStatsData();
+            this.statsData.Values.ForEach(this.InitStatView);
         }
 
-        protected virtual void InitStatData(DynamicBuffer<StatDataElement> statDataBuffer)
+        private void InitStatsData()
         {
-            this.StatData.Clear();
+            this.statsData.Clear();
+            this.initStatViewActions.Clear();
+            this.updateStatViewActions.Clear();
+
+            var statDataBuffer = this.entityManager.GetBuffer<StatDataElement>(this.entity);
+
             foreach (var statData in statDataBuffer)
             {
-                this.StatData[statData.StatName] = statData;
-                this.InitStatView(statData);
+                this.statsData[statData.StatName]             = statData;
+                this.initStatViewActions[statData.StatName]   = null;
+                this.updateStatViewActions[statData.StatName] = null;
             }
-        }
 
-        protected virtual void InitOnStatChangeActions()
-        {
-            this.OnStatChangeActions.Clear();
             foreach (var executor in this.GetComponentsInChildren<OnStatChangeExecutor>())
             {
-                if (this.OnStatChangeActions.ContainsKey(executor.StatName))
-                {
-                    this.OnStatChangeActions[executor.StatName] += executor.Execute;
-                }
-                else
-                {
-                    this.OnStatChangeActions[executor.StatName] = executor.Execute;
-                }
+                this.initStatViewActions[executor.StatName]   +=  executor.InitStatView;
+                this.updateStatViewActions[executor.StatName] += executor.UpdateStatView;
             }
         }
 
-        public virtual void RegisterEvent(ListenerCollector listenerCollector)
+        public void RegisterEvent(ListenerCollector listenerCollector)
         {
-            listenerCollector.Subscribe<ChangeStatEvent>(this.OnEventTrigger);
+            listenerCollector.Subscribe<ChangeStatEvent>(this.OnStatChange);
         }
 
-        protected virtual void OnEventTrigger(ChangeStatEvent data)
+        protected virtual void OnStatChange(ChangeStatEvent data)
         {
-            var changedStat  = data.ChangedStat;
-            var statName     = changedStat.StatName;
-            var changedValue = changedStat.CurrentValue - this.StatData[statName].CurrentValue;
+            var stat         = data.ChangedStat;
+            var statName     = stat.StatName;
+            var changedValue = stat.CurrentValue - this.statsData[statName].CurrentValue;
             if (changedValue == 0) return;
-            this.StatData[statName] = changedStat;
-            this.ChangeStatView(changedStat, changedValue);
+            this.statsData[statName] = stat;
+            this.UpdateStatView(stat, changedValue);
         }
 
-        protected virtual void InitStatView(StatDataElement data)
+        protected virtual void InitStatView(StatDataElement stat)
         {
+            this.initStatViewActions[stat.StatName]?.Invoke(stat);
         }
 
-        protected virtual void ChangeStatView(StatDataElement changedStat, float changedValue)
+        protected virtual void UpdateStatView(StatDataElement stat, float changedValue)
         {
-            if (!this.OnStatChangeActions.TryGetValue(changedStat.StatName, out var action)) return;
-            action(changedStat, changedValue);
-        }
-
-        protected StatDataElement GetCurrentStatData(FixedString64Bytes statName)
-        {
-            return this.StatData.TryGetValue(statName, out var stat) ? stat : default;
+            this.updateStatViewActions[stat.StatName]?.Invoke(stat, changedValue);
         }
     }
 
     public abstract class OnStatChangeExecutor : MonoBehaviour
     {
         public abstract FixedString64Bytes StatName { get; }
-        public abstract void               Execute(StatDataElement changedStat, float changedValue);
+        public abstract void               InitStatView(StatDataElement stat);
+        public abstract void               UpdateStatView(StatDataElement stat, float changedValue);
     }
 }
