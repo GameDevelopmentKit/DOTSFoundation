@@ -26,8 +26,10 @@
         public SimpleIntRange   AmountRange;
         public SimpleFloatRange StartAngleRange;
         public SimpleFloatRange AngleStepRange;
+        public SimpleFloatRange PositionStepRange;
 
         public float CurrentAngle;
+        public float CurrentPosition;
         public int   Clockwise;
     }
 
@@ -42,11 +44,11 @@
         public bool  IsLookSpawnerRotation     = false;
         public bool  IsResetRotationAfterSpawn = false;
         public float SpawnerRadius             = 0;
-        
-        public SimpleIntRange   AmountRange     = new() { min = 1, max = 1 };
-        public SimpleFloatRange StartAngleRange = new() { min = 0, max = 0 };
-        public SimpleFloatRange AngleStepRange  = new() { min = 0, max = 0 };
 
+        public SimpleIntRange                                  AmountRange       = new() { min = 1, max = 1 };
+        public SimpleFloatRange                                StartAngleRange   = new() { min = 0, max = 0 };
+        public SimpleFloatRange                                AngleStepRange    = new() { min = 0, max = 0 };
+        public SimpleFloatRange                                PositionStepRange = new() { min = 0, max = 0 };
         public EntityConverter.EntityData<IComponentConverter> EntityPrefab;
 
         public bool AttachToAffectedTarget = true;
@@ -66,14 +68,14 @@
                 IsLookSpawnerRotation     = this.IsLookSpawnerRotation,
                 IsResetRotationAfterSpawn = this.IsResetRotationAfterSpawn,
                 SpawnerRadius             = this.SpawnerRadius,
-                
-                AmountRange           = this.AmountRange,
-                StartAngleRange       = new SimpleFloatRange() { min = math.radians(this.StartAngleRange.min), max = math.radians(this.StartAngleRange.max) },
-                AngleStepRange        = new SimpleFloatRange() { min = math.radians(this.AngleStepRange.min), max  = math.radians(this.AngleStepRange.max) },
 
-                Clockwise = 0,
+                AmountRange       = this.AmountRange,
+                StartAngleRange   = new SimpleFloatRange() { min = math.radians(this.StartAngleRange.min), max   = math.radians(this.StartAngleRange.max) },
+                AngleStepRange    = new SimpleFloatRange() { min = math.radians(this.AngleStepRange.min), max    = math.radians(this.AngleStepRange.max) },
+                PositionStepRange = new SimpleFloatRange() { min = math.radians(this.PositionStepRange.min), max = math.radians(this.PositionStepRange.max) },
+                Clockwise         = 0,
             });
-            if(this.AttachToAffectedTarget)
+            if (this.AttachToAffectedTarget)
                 ecb.AddComponent<AttachToAffectedTarget>(index, entity);
         }
     }
