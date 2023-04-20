@@ -4,6 +4,7 @@
     using GASCore.Groups;
     using GASCore.Systems.AbilityMainFlow.Components;
     using GASCore.Systems.LogicEffectSystems.Components;
+    using GASCore.Systems.StatSystems.Components;
     using GASCore.Systems.TargetDetectionSystems.Components;
     using Unity.Burst;
     using Unity.Collections;
@@ -24,7 +25,7 @@
         protected override void OnCreate()
         {
             this.endSimEcbSystem = this.World.GetExistingSystemManaged<EndSimulationEntityCommandBufferSystem>();
-            using var queryBuilder = new EntityQueryBuilder(Allocator.Temp).WithAll<TeamOwnerId, WorldTransform, MovementDirection>();
+            using var queryBuilder = new EntityQueryBuilder(Allocator.Temp).WithAll<TeamOwnerId, LocalToWorld, StatNameToIndex>();
             this.teamQuery = this.GetEntityQuery(queryBuilder);
         }
 
@@ -32,7 +33,7 @@
         {
             var ecb        = this.endSimEcbSystem.CreateCommandBuffer().AsParallelWriter();
             var entityList = this.teamQuery.ToEntityListAsync(this.WorldUpdateAllocator, out var getTargetEntityJobHandle);
-            var transforms = this.teamQuery.ToComponentDataListAsync<WorldTransform>(this.WorldUpdateAllocator, out var getPositionJobHandle);
+            var transforms = this.teamQuery.ToComponentDataListAsync<LocalToWorld>(this.WorldUpdateAllocator, out var getPositionJobHandle);
             var jobCombine = JobHandle.CombineDependencies(new NativeArray<JobHandle>(4, Allocator.Temp)
                 { [0] = getTargetEntityJobHandle, [1] = getPositionJobHandle, [2] = this.Dependency });
 
@@ -40,7 +41,7 @@
                 .ForEach((Entity activatedStateAbilityEntity, int entityInQueryIndex, ref DynamicBuffer<EntityInAbilityRangeElement> entityInRangeBuffer,
                     in CastRangeComponent castRange, in CasterComponent caster) =>
                 {
-                    var casterPosition = SystemAPI.GetComponent<WorldTransform>(caster.Value).Position;
+                    var casterPosition = SystemAPI.GetComponent<LocalToWorld>(caster.Value).Position;
                     var sqrRange       = castRange.Value * castRange.Value;
 
                     for (int i = 0; i < transforms.Length; i++)

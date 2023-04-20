@@ -2,7 +2,6 @@ namespace GASCore.Systems.StatSystems.Systems
 {
     using GASCore.Groups;
     using GASCore.Systems.AbilityMainFlow.Components;
-    using GASCore.Systems.LogicEffectSystems.Components;
     using GASCore.Systems.StatSystems.Components;
     using Unity.Burst;
     using Unity.Collections;
@@ -12,44 +11,33 @@ namespace GASCore.Systems.StatSystems.Systems
     [UpdateAfter(typeof(AggregateStatModifierSystem))]
     [RequireMatchingQueriesForUpdate]
     [BurstCompile]
-    public partial struct UpdateKillCountSystem : ISystem
+    public partial struct UpdateKillCountStatSystem : ISystem
     {
-        private ComponentLookup<TagComponent> tagLookup;
-
-        [BurstCompile]
         public void OnCreate(ref SystemState state)
         {
-            this.tagLookup = state.GetComponentLookup<TagComponent>(true);
+            state.RequireForUpdate<UpdateKillCountStat>();
         }
 
-        [BurstCompile]
-        public void OnDestroy(ref SystemState state)
-        {
-        }
-
-        [BurstCompile]
         public void OnUpdate(ref SystemState state)
         {
-            this.tagLookup.Update(ref state);
-
-            new UpdateKillCountJob()
+            state.Dependency = new UpdateKillCountJob
             {
-                TagLookup = this.tagLookup,
-            }.ScheduleParallel();
+                StatNameLookup = SystemAPI.GetComponentLookup<UpdateKillCountStatNameComponent>(true),
+            }.ScheduleParallel(state.Dependency);
         }
     }
 
-    [WithChangeFilter(typeof(UpdateKillCountTag))]
+    [WithChangeFilter(typeof(UpdateKillCountStat))]
     [BurstCompile]
     public partial struct UpdateKillCountJob : IJobEntity
     {
-        [ReadOnly] public ComponentLookup<TagComponent> TagLookup;
+        [ReadOnly] public ComponentLookup<UpdateKillCountStatNameComponent> StatNameLookup;
 
         private void Execute(ref DynamicBuffer<ModifierAggregatorData> modifierAggregatorBuffer, in CasterComponent caster)
         {
             modifierAggregatorBuffer.Add(new ModifierAggregatorData()
             {
-                TargetStat = this.TagLookup[caster],
+                TargetStat = this.StatNameLookup[caster],
                 Add        = -1,
                 Multiply   = 1,
                 Divide     = 1,

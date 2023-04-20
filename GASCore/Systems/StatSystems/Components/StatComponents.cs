@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using DOTSCore.Extension;
 using GASCore.Interfaces;
 using GASCore.Systems.TimelineSystems.Components;
 using Unity.Collections;
@@ -13,8 +14,15 @@ namespace GASCore.Systems.StatSystems.Components
         public float              OriginValue;
         public float              BaseValue;
         public float              AddedValue;
+        public float              CurrentValue => this.BaseValue + this.AddedValue;
 
-        public float CurrentValue => this.BaseValue + this.AddedValue;
+        public StatDataElement(FixedString64Bytes statName, float originValue)
+        {
+            this.StatName    = statName;
+            this.OriginValue = originValue;
+            this.BaseValue   = originValue;
+            this.AddedValue  = 0;
+        }
     }
 
 
@@ -31,25 +39,23 @@ namespace GASCore.Systems.StatSystems.Components
 
         public void Convert(EntityCommandBuffer.ParallelWriter ecb, int index, Entity entity)
         {
-            var statBuffer  = ecb.AddBuffer<StatDataElement>(index, entity);
-
-            for (var i = 0; i < this.Value.Count; i++)
+            var statBuffer = ecb.AddBuffer<StatDataElement>(index, entity);
+            foreach (var stat in this.Value)
             {
-                var stat = this.Value[i];
-                statBuffer.Add(new StatDataElement()
-                {
-                    StatName    = stat.StatName,
-                    OriginValue = stat.BaseValue,
-                    BaseValue   = stat.BaseValue,
-                    AddedValue  = 0
-                });
+                statBuffer.Add(new StatDataElement(stat.StatName, stat.BaseValue));
             }
         }
     }
 
     public struct StatNameToIndex : IComponentData
     {
-        public BlobAssetReference<NativeHashMap<FixedString64Bytes, int>> BlobValue;
+        private BlobAssetReference<NativeHashMap<FixedString64Bytes, int>> blobValue;
+
+        public NativeHashMap<FixedString64Bytes, int> Value
+        {
+            get => this.blobValue.Value;
+            set => this.blobValue = value.CreateReference();
+        }
     }
 
     public readonly partial struct StatAspect : IAspect
@@ -60,7 +66,7 @@ namespace GASCore.Systems.StatSystems.Components
 
         public bool SetBaseValue(FixedString64Bytes statName, float newValue)
         {
-            if (!this.statNameToIndex.ValueRO.BlobValue.Value.TryGetValue(statName, out var statIndex)) return false;
+            if (!this.statNameToIndex.ValueRO.Value.TryGetValue(statName, out var statIndex)) return false;
             var statData = this.statDataBuffer[statIndex];
             statData.BaseValue = newValue;
             this.statDataBuffer.RemoveAt(statIndex);
@@ -70,7 +76,7 @@ namespace GASCore.Systems.StatSystems.Components
 
         public bool SetAddedValue(FixedString64Bytes statName, float newValue)
         {
-            if (!this.statNameToIndex.ValueRO.BlobValue.Value.TryGetValue(statName, out var statIndex)) return false;
+            if (!this.statNameToIndex.ValueRO.Value.TryGetValue(statName, out var statIndex)) return false;
             var statData = this.statDataBuffer[statIndex];
             statData.AddedValue = newValue;
             this.statDataBuffer.RemoveAt(statIndex);
@@ -78,11 +84,14 @@ namespace GASCore.Systems.StatSystems.Components
             return true;
         }
 
-        public int GetStatCount() { return this.statDataBuffer.Length; }
+        public int GetStatCount()
+        {
+            return this.statDataBuffer.Length;
+        }
 
         public float GetBaseValue(FixedString64Bytes statName)
         {
-            if (this.statNameToIndex.ValueRO.BlobValue.Value.TryGetValue(statName, out var statIndex))
+            if (this.statNameToIndex.ValueRO.Value.TryGetValue(statName, out var statIndex))
                 return this.statDataBuffer[statIndex].BaseValue;
 
             return 0;
@@ -90,7 +99,7 @@ namespace GASCore.Systems.StatSystems.Components
 
         public float GetCurrentValue(FixedString64Bytes statName)
         {
-            if (this.statNameToIndex.ValueRO.BlobValue.Value.TryGetValue(statName, out var statIndex))
+            if (this.statNameToIndex.ValueRO.Value.TryGetValue(statName, out var statIndex))
                 return this.statDataBuffer[statIndex].CurrentValue;
 
             return 0;
@@ -98,7 +107,7 @@ namespace GASCore.Systems.StatSystems.Components
 
         public int GetStatIndex(FixedString64Bytes statName)
         {
-            if (this.statNameToIndex.ValueRO.BlobValue.Value.TryGetValue(statName, out var statIndex))
+            if (this.statNameToIndex.ValueRO.Value.TryGetValue(statName, out var statIndex))
             {
                 return statIndex;
             }
@@ -108,7 +117,7 @@ namespace GASCore.Systems.StatSystems.Components
 
         public void NotifyStatChange(EntityCommandBuffer.ParallelWriter ecb, int entityInQueryIndex, FixedString64Bytes statName)
         {
-            if (!this.statNameToIndex.ValueRO.BlobValue.Value.TryGetValue(statName, out var statIndex)) return;
+            if (!this.statNameToIndex.ValueRO.Value.TryGetValue(statName, out var statIndex)) return;
             ecb.SetComponentEnabled<OnStatChange>(entityInQueryIndex, this.sourceEntity, true);
             ecb.AppendToBuffer(entityInQueryIndex, this.sourceEntity, new OnStatChange()
             {
@@ -116,7 +125,10 @@ namespace GASCore.Systems.StatSystems.Components
             });
         }
 
-        public bool HasStat(FixedString64Bytes statName) { return this.statNameToIndex.ValueRO.BlobValue.Value.ContainsKey(statName); }
+        public bool HasStat(FixedString64Bytes statName)
+        {
+            return this.statNameToIndex.ValueRO.Value.ContainsKey(statName);
+        }
 
         public float CalculateStatValue(ModifierAggregatorData aggregator)
         {

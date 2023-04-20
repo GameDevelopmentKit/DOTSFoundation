@@ -13,33 +13,16 @@
     [BurstCompile]
     public partial struct WaitOnTargetEntityOutCastRangeSystem : ISystem
     {
-        private ComponentLookup<TriggerOnOutAbilityRange> triggerOnOutAbilityRangeLookup;
-        private BufferLookup<LinkedEntityGroup>           linkedEntityLookup;
-
-        [BurstCompile]
-        public void OnCreate(ref SystemState state)
-        {
-            this.triggerOnOutAbilityRangeLookup  = state.GetComponentLookup<TriggerOnOutAbilityRange>(true);
-            this.linkedEntityLookup              = state.GetBufferLookup<LinkedEntityGroup>(true);
-        }
-
-        [BurstCompile]
-        public void OnDestroy(ref SystemState state) { }
-
         [BurstCompile]
         public void OnUpdate(ref SystemState state)
         {
-            this.triggerOnOutAbilityRangeLookup.Update(ref state);
-            this.linkedEntityLookup.Update(ref state);
-
             var ecbSingleton = SystemAPI.GetSingleton<EndSimulationEntityCommandBufferSystem.Singleton>();
-            var ecb          = ecbSingleton.CreateCommandBuffer(state.WorldUnmanaged).AsParallelWriter();
 
             var waitOnTargetEntityOutCastRangeJob = new WaitOnTargetEntityOutCastRangeJob()
             {
-                Ecb                             = ecb,
-                LinkedEntityLookup              = this.linkedEntityLookup,
-                TriggerOnOutAbilityRangeLookup  = this.triggerOnOutAbilityRangeLookup
+                Ecb                            = ecbSingleton.CreateCommandBuffer(state.WorldUnmanaged).AsParallelWriter(),
+                TriggerOnOutAbilityRangeLookup = SystemAPI.GetComponentLookup<TriggerOnOutAbilityRange>(true),
+                LinkedEntityLookup             = SystemAPI.GetBufferLookup<LinkedEntityGroup>(true)
             };
 
             state.Dependency = waitOnTargetEntityOutCastRangeJob.ScheduleParallel(state.Dependency);
