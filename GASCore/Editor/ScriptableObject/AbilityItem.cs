@@ -116,7 +116,7 @@ namespace GASCore.Editor.ScriptableObject
         [SerializeReference] public List<IAbilityActivateConditionConverter> abilityActivateConditionComponents = new();
 
 
-        [HorizontalGroup(GroupID = "ActivateComponentGroup", Title = "Activated Components Group", Width = 0.3f, PaddingRight = 15)] [ListDrawerSettings(ShowIndexLabels = true)]
+        [HorizontalGroup(GroupID = "ActivateComponentGroup", Title = "Activated Components Group", Width = 0.3f)] [ListDrawerSettings(ShowIndexLabels = true)]
         public List<EntityConverter.EntityData<ITimelineActionComponentConverter>> timelineComponents = new();
 
         [HorizontalGroup(GroupID = "ActivateComponentGroup")]

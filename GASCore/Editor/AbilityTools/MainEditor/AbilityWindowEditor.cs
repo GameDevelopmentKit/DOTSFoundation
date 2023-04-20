@@ -156,7 +156,7 @@ namespace GASCore.Editor.AbilityTools.MainEditor
             //There will only ever be one because SelectionType is set to Single
             this.activeItem = (AbilityItem)selectedItems.First();
             //highlight on folder
-            EditorGUIUtility.PingObject(this.activeItem);
+            // EditorGUIUtility.PingObject(this.activeItem);
 
             var index = this.abilityInventory.FindIndex(x => x == this.activeItem);
             this.lastSelectionItem = index == -1 ? 0 : index;

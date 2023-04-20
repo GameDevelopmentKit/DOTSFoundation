@@ -26,8 +26,7 @@
             this.Add(template.CloneTree());
 
             this.abilityGeneralInfoView = this.Q("General");
-            this.abilityLevelEditorView = new IMGUIContainer();
-            this.Q("LevelArea").Add(this.abilityLevelEditorView);
+            this.abilityLevelEditorView = this.Q<IMGUIContainer>("AbilityLevelEditor");
             this.abilityGeneralInfoView.Q<ObjectField>("IconPicker").RegisterValueChangedCallback(this.OnChangeAbilityIcon);
         }
 
