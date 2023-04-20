@@ -15,11 +15,7 @@ namespace GASCore.Systems.VisualEffectSystems.Systems
         [BurstCompile]
         public void OnCreate(ref SystemState state)
         {
-        }
-
-        [BurstCompile]
-        public void OnDestroy(ref SystemState state)
-        {
+            state.RequireForUpdate<FollowAffectedTarget>();
         }
 
         [BurstCompile]
@@ -57,6 +53,8 @@ namespace GASCore.Systems.VisualEffectSystems.Systems
             {
                 RadiusSq = data.Radius * data.Radius
             });
+            
+            if(data.RotateSpeed <= 0) return;
             this.Ecb.AddComponent(entityInQueryIndex, source, new RotationSpeed()
             {
                 Value = data.RotateSpeed

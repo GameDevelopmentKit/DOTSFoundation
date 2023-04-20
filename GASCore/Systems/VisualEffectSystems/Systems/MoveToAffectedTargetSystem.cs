@@ -14,26 +14,19 @@
     [BurstCompile]
     public partial struct MoveToAffectedTargetSystem : ISystem
     {
-        ComponentLookup<LocalToWorld> positionLookup;
-
         [BurstCompile]
-        public void OnCreate(ref SystemState state) { this.positionLookup = state.GetComponentLookup<LocalToWorld>(true); }
-
-        [BurstCompile]
-        public void OnDestroy(ref SystemState state) { }
-
+        public void OnCreate(ref SystemState state) { state.RequireForUpdate<MoveToAffectedTarget>(); }
+        
         [BurstCompile]
         public void OnUpdate(ref SystemState state)
         {
             var ecbSingleton = SystemAPI.GetSingleton<AbilityPresentEntityCommandBufferSystem.Singleton>();
             var ecb          = ecbSingleton.CreateCommandBuffer(state.WorldUnmanaged).AsParallelWriter();
-            this.positionLookup.Update(ref state);
-            var lifeTimeJob = new MoveToAffectedTargetJob()
+            new MoveToAffectedTargetJob()
             {
                 Ecb            = ecb,
-                PositionLookup = this.positionLookup
-            };
-            lifeTimeJob.ScheduleParallel();
+                PositionLookup = SystemAPI.GetComponentLookup<LocalToWorld>(true)
+            }.ScheduleParallel();
         }
     }
 

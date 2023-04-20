@@ -19,16 +19,10 @@ namespace GASCore.Systems.LogicEffectSystems.Systems
         }
     }
 
-    [UpdateInGroup(typeof(AbilityLogicEffectGroup))]
+    [UpdateInGroup(typeof(GameAbilityFixedUpdateSystemGroup))]
     [BurstCompile]
     public partial struct MovementInDirSystem : ISystem
     {
-        [BurstCompile]
-        public void OnCreate(ref SystemState state) { }
-
-        [BurstCompile]
-        public void OnDestroy(ref SystemState state) { }
-
         [BurstCompile]
         public void OnUpdate(ref SystemState state)
         {

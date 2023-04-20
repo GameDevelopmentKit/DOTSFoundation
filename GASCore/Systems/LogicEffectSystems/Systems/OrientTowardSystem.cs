@@ -20,16 +20,13 @@
         }
     }
 
-    [UpdateInGroup(typeof(AbilityLogicEffectGroup))]
+    [UpdateInGroup(typeof(GameAbilityFixedUpdateSystemGroup))]
     [BurstCompile]
     public partial struct OrientTowardSystem : ISystem
     {
         private float3 upVector;
         [BurstCompile]
         public void OnCreate(ref SystemState state) { this.upVector = new float3(0, 1, 0); }
-
-        [BurstCompile]
-        public void OnDestroy(ref SystemState state) { }
 
         [BurstCompile]
         public void OnUpdate(ref SystemState state)

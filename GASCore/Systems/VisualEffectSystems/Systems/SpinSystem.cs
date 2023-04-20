@@ -7,17 +7,11 @@
     using Unity.Mathematics;
     using Unity.Transforms;
 
-    [UpdateInGroup(typeof(AbilityVisualEffectGroup))]
+    [UpdateInGroup(typeof(GameAbilityFixedUpdateSystemGroup))]
     [RequireMatchingQueriesForUpdate]
     [BurstCompile]
     public partial struct SpinSystem : ISystem
-    {
-        [BurstCompile]
-        public void OnCreate(ref SystemState state) { }
-
-        [BurstCompile]
-        public void OnDestroy(ref SystemState state) { }
-
+    { 
         [BurstCompile]
         public void OnUpdate(ref SystemState state)
         {

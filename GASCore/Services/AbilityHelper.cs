@@ -41,7 +41,7 @@
                         }
 
                         //DON'T REMOVE THIS LOG, it's used to fix a magic bug on release build
-                        Debug.Log($"AddAllAffectedTargetInAoe - targetBuffer count = {result.Count}");
+                        // Debug.Log($"AddAllAffectedTargetInAoe - targetBuffer count = {result.Count}");
 
                         break;
                     case TargetType.Ally:

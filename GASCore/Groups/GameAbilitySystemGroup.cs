@@ -1,4 +1,6 @@
-﻿namespace GASCore.Groups
+﻿using Unity.Physics.Systems;
+
+namespace GASCore.Groups
 {
     using Unity.Collections;
     using Unity.Collections.LowLevel.Unsafe;
@@ -11,7 +13,7 @@
     public partial class GameAbilityInitializeSystemGroup { }
 
     [UpdateInGroup(typeof(GameAbilityInitializeSystemGroup))]
-    public class AbilityMainFlowGroup : ComponentSystemGroup { }
+    public partial class AbilityMainFlowGroup : ComponentSystemGroup { }
 
     #endregion
 
@@ -20,20 +22,23 @@
     [UpdateInGroup(typeof(SimulationSystemGroup), OrderFirst = true)]
     [UpdateBefore(typeof(TransformSystemGroup))]
     public partial class GameAbilityBeginSimulationSystemGroup { }
+    
+    [UpdateInGroup(typeof(AfterPhysicsSystemGroup))]
+    public partial class GameAbilityFixedUpdateSystemGroup { }
 
     [UpdateInGroup(typeof(LateSimulationSystemGroup))]
     public partial class GameAbilityLateSimulationSystemGroup { }
 
     [UpdateInGroup(typeof(GameAbilityLateSimulationSystemGroup))]
-    public class AbilityTimelineGroup : ComponentSystemGroup { }
+    public partial class AbilityTimelineGroup : ComponentSystemGroup { }
 
     [UpdateInGroup(typeof(GameAbilityLateSimulationSystemGroup))]
     [UpdateAfter(typeof(AbilityTimelineGroup))]
-    public class AbilityCommonSystemGroup : ComponentSystemGroup { }
+    public partial class AbilityCommonSystemGroup : ComponentSystemGroup { }
 
     [UpdateInGroup(typeof(GameAbilityLateSimulationSystemGroup))]
     [UpdateAfter(typeof(AbilityCommonSystemGroup))]
-    public class AbilityLogicEffectGroup : ComponentSystemGroup { }
+    public partial class AbilityLogicEffectGroup : ComponentSystemGroup { }
 
     #endregion
 
@@ -44,16 +49,16 @@
 
 
     [UpdateInGroup(typeof(GameAbilityPresentSystemGroup))]
-    public class AbilityVisualEffectGroup : ComponentSystemGroup { }
+    public partial class AbilityVisualEffectGroup : ComponentSystemGroup { }
 
     [UpdateInGroup(typeof(GameAbilityPresentSystemGroup))]
     [UpdateAfter(typeof(AbilityPresentEntityCommandBufferSystem))]
-    public class AbilityCleanupSystemGroup : ComponentSystemGroup { }
+    public partial class AbilityCleanupSystemGroup : ComponentSystemGroup { }
 
 
     [UpdateInGroup(typeof(GameAbilityPresentSystemGroup))]
     [UpdateAfter(typeof(AbilityVisualEffectGroup))]
-    public class AbilityPresentEntityCommandBufferSystem : EntityCommandBufferSystem
+    public partial class AbilityPresentEntityCommandBufferSystem : EntityCommandBufferSystem
     {
         /// <summary>
         /// Call <see cref="SystemAPI.GetSingletonRW{T}"/> to get this component for this system, and then call

@@ -22,23 +22,18 @@
         [BurstCompile]
         public void OnUpdate(ref SystemState state)
         {
-            var ecbSingleton = SystemAPI.GetSingleton<AbilityPresentEntityCommandBufferSystem.Singleton>();
-            var ecb          = ecbSingleton.CreateCommandBuffer(state.WorldUnmanaged).AsParallelWriter();
             var deltaTime    = SystemAPI.Time.DeltaTime;
 
             new CurveForwardJob()
             {
-                Ecb       = ecb,
                 DeltaTime = deltaTime,
             }.ScheduleParallel();
         }
     }
 
     [BurstCompile]
-    [WithNone(typeof(ArrivedAtDestinationTag))]
     public partial struct CurveForwardJob : IJobEntity
     {
-        public EntityCommandBuffer.ParallelWriter Ecb;
         public float                              DeltaTime;
 
         [NativeSetThreadIndex] private int threadId;
@@ -58,7 +53,6 @@
             // arrive at destination
             if (math.distancesq(transform.Position, data.Destination) < .1f)
             {
-                this.Ecb.AddComponent<ArrivedAtDestinationTag>(index, entity);
                 return;
             }
 

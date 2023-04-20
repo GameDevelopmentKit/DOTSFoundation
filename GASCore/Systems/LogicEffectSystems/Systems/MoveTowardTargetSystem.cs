@@ -17,7 +17,10 @@ namespace GASCore.Systems.LogicEffectSystems.Systems
             if (math.distancesq(transform.Position, target.Value).IsZero(target.RadiusSq))
             {
                 movementDirection.Value = float3.zero;
-                if (target.RadiusSq <= 0.01f) transform.Position = target.Value;
+                if (target.RadiusSq <= 0.01f)
+                {
+                    transform.Position = target.Value;
+                }
             }
             else
                 movementDirection.Value = math.normalize(target.Value - transform.Position);
@@ -43,6 +46,22 @@ namespace GASCore.Systems.LogicEffectSystems.Systems
         }
     }
 
+    [UpdateInGroup(typeof(GameAbilityFixedUpdateSystemGroup))]
+    [BurstCompile]
+    public partial struct MoveTowardTargetSystem : ISystem
+    {
+        [BurstCompile]
+        public void OnUpdate(ref SystemState state)
+        {
+            new ChaseTargetJob()
+            {
+                TransformLookup = SystemAPI.GetComponentLookup<LocalToWorld>(true)
+            }.ScheduleParallel();
+
+            new UpdateMoveDirJob().ScheduleParallel();
+        }
+    }
+
     [WithAll(typeof(TargetPosition))]
     [WithNone(typeof(MovementDirection))]
     [BurstCompile]
@@ -54,32 +73,22 @@ namespace GASCore.Systems.LogicEffectSystems.Systems
     }
 
 
-    [UpdateInGroup(typeof(AbilityLogicEffectGroup))]
+    [UpdateInGroup(typeof(GameAbilityBeginSimulationSystemGroup))]
+    [RequireMatchingQueriesForUpdate]
     [BurstCompile]
-    public partial struct MoveTowardTargetSystem : ISystem
+    public partial struct AddMoveDirComponentSystem : ISystem
     {
         [BurstCompile]
-        public void OnCreate(ref SystemState state) { }
-
-        [BurstCompile]
-        public void OnDestroy(ref SystemState state) { }
-
+        public void OnCreate(ref SystemState state)
+        {
+            state.RequireForUpdate(SystemAPI.QueryBuilder().WithAll<TargetPosition>().WithNone<MovementDirection>().Build());
+        }
         [BurstCompile]
         public void OnUpdate(ref SystemState state)
         {
-            var ecbSingleton = SystemAPI.GetSingleton<EndSimulationEntityCommandBufferSystem.Singleton>();
+            var ecbSingleton = SystemAPI.GetSingleton<BeginSimulationEntityCommandBufferSystem.Singleton>();
             var ecb          = ecbSingleton.CreateCommandBuffer(state.WorldUnmanaged).AsParallelWriter();
-
-            new ChaseTargetJob()
-            {
-                TransformLookup = SystemAPI.GetComponentLookup<LocalToWorld>(true)
-            }.ScheduleParallel();
-
-            new AddMoveDirComponentJob()
-            {
-                Ecb = ecb
-            }.ScheduleParallel();
-            new UpdateMoveDirJob().ScheduleParallel();
+            new AddMoveDirComponentJob() { Ecb = ecb }.ScheduleParallel();
         }
     }
 }

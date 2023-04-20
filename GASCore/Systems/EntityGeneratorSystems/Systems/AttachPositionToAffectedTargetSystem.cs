@@ -1,4 +1,6 @@
-﻿namespace GASCore.Systems.EntityGeneratorSystems.Systems
+﻿using GASCore.Systems.LogicEffectSystems.Components;
+
+namespace GASCore.Systems.EntityGeneratorSystems.Systems
 {
     using GASCore.Groups;
     using GASCore.Systems.AbilityMainFlow.Components;
@@ -8,46 +10,51 @@
     using Unity.Entities;
     using Unity.Transforms;
 
-    [UpdateInGroup(typeof(GameAbilityBeginSimulationSystemGroup))]
-    [UpdateAfter(typeof(SetupInitialPositionSystem))]
+    [UpdateInGroup(typeof(GameAbilityFixedUpdateSystemGroup))]
     [RequireMatchingQueriesForUpdate]
     [BurstCompile]
     public partial struct AttachPositionToAffectedTargetSystem : ISystem
     {
         [BurstCompile]
-        public void OnCreate(ref SystemState state) { }
-
-        [BurstCompile]
-        public void OnDestroy(ref SystemState state) { }
-
-        [BurstCompile]
         public void OnUpdate(ref SystemState state)
         {
-            new PositionAttachWithPositionOffsetJob { WorldLookup = SystemAPI.GetComponentLookup<LocalToWorld>(true) }.ScheduleParallel();
-            new PositionAttachJob { WorldLookup                   = SystemAPI.GetComponentLookup<LocalToWorld>(true) }.ScheduleParallel();
-        }
-    }
-
-
-    [WithAll(typeof(AttachPositionToAffectedTarget))]
-    [BurstCompile]
-    public partial struct PositionAttachWithPositionOffsetJob : IJobEntity
-    {
-        [ReadOnly] public ComponentLookup<LocalToWorld> WorldLookup;
-
-        private void Execute(in AffectedTargetComponent affectedTarget, ref TransformAspect transformAspect, in PositionOffset positionOffset)
-        {
-            transformAspect.WorldPosition = this.WorldLookup[affectedTarget.Value].Position + positionOffset.Value;
+            new PositionAttachJob
+                {
+                    LocalTransformLookup      = SystemAPI.GetComponentLookup<LocalTransform>(false),
+                    ParentLookup              = SystemAPI.GetComponentLookup<Parent>(true),
+                    PostTransformMatrixLookup = SystemAPI.GetComponentLookup<PostTransformMatrix>(true),
+                    PositionOffsetLookup      = SystemAPI.GetComponentLookup<PositionOffset>(true)
+                }
+                .ScheduleParallel();
         }
     }
 
     [WithAll(typeof(AttachPositionToAffectedTarget))]
-    [WithNone(typeof(PositionOffset))]
     [BurstCompile]
     public partial struct PositionAttachJob : IJobEntity
     {
-        [ReadOnly] public ComponentLookup<LocalToWorld> WorldLookup;
+        [NativeDisableParallelForRestriction] public ComponentLookup<LocalTransform> LocalTransformLookup;
 
-        private void Execute(in AffectedTargetComponent affectedTarget, ref TransformAspect transformAspect) { transformAspect.WorldPosition = this.WorldLookup[affectedTarget.Value].Position; }
+        [ReadOnly] public ComponentLookup<Parent>              ParentLookup;
+        [ReadOnly] public ComponentLookup<PostTransformMatrix> PostTransformMatrixLookup;
+        [ReadOnly] public ComponentLookup<PositionOffset>      PositionOffsetLookup;
+
+        private void Execute(in SourceComponent sourceComponent, in AffectedTargetComponent affectedTarget)
+        {
+            Helpers.ComputeWorldTransformMatrix(affectedTarget, out var affectedTargetWorldMat, ref this.LocalTransformLookup, ref this.ParentLookup, ref this.PostTransformMatrixLookup);
+
+            var sourceTransform = LocalTransformLookup[sourceComponent];
+
+            var affectedTargetWorldPos = affectedTargetWorldMat.Translation();
+            sourceTransform.Position = this.ParentLookup.HasComponent(sourceComponent)
+                ? this.LocalTransformLookup[this.ParentLookup[sourceComponent].Value].InverseTransformPoint(affectedTargetWorldPos)
+                : affectedTargetWorldPos;
+            if (PositionOffsetLookup.TryGetComponent(sourceComponent, out var positionOffset))
+            {
+                sourceTransform.Position += positionOffset.Value;
+            }
+
+            LocalTransformLookup[sourceComponent] = sourceTransform;
+        }
     }
 }
