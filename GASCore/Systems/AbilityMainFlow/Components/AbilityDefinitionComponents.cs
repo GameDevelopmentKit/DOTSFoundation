@@ -43,9 +43,8 @@
 
     public struct CastRangeComponent : IComponentData
     {
-        public                          float Value;
-        public static implicit operator float(CastRangeComponent castRange) => castRange.Value;
-        public static implicit operator CastRangeComponent(float castRange) => new() { Value = castRange };
+        public float Value;
+        public float ValueSqr => this.Value * this.Value;
     }
 
     public struct Cooldown : IComponentData
@@ -66,11 +65,16 @@
         public Entity Value;
     }
 
+    public struct AbilityTimelineInitialElement : IBufferElementData
+    {
+        public Entity Prefab;
+    }
+
     public struct AbilityEffectElement : IBufferElementData
     {
         public Entity EffectPrefab;
     }
-    
+
     public struct AbilityEffectPoolComponent : IComponentData
     {
         public BlobAssetReference<NativeHashMap<FixedString64Bytes, Entity>> BlobValue;

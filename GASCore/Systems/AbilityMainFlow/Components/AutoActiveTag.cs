@@ -2,5 +2,5 @@ namespace GASCore.Systems.AbilityMainFlow.Components
 {
     using Unity.Entities;
 
-    public struct ManualActiveTag : IComponentData { }
+    public struct AutoActiveTag : IComponentData, IEnableableComponent { }
 }

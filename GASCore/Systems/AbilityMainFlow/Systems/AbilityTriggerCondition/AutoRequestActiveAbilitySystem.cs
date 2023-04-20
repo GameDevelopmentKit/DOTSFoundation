@@ -6,6 +6,7 @@
     using GASCore.Systems.LogicEffectSystems.Components;
     using GASCore.Systems.TimelineSystems.Components;
     using Unity.Burst;
+    using Unity.Collections;
     using Unity.Entities;
 
     [UpdateInGroup(typeof(AbilityMainFlowGroup))]
@@ -24,23 +25,31 @@
             new AutoTriggerAbilityAfterCooldownJob() { Ecb = ecb }.ScheduleParallel();
             new AutoTriggerAbilityOnStartJob() { Ecb       = ecb }.ScheduleParallel();
 
-            new AutoRequestActiveAbilityJob() { Ecb = ecb }.ScheduleParallel();
+            new AutoRequestActiveAbilityJob()
+            {
+                Ecb                  = ecb,
+                RecycleTriggerLookup = SystemAPI.GetComponentLookup<RecycleTriggerEntityTag>(true)
+            }.ScheduleParallel();
         }
         [BurstCompile]
         public void OnDestroy(ref SystemState state) { }
     }
 
     [BurstCompile]
-    [WithAll(typeof(AbilityId), typeof(CompletedAllTriggerConditionTag))]
-    [WithNone(typeof(ManualActiveTag), typeof(RequestActivate))]
+    [WithAll(typeof(AbilityId), typeof(CompletedAllTriggerConditionTag), typeof(AutoActiveTag))]
+    [WithNone(typeof(RequestActivate))]
     public partial struct AutoRequestActiveAbilityJob : IJobEntity
     {
-        public EntityCommandBuffer.ParallelWriter Ecb;
-
-        void Execute(Entity abilityEntity, [EntityIndexInQuery] int entityInQueryIndex)
+        public            EntityCommandBuffer.ParallelWriter       Ecb;
+        [ReadOnly] public ComponentLookup<RecycleTriggerEntityTag> RecycleTriggerLookup;
+        void Execute(Entity abilityEntity, [EntityIndexInQuery] int entityInQueryIndex, in AbilityId abilityId)
         {
-            // Debug.Log($"AutoRequestActiveAbilityJob ability Index {abilityEntity.Index}");
-            this.Ecb.SetComponentEnabled<CompletedAllTriggerConditionTag>(entityInQueryIndex, abilityEntity, false);
+            // Debug.Log($"AutoRequestActiveAbilityJob ability {abilityId.Value}");
+            if (!this.RecycleTriggerLookup.HasComponent(abilityEntity))
+            {
+                this.Ecb.SetComponentEnabled<AutoActiveTag>(entityInQueryIndex, abilityEntity, false);
+            }
+
             this.Ecb.SetComponentEnabled<RequestActivate>(entityInQueryIndex, abilityEntity, true);
         }
     }
