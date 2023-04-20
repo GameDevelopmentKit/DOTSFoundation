@@ -8,8 +8,15 @@
 
     public class GameObjectHybridLink : ICleanupComponentData
     {
-        public GameObject Object;
-        public Animator   Animator;
+        public GameObject Value;
+    }
+
+    public class AnimatorHybridLink : IComponentData
+    {
+        public Animator Value;
+        
+        public static implicit operator Animator(AnimatorHybridLink link) => link.Value;
+        public static implicit operator AnimatorHybridLink(Animator animator)  => new() { Value = animator };
     }
 
     public struct IsLoadingGameObjectTag : IComponentData { }

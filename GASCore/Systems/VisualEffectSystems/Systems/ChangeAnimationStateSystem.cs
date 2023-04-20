@@ -3,9 +3,9 @@
     using DOTSCore.CommonSystems.Components;
     using GASCore.Groups;
     using GASCore.Systems.AbilityMainFlow.Components;
+    using GASCore.Systems.LogicEffectSystems.Components;
     using GASCore.Systems.VisualEffectSystems.Components;
     using Unity.Burst;
-    using Unity.Collections;
     using Unity.Entities;
 
     [UpdateInGroup(typeof(AbilityVisualEffectGroup))]
@@ -13,40 +13,27 @@
     [BurstCompile]
     public partial struct ChangeAnimationStateSystem : ISystem
     {
-        ComponentLookup<AnimationTriggerComponent> animationStateLookup;
-        [BurstCompile]
-        public void OnCreate(ref SystemState state) { animationStateLookup = state.GetComponentLookup<AnimationTriggerComponent>(true); }
-
-        [BurstCompile]
-        public void OnDestroy(ref SystemState state) { }
-
         [BurstCompile]
         public void OnUpdate(ref SystemState state)
         {
-            this.animationStateLookup.Update(ref state);
-            var ecbSingleton = SystemAPI.GetSingleton<AbilityPresentEntityCommandBufferSystem.Singleton>();
-            var ecb          = ecbSingleton.CreateCommandBuffer(state.WorldUnmanaged).AsParallelWriter();
-
             new ChangeAnimationStateJob()
             {
-                Ecb = ecb,
-                AnimationStateLookup = animationStateLookup
-            }.ScheduleParallel();
+                AnimationStateLookup = SystemAPI.GetComponentLookup<AnimationTriggerComponent>()
+            }.Schedule();
         }
     }
 
     [BurstCompile]
-    [WithChangeFilter(typeof(PlayAnimation))]
+    [WithNone(typeof(EndTimeComponent))]
     public partial struct ChangeAnimationStateJob : IJobEntity
     {
-        public            EntityCommandBuffer.ParallelWriter       Ecb;
-        [ReadOnly] public ComponentLookup<AnimationTriggerComponent> AnimationStateLookup;
-        void Execute([EntityIndexInQuery] int entityInQueryIndex, in PlayAnimation playAnimation, AffectedTargetComponent affectedTarget)
+        public ComponentLookup<AnimationTriggerComponent> AnimationStateLookup;
+        void Execute(in PlayAnimation playAnimation, AffectedTargetComponent affectedTarget)
         {
             if (this.AnimationStateLookup.TryGetComponent(affectedTarget.Value, out var animationState))
             {
-                animationState.Value = playAnimation.Value;
-                this.Ecb.SetComponent(entityInQueryIndex, affectedTarget.Value, animationState);
+                animationState.Value                            = playAnimation.Value;
+                this.AnimationStateLookup[affectedTarget.Value] = animationState;
             }
         }
     }

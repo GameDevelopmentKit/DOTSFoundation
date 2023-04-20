@@ -14,11 +14,11 @@
 
     public enum AnimationTrigger
     {
-        Idle,
-        Move,
-        Dead,
         AttackA,
         AttackB,
-        Damaged
+        Damaged,
+        Victory,
+        Dead,
+        Idle,
     }
 }
