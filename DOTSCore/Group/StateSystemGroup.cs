@@ -15,7 +15,7 @@
 
         protected override void OnUpdate()
         {
-            if (this.RunInStates.Count == 0 || this.RunInStates.Contains(this.GetSingleton<CurrentGameState>().Value.Value))
+            if (this.RunInStates.Count == 0 || this.RunInStates.Contains(SystemAPI.GetSingleton<CurrentGameState>().Value.Value))
             {
                 base.OnUpdate();
             }

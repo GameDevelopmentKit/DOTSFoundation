@@ -17,7 +17,6 @@ namespace DOTSCore.EntityFactory
         {
             var entity = ecb.CreateEntity(index);
             ecb.AddComponent(index, entity, LocalTransform.Identity);
-            ecb.AddComponent(index, entity, WorldTransform.Identity);
             ecb.AddComponent(index, entity, new LocalToWorld() { Value = float4x4.identity });
             this.InitComponents(ref ecb, index, ref entity, data);
             return entity;

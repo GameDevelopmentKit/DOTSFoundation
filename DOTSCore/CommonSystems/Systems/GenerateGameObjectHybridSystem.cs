@@ -22,21 +22,26 @@
             this.Entities
                 .WithoutBurst()
                 .WithStructuralChanges()
-                .WithNone<GameObjectHybridLink, IsLoadingGameObjectTag>().ForEach((Entity entity, in AssetPathComponent assetPath, in WorldTransform transform) =>
+                .WithNone<GameObjectHybridLink, IsLoadingGameObjectTag>().ForEach((Entity entity, in AssetPathComponent assetPath, in LocalToWorld transform) =>
                 {
                     this.GenerateGameObject(entity, assetPath, transform);
                 }).Run();
         }
 
-        private async void GenerateGameObject(Entity entity, AssetPathComponent assetPath, WorldTransform transform)
+        private unsafe Vector3 GetScaleFromLocalToWorld(LocalToWorld transform)
+        {
+            var mat = *(UnityEngine.Matrix4x4*) &transform;
+            return mat.lossyScale;
+        }
+
+        private async void GenerateGameObject(Entity entity, AssetPathComponent assetPath, LocalToWorld transform)
         {
             this.EntityManager.AddComponent<IsLoadingGameObjectTag>(entity);
             var tmpObject = await this.objectPoolManager.Spawn(assetPath.Path.Value, transform.Position, transform.Rotation);
-            var animator  = tmpObject.GetComponent<Animator>();
 
             if (this.EntityManager.HasComponent<AssetPathComponent>(entity))
             {
-                tmpObject.transform.localScale = new Vector3(transform.Scale, transform.Scale, transform.Scale);
+                tmpObject.transform.localScale = this.GetScaleFromLocalToWorld(transform);
                 var listEntityViewMono = tmpObject.GetComponentsInChildren<IEntityViewMono>();
                 foreach (var viewMono in listEntityViewMono)
                 {
@@ -56,10 +61,18 @@
 
                 this.EntityManager.AddComponentData(entity, new GameObjectHybridLink
                 {
-                    Object   = tmpObject,
-                    Animator = animator,
+                    Value   = tmpObject
                 });
 
+                var animator = tmpObject.GetComponent<Animator>();
+                if (animator != null)
+                {
+                    this.EntityManager.AddComponentData(entity, new AnimatorHybridLink()
+                    {
+                        Value = animator
+                    });
+                }
+                
                 this.EntityManager.RemoveComponent<IsLoadingGameObjectTag>(entity);
             }
             else

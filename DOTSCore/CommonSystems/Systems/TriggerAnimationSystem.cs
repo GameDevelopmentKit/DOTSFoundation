@@ -20,9 +20,9 @@
         }
         protected override void OnUpdate()
         {
-            this.Entities.WithoutBurst().WithChangeFilter<AnimationTriggerComponent>().ForEach((in AnimationTriggerComponent curAnimState, in GameObjectHybridLink hybridLink) =>
+            this.Entities.WithoutBurst().WithChangeFilter<AnimationTriggerComponent>().ForEach((in AnimationTriggerComponent curAnimState, in AnimatorHybridLink animatorHybridLink) =>
             {
-                hybridLink.Animator.SetTrigger(this.animationStateToHashMap[curAnimState.Value]);
+                animatorHybridLink.Value.SetTrigger(this.animationStateToHashMap[curAnimState.Value]);
             }).Run();
         }
     }

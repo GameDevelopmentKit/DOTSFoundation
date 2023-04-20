@@ -12,14 +12,14 @@
         {
             this.Entities.WithoutBurst().WithStructuralChanges().WithNone<AssetPathComponent>().ForEach((Entity entity, in GameObjectHybridLink hybridLink) =>
             {
-                var destroyListener = hybridLink.Object.GetComponent<DestroyListener>();
+                var destroyListener = hybridLink.Value.GetComponent<IDestroyListener>();
                 if (destroyListener == null)
                 {
-                    hybridLink.Object.Recycle();
+                    hybridLink.Value.Recycle();
                 }
                 else
                 {
-                    destroyListener.DestroyGameObject(hybridLink);
+                    destroyListener.DestroyGameObject();
                 }
 
                 EntityManager.RemoveComponent<GameObjectHybridLink>(entity);

@@ -11,7 +11,6 @@ namespace DOTSCore.EntityFactory
         {
             var entity = entityManager.CreateEntity();
             entityManager.AddComponentData(entity, LocalTransform.Identity);
-            entityManager.AddComponentData(entity, WorldTransform.Identity);
             entityManager.AddComponentData(entity, new LocalToWorld() { Value = float4x4.identity });
             this.InitComponents(entityManager, entity, data);
 

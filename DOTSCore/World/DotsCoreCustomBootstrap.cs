@@ -1,4 +1,6 @@
-﻿namespace DOTSCore.World
+﻿using System.Linq;
+
+namespace DOTSCore.World
 {
     using System;
     using DOTSCore.EntityFactory;
@@ -9,25 +11,35 @@
         public bool Initialize(string defaultWorldName)
         {
             World.DefaultGameObjectInjectionWorld = new World(defaultWorldName, WorldFlags.None);
+#if TEST_DOTS
+              var allSystems = DefaultWorldInitialization.GetAllSystems(WorldSystemFilterFlags.Default);
+            var filteredSystems = allSystems.Where(type =>
+            {
+                var assemblyFullName = type.Namespace ?? type.Assembly.FullName;
+                return !assemblyFullName.Contains("Gameplay") && !assemblyFullName.Contains("DOTSCore") &&
+                       !assemblyFullName.Contains("GASCore");
+            });
+            
+            DefaultWorldInitialization.AddSystemsToRootLevelSystemGroups(World.DefaultGameObjectInjectionWorld,
+                filteredSystems);
+            ScriptBehaviourUpdateOrder.AppendWorldToCurrentPlayerLoop(World.DefaultGameObjectInjectionWorld);
+#endif
             return true;
-        }
-
-        public static bool FilterUnitySystemType(Type type)
-        {
-            var chosenString = type.Namespace ?? type.Assembly.FullName;
-            return chosenString.Contains("Unity");
         }
     }
 
-    
+
     public class GameWorldController
     {
-        public           World                  WorldInstance { get; set; }
+        public World WorldInstance { get; set; }
         private readonly GameStateEntityFactory gameStateEntityFactory;
 
-        public GameWorldController(GameStateEntityFactory gameStateEntityFactory) { this.gameStateEntityFactory = gameStateEntityFactory; }
+        public GameWorldController(GameStateEntityFactory gameStateEntityFactory)
+        {
+            this.gameStateEntityFactory = gameStateEntityFactory;
+        }
 
-        public virtual void Initialize(string worldName, string gameState ,bool isDefault = true)
+        public virtual void Initialize(string worldName, string gameState, bool isDefault = true)
         {
             this.WorldInstance = new World(worldName, WorldFlags.Game);
 

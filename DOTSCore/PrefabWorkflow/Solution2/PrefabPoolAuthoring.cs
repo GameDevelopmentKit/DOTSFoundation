@@ -14,7 +14,7 @@
         {
             public override void Bake(PrefabPoolAuthoring authoring)
             {
-                this.AddComponent<LocalTransform>();
+                this.AddComponent<LocalTransform>(this.GetEntity(TransformUsageFlags.Dynamic));
 
                 if (authoring.PoolData == null || authoring.PoolData.ListPrefab == null || authoring.PoolData.ListPrefab.Count == 0)
                     return;
@@ -23,14 +23,14 @@
 
                 foreach (var prefab in authoring.PoolData.ListPrefab)
                 {
-                    var prefabEntity = this.GetEntity(prefab);
+                    var prefabEntity = this.GetEntity(prefab, TransformUsageFlags.Dynamic);
 
                     if (prefabEntity == Entity.Null) continue;
 
                     prefabsDeduped.Add(prefabEntity);
                 }
 
-                var groupBuffer = this.AddBuffer<PrefabPool>();
+                var groupBuffer = this.AddBuffer<PrefabPool>(this.GetEntity(TransformUsageFlags.Dynamic));
                 foreach (var prefabEntity in prefabsDeduped)
                     groupBuffer.Add(new PrefabPool() { Value = prefabEntity });
             }

@@ -5,15 +5,16 @@
     using Unity.Collections;
     using Unity.Entities;
     using Unity.Transforms;
+    using UnityEngine;
     using UnityEngine.Jobs;
-    
+
     //copy from Unity.Entities.CompanionGameObjectUpdateTransformSystem but modify a bit
     struct SyncGameObjectTransformCleanup : ICleanupComponentData
     {
     }
 
     [WorldSystemFilter(WorldSystemFilterFlags.Default | WorldSystemFilterFlags.Editor)]
-    [UpdateAfter(typeof(TransformSystemGroup))]
+    [UpdateAfter(typeof(LateSimulationSystemGroup))]
     [BurstCompile]
     partial class SyncGameObjectTransformSystem : SystemBase
     {
@@ -106,13 +107,13 @@
                     var link   = EntityManager.GetComponentData<GameObjectHybridLink>(entity);
 
                     // It is possible that an object is created and immediately destroyed, and then this shouldn't run.
-                    if (link.Object != null)
+                    if (link.Value != null && !EntityManager.HasComponent<IgnoreSysnTransformComponent>(entity))
                     {
                         IndexAndInstance indexAndInstance = default;
                         indexAndInstance.transformAccessArrayIndex = m_Entities.Length;
-                        indexAndInstance.instanceID                = link.Object.GetInstanceID();
+                        indexAndInstance.instanceID                = link.Value.GetInstanceID();
                         m_EntitiesMap.Add(entity, indexAndInstance);
-                        m_TransformAccessArray.Add(link.Object.transform);
+                        m_TransformAccessArray.Add(link.Value.transform);
                         m_Entities.Add(entity);
                     }
                 }
@@ -133,28 +134,32 @@
                 };
                 RemoveDestroyedEntities(ref args);
             }
-            
+
             Dependency = new CopyTransformJob
             {
-                localToWorld = GetComponentLookup<LocalToWorld>(),
-                entities     = m_Entities
+                localToWorld    = GetComponentLookup<LocalToWorld>(),
+                entities        = m_Entities,
+                ignoreTransform = GetComponentLookup<IgnoreSysnTransformComponent>()
             }.Schedule(m_TransformAccessArray, Dependency);
         }
 
         [BurstCompile]
         struct CopyTransformJob : IJobParallelForTransform
         {
-            [NativeDisableParallelForRestriction] public ComponentLookup<LocalToWorld> localToWorld;
-            [ReadOnly]                            public NativeList<Entity>            entities;
-
+            [NativeDisableParallelForRestriction] public ComponentLookup<LocalToWorld>                 localToWorld;
+            [ReadOnly]                            public NativeList<Entity>                            entities;
+            [NativeDisableParallelForRestriction] public ComponentLookup<IgnoreSysnTransformComponent> ignoreTransform;
             public unsafe void Execute(int index, TransformAccess transform)
             {
                 var entity = this.entities[index];
-                var ltw    = localToWorld[entity];
-                var mat    = *(UnityEngine.Matrix4x4*) &ltw;
-                transform.localPosition = ltw.Position;
-                transform.localRotation = mat.rotation;
-                transform.localScale    = mat.lossyScale;
+                if (!this.ignoreTransform.HasComponent(entity))
+                {
+                    var ltw = localToWorld[entity];
+                    var mat = *(UnityEngine.Matrix4x4*)&ltw;
+                    transform.localPosition = ltw.Position;
+                    transform.localRotation = mat.rotation;
+                    transform.localScale    = mat.lossyScale;
+                }
             }
         }
     }

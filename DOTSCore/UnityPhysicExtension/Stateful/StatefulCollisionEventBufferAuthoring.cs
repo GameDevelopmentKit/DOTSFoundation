@@ -24,9 +24,10 @@ namespace Unity.Physics.Stateful
                         CalculateDetails = authoring.CalculateDetails
                     };
 
-                    AddComponent(dynamicBufferTag);
+                    AddComponent(this.GetEntity(TransformUsageFlags.Dynamic), dynamicBufferTag);
                 }
-                AddBuffer<StatefulCollisionEvent>();
+
+                AddBuffer<StatefulCollisionEvent>(this.GetEntity(TransformUsageFlags.Dynamic));
             }
         }
     }
