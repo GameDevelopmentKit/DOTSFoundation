@@ -3,6 +3,7 @@
     using GASCore.Groups;
     using GASCore.Systems.AbilityMainFlow.Components;
     using GASCore.Systems.LogicEffectSystems.Components;
+    using GASCore.Systems.LogicEffectSystems.Systems;
     using GASCore.Systems.StatSystems.Components;
     using Unity.Burst;
     using Unity.Collections;
@@ -10,7 +11,8 @@
     using Unity.Mathematics;
     using Unity.Transforms;
 
-    [UpdateInGroup(typeof(AbilityLogicEffectGroup), OrderFirst = true)]
+    [UpdateInGroup(typeof(AbilityLogicEffectGroup))]
+    [UpdateAfter(typeof(CountdownTimeSystem))]
     [RequireMatchingQueriesForUpdate]
     [BurstCompile]
     public partial struct CalculateStatModifierMagnitudeSystem : ISystem
@@ -46,7 +48,6 @@
     }
 
     [WithChangeFilter(typeof(ScalableFloatMagnitudeCalculation))]
-    [WithNone(typeof(PeriodEffectInstanceTag))]
     [BurstCompile]
     public partial struct CalculateScalableFloatMagnitudeJob : IJobEntity
     {
@@ -54,7 +55,6 @@
     }
 
     [WithChangeFilter(typeof(RandomIntInRangeMagnitudeCalculation))]
-    [WithNone(typeof(PeriodEffectInstanceTag))]
     [BurstCompile]
     public partial struct CalculateRandomIntInRangeMagnitudeJob : IJobEntity
     {
@@ -64,7 +64,6 @@
     }
 
     [WithChangeFilter(typeof(StatBasedMagnitudeCalculation))]
-    [WithNone(typeof(PeriodEffectInstanceTag))]
     [BurstCompile]
     public partial struct CalculateStatBasedMagnitudeJob : IJobEntity
     {

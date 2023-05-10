@@ -40,10 +40,14 @@
                 statToIndex.Add(statDataElements[i].StatName, i);
             }
 
-            Ecb.AddComponent(entityInQueryIndex, entity, new StatNameToIndex() { Value = statToIndex });
+            this.Ecb.AddComponent(entityInQueryIndex, entity, new StatNameToIndex() { Value = statToIndex });
 
-            Ecb.AddBuffer<OnStatChange>(entityInQueryIndex, entity);
-            this.Ecb.SetComponentEnabled<OnStatChange>(entityInQueryIndex, entity, false);
+            this.Ecb.AddBuffer<StatChangeElement>(entityInQueryIndex, entity);
+            this.Ecb.AddComponent<OnStatChangeTag>(entityInQueryIndex, entity);
+            this.Ecb.SetComponentEnabled<OnStatChangeTag>(entityInQueryIndex, entity, false);
+            
+            this.Ecb.AddComponent<OnUpdateTempStatModifierTag>(entityInQueryIndex, entity);
+            this.Ecb.SetComponentEnabled<OnUpdateTempStatModifierTag>(entityInQueryIndex, entity, false);
         }
     }
 }

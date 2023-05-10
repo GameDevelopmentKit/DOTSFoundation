@@ -13,15 +13,7 @@
     public partial struct CleanupOnStatChangeEventSystem : ISystem
     {
         [BurstCompile]
-        public void OnCreate(ref SystemState state) { state.RequireForUpdate<OnStatChange>();}
-
-        [BurstCompile]
-        public void OnUpdate(ref SystemState state)
-        {
-            var ecbSingleton = SystemAPI.GetSingleton<BeginInitializationEntityCommandBufferSystem.Singleton>();
-            var ecb          = ecbSingleton.CreateCommandBuffer(state.WorldUnmanaged).AsParallelWriter();
-            new CleanupOnStatChangeEventJob() { Ecb    = ecb }.ScheduleParallel();
-        }
+        public void OnUpdate(ref SystemState state) { new CleanupOnStatChangeEventJob().ScheduleParallel(); }
     }
 
     [BurstCompile]
@@ -29,10 +21,10 @@
     {
         public EntityCommandBuffer.ParallelWriter Ecb;
 
-        void Execute(Entity entity, [EntityIndexInQuery] int entityInQueryIndex, ref DynamicBuffer<OnStatChange> statChangeEventBuffer)
+        void Execute(ref DynamicBuffer<StatChangeElement> statChangeEventBuffer, EnabledRefRW<OnStatChangeTag> statChangeEnableState)
         {
             statChangeEventBuffer.Clear();
-            this.Ecb.SetComponentEnabled<OnStatChange>(entityInQueryIndex, entity, false);
+            statChangeEnableState.ValueRW = false;
         }
     }
 }

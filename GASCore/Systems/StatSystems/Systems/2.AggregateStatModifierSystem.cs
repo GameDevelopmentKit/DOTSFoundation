@@ -13,11 +13,6 @@
     public partial struct AggregateStatModifierSystem : ISystem
     {
         [BurstCompile]
-        public void OnCreate(ref SystemState state) { }
-        [BurstCompile]
-        public void OnDestroy(ref SystemState state) { }
-
-        [BurstCompile]
         public void OnUpdate(ref SystemState state)
         {
             new AggregateStatModifierSystemJob()
@@ -46,13 +41,7 @@
 
                 if (!statNameToModifierAggregators.TryGetValue(statModifierData.TargetStat, out var dataAggregator))
                 {
-                    dataAggregator = new ModifierAggregatorData()
-                    {
-                        TargetStat = statModifierData.TargetStat,
-                        Add        = 0,
-                        Multiply   = 1,
-                        Divide     = 1
-                    };
+                    dataAggregator = new ModifierAggregatorData(statModifierData.TargetStat);
                 }
 
                 switch (statModifierData.ModifierOperator)

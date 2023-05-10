@@ -9,28 +9,24 @@
     using Unity.Entities;
 
     [UpdateInGroup(typeof(AbilityLogicEffectGroup))]
+    [UpdateAfter(typeof(AggregateStatModifierSystem))]
     [RequireMatchingQueriesForUpdate]
     [BurstCompile]
-    public partial struct ApplyTempEffectPolicySystem : ISystem
+    public partial struct ApplyDurationEffectPolicySystem : ISystem
     {
-        private BufferLookup<LinkedEntityGroup> linkedEntityLookup;
-        [BurstCompile]
-        public void OnCreate(ref SystemState state) { this.linkedEntityLookup = state.GetBufferLookup<LinkedEntityGroup>(true); }
-        [BurstCompile]
-        public void OnDestroy(ref SystemState state) { }
+
         [BurstCompile]
         public void OnUpdate(ref SystemState state)
         {
-            var ecbSingleton = SystemAPI.GetSingleton<EndSimulationEntityCommandBufferSystem.Singleton>();
-            var ecb          = ecbSingleton.CreateCommandBuffer(state.WorldUnmanaged).AsParallelWriter();
+            var ecbSingleton       = SystemAPI.GetSingleton<EndSimulationEntityCommandBufferSystem.Singleton>();
+            var ecb                = ecbSingleton.CreateCommandBuffer(state.WorldUnmanaged).AsParallelWriter();
+            
             new ApplyDurationEffectPolicyJob() { Ecb = ecb }.ScheduleParallel();
             new ApplyInfiniteEffectPolicyJob() { Ecb = ecb }.ScheduleParallel();
-
-            this.linkedEntityLookup.Update(ref state);
-            new LinkTempEffectToAffectedTargetJob()
+            new ApplyPeriodEffectPolicyJob()
             {
                 Ecb                = ecb,
-                LinkedEntityLookup = this.linkedEntityLookup
+                CurrentElapsedTime = SystemAPI.Time.ElapsedTime
             }.ScheduleParallel();
         }
     }
@@ -56,18 +52,22 @@
 
         void Execute(Entity statModifierEntity, [EntityIndexInQuery] int entityInQueryIndex) { this.Ecb.AddComponent<IgnoreCleanupTag>(entityInQueryIndex, statModifierEntity); }
     }
-
+    
+    /// <summary>
+    /// Add end time for period effect
+    /// </summary>
     [BurstCompile]
-    [WithAny(typeof(InfiniteEffect), typeof(DurationEffect))]
-    [WithNone(typeof(IgnoreCleanupTag), typeof(Duration))]
-    public partial struct LinkTempEffectToAffectedTargetJob : IJobEntity
+    [WithNone(typeof(EndTimeComponent))]
+    public partial struct ApplyPeriodEffectPolicyJob : IJobEntity
     {
-        public            EntityCommandBuffer.ParallelWriter Ecb;
-        [ReadOnly] public BufferLookup<LinkedEntityGroup>    LinkedEntityLookup;
-        void Execute(Entity statModifierEntity, [EntityIndexInQuery] int entityInQueryIndex, in AffectedTargetComponent affectedTarget)
+        public EntityCommandBuffer.ParallelWriter Ecb;
+        public double                             CurrentElapsedTime;
+
+        void Execute(Entity statModifierEntity, [EntityIndexInQuery] int entityInQueryIndex, in PeriodEffect periodEffect)
         {
-            if (!LinkedEntityLookup.HasBuffer(affectedTarget)) this.Ecb.AddBuffer<LinkedEntityGroup>(entityInQueryIndex, affectedTarget);
-            this.Ecb.AppendToBuffer(entityInQueryIndex, affectedTarget, new LinkedEntityGroup() { Value = statModifierEntity });
+            //wait period in second
+            this.Ecb.AddComponent(entityInQueryIndex, statModifierEntity, new EndTimeComponent() { Value = this.CurrentElapsedTime + periodEffect.Value });
+            this.Ecb.SetComponentEnabled<EndTimeComponent>(entityInQueryIndex, statModifierEntity, true);
         }
     }
 }

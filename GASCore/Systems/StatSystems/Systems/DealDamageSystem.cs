@@ -53,24 +53,14 @@
                     damage += damage * casterStatAspect.GetCurrentValue(StatName.CriticalStrikeDamage);
                 }
 
-                //if affected target is immortal we will not deal damage
                 //add caster armor
                 damage = Math.Max(damage - affectedTargetStatAspect.GetCurrentValue(StatName.Armor), 0);
                 var currentHealth = affectedTargetStatAspect.GetCurrentValue(StatName.Health);
                 if (currentHealth - damage < 0)
-                {
                     damage = currentHealth;
-                }
 
                 // modify health stat
-                ModifierAggregatorData modifierData = new ModifierAggregatorData()
-                {
-                    TargetStat = StatName.Health,
-                    Add        = -damage,
-                    Multiply   = 1,
-                    Divide     = 1
-                };
-                modifierAggregatorBuffer.Add(modifierData);
+                modifierAggregatorBuffer.Add( new ModifierAggregatorData(StatName.Health,-damage));
                 modifierAggregatorBuffer.RemoveAtSwapBack(index);
                 break;
             }
