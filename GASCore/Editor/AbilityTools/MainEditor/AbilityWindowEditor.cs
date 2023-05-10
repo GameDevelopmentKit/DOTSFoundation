@@ -7,6 +7,7 @@ namespace GASCore.Editor.AbilityTools.MainEditor
     using System.Net;
     using System.Net.Security;
     using System.Security.Cryptography.X509Certificates;
+    using System.Threading.Tasks;
     using GASCore.Blueprints;
     using GASCore.Editor.AbilityTools.ItemInfoEditor;
     using GASCore.Editor.GoogleSheetSync;
@@ -32,6 +33,8 @@ namespace GASCore.Editor.AbilityTools.MainEditor
 
         private AbilityItem activeItem;
         private int         lastSelectionItem;
+
+        private Button pushToSheetBtn;
 
         [MenuItem("GDK/AbilityWindowEditor _Alt+A", priority = 1)]
         [Shortcut("GDK/AbilityWindowEditor", null, KeyCode.A, ShortcutModifiers.Alt)]
@@ -63,23 +66,26 @@ namespace GASCore.Editor.AbilityTools.MainEditor
 
             //Register Value Changed Callbacks for new items added to the ListView
             this.rootVisualElement.Q<Button>("btnPullFromSpreadSheet").clicked += this.PullDataFromSpreadSheet;
-            this.rootVisualElement.Q<Button>("btnPushToSpreadSheet").clicked   += this.PushDataFromSpreadSheet;
-            this.rootVisualElement.Q<Button>("btnApiConfig").clicked           += this.ApiConfig;
-            this.rootVisualElement.Q<Button>("btnSheetConfig").clicked         += this.SheetConfig;
+
+            this.pushToSheetBtn                                        =  this.rootVisualElement.Q<Button>("btnPushToSpreadSheet");
+            this.pushToSheetBtn.clicked                                += this.PushDataToSpreadSheet;
+            this.rootVisualElement.Q<Button>("btnApiConfig").clicked   += this.ApiConfig;
+            this.rootVisualElement.Q<Button>("btnSheetConfig").clicked += this.SheetConfig;
 
             this.rootVisualElement.Q<ToolbarSearchField>("search_field").RegisterValueChangedCallback(this.OnSearchTextChanged);
         }
 
         private void OnSearchTextChanged(ChangeEvent<string> evt)
         {
-            var cloneAbilityInventory = new List<AbilityItem>(this.abilityInventory);
-            var abilitySearch         = new List<AbilityItem>();
-            foreach (var abilityItem in cloneAbilityInventory.Where(abilityItem => abilityItem.name.Contains(evt.newValue)).Where(abilityItem => !abilitySearch.Contains(abilityItem)))
+            var abilitySearch = new List<AbilityItem>(abilityInventory.Where(abilityItem => abilityItem.name.Contains(evt.newValue, StringComparison.OrdinalIgnoreCase)));
+            this.abilityItemListView.itemsSource = abilitySearch;
+            this.abilityItemListView.bindItem = async (e, i) =>
             {
-                abilitySearch.Add(abilityItem);
-            }
-
-            this.GenerateListView(abilitySearch);
+                if (abilitySearch[i] == null) return;
+                e.Q<Label>("Name").text                          = abilitySearch[i].name;
+                e.Q<VisualElement>("Icon").style.backgroundImage = (await abilitySearch[i].Icon.LoadLocalSprite())?.texture;
+            };
+            this.RebuildListAbilityItemRowView();
         }
 
         /// <summary>
@@ -97,13 +103,12 @@ namespace GASCore.Editor.AbilityTools.MainEditor
 
             //Defining what each item will visually look like. In this case, the makeItem function is creating a clone of the ItemRowTemplate.
             this.abilityItemListView.makeItem = () => itemRowTemplate.CloneTree();
-
             //Define the binding of each individual Item that is created.
             this.abilityItemListView.bindItem = async (e, i) =>
             {
                 if (abilityItems[i] == null) return;
                 e.Q<Label>("Name").text                          = abilityItems[i].name;
-                e.Q<VisualElement>("Icon").style.backgroundImage = (await this.abilityInventory[i].Icon.LoadLocalSprite())?.texture;
+                e.Q<VisualElement>("Icon").style.backgroundImage = (await abilityItems[i].Icon.LoadLocalSprite())?.texture;
             };
             this.abilityItemListView.selectionType = SelectionType.Single;
 
@@ -228,8 +233,10 @@ namespace GASCore.Editor.AbilityTools.MainEditor
             return item;
         }
 
-        private async void PushDataFromSpreadSheet()
+        private async void PushDataToSpreadSheet()
         {
+            this.pushToSheetBtn.SetEnabled(false);
+            var startTime        = DateTime.Now;
             var abilityBlueprint = new AbilityBlueprint();
             foreach (var ablityScripableObject in this.abilityInventory)
             {
@@ -238,11 +245,9 @@ namespace GASCore.Editor.AbilityTools.MainEditor
 
             if (this.configGoogleSheet.IsLocalResource)
             {
-                await using StreamWriter file = new($"./{this.configGoogleSheet.LocalSheetPath}");
-
-                foreach (var row in abilityBlueprint.SerializeToRawData())
+                var contents = abilityBlueprint.SerializeToRawData().Select(item =>
                 {
-                    var combinedString = string.Join(",", row.Select(s =>
+                    var combinedString = string.Join(",", item.Select(s =>
                     {
                         if (string.IsNullOrEmpty(s))
                             return "";
@@ -254,11 +259,11 @@ namespace GASCore.Editor.AbilityTools.MainEditor
 
                         return result;
                     }));
-                    await file.WriteLineAsync(combinedString);
-                }
+                    return combinedString;
+                });
 
-                await file.DisposeAsync();
-                Debug.Log($"Save to {this.configGoogleSheet.LocalSheetPath} complete");
+                await File.WriteAllLinesAsync($"./{this.configGoogleSheet.LocalSheetPath}", contents);
+                Debug.Log($"Save to {this.configGoogleSheet.LocalSheetPath} complete - time = {(DateTime.Now - startTime).TotalSeconds}");
                 AssetDatabase.Refresh();
             }
             else
@@ -266,6 +271,8 @@ namespace GASCore.Editor.AbilityTools.MainEditor
                 SyncGoogleSheetData.PushAllData(this.configGoogleSheet.SpreadSheetID, this.configGoogleSheet.UploadSheetName, abilityBlueprint.SerializeToRawData(),
                     () => { Debug.LogError($"Push Complete"); });
             }
+
+            this.pushToSheetBtn.SetEnabled(true);
         }
 
         #endregion
