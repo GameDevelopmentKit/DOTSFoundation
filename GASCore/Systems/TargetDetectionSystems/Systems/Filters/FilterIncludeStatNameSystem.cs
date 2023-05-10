@@ -50,7 +50,8 @@ namespace GASCore.Systems.TargetDetectionSystems.Systems.Filters
         private void Execute(
             Entity entity,
             [EntityIndexInQuery] int index,
-            in CasterComponent caster)
+            in CasterComponent caster
+        )
         {
             if (!this.FilterLookup.HasBuffer(entity))
             {
@@ -70,17 +71,16 @@ namespace GASCore.Systems.TargetDetectionSystems.Systems.Filters
 
         private void Execute(
             ref DynamicBuffer<TargetableElement> targetables,
-            in CasterComponent caster,
             in DynamicBuffer<FilterIncludeStatName> statNames
         )
         {
-            var casterStatNames = this.StatNamesLookup[caster].Value;
             for (var i = 0; i < targetables.Length;)
             {
+                var targetStatNames = this.StatNamesLookup[targetables[i]].Value;
                 var isValid = true;
                 foreach (var statName in statNames)
                 {
-                    if (!casterStatNames.ContainsKey(statName))
+                    if (!targetStatNames.ContainsKey(statName))
                     {
                         isValid = false;
                         break;

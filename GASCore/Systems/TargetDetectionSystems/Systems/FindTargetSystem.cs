@@ -17,26 +17,20 @@ namespace GASCore.Systems.TargetDetectionSystems.Systems
     {
         private EntityQuery entityQuery;
 
-        public void OnCreate(ref SystemState state)
-        {
-            this.entityQuery = SystemAPI.QueryBuilder().WithAll<LocalToWorld, StatNameToIndex, TeamOwnerId>().Build();
-        }
+        public void OnCreate(ref SystemState state) { this.entityQuery = SystemAPI.QueryBuilder().WithAll<LocalToWorld, StatNameToIndex, TeamOwnerId>().WithNone<UntargetableTag>().Build(); }
 
         public void OnUpdate(ref SystemState state)
         {
-            var ecbSingleton = SystemAPI.GetSingleton<EndSimulationEntityCommandBufferSystem.Singleton>();
-            var ecb          = ecbSingleton.CreateCommandBuffer(state.WorldUnmanaged).AsParallelWriter();
-
             var entities = this.entityQuery.ToEntityListAsync(state.WorldUpdateAllocator, state.Dependency, out var queryJob);
 
-            var recycleJob = new RecycleFindTargetComponentJob
+            var recycleJob = new RecycleFindTargetComponentJob()
             {
-                Ecb = ecb,
+                FindTargetLookup = SystemAPI.GetComponentLookup<FindTargetComponent>()
             }.ScheduleParallel(state.Dependency);
 
             state.Dependency = new FindTargetJob
             {
-                Entities = entities,
+                Entities = entities
             }.ScheduleParallel(JobHandle.CombineDependencies(queryJob, recycleJob));
         }
     }
@@ -45,15 +39,11 @@ namespace GASCore.Systems.TargetDetectionSystems.Systems
     [BurstCompile]
     public partial struct RecycleFindTargetComponentJob : IJobEntity
     {
-        public EntityCommandBuffer.ParallelWriter Ecb;
-
+        [NativeDisableParallelForRestriction] public ComponentLookup<FindTargetComponent> FindTargetLookup;
         private void Execute(
             Entity entity,
-            [EntityIndexInQuery] int index,
-            in FindTargetComponent param,
             in TriggerConditionAmount triggersAmount,
-            in DynamicBuffer<CompletedTriggerElement> completedTriggers
-        )
+            in DynamicBuffer<CompletedTriggerElement> completedTriggers)
         {
             var findTargetTrigger = TypeManager.GetTypeIndex<FindTargetComponent>().Index;
             foreach (var trigger in completedTriggers)
@@ -63,9 +53,8 @@ namespace GASCore.Systems.TargetDetectionSystems.Systems
             }
 
             // wait for other triggers
-            if (param.WaitForOtherTriggers && completedTriggers.Length < triggersAmount - 1) return;
-
-            this.Ecb.SetComponentEnabled<FindTargetComponent>(index, entity, true);
+            if (this.FindTargetLookup[entity].WaitForOtherTriggers && completedTriggers.Length < triggersAmount - 1) return;
+            this.FindTargetLookup.SetComponentEnabled(entity, true);
         }
     }
 
