@@ -33,6 +33,9 @@ namespace GASCore.Systems.StatSystems.Components
         public static readonly FixedString64Bytes MovementSpeed = "MovementSpeed";
         public static readonly FixedString64Bytes AttackRange   = "AttackRange";
 
+        public static readonly FixedString64Bytes Coin = "Coin";
+
         #endregion
+
     }
 }
