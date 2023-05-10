@@ -42,16 +42,7 @@
                 if (!isTimelineEntity) continue;
                 //if component data contain any trigger condition, will be add TriggerConditionAmount
                 var count = entityData.components.Count(converter => converter is ITriggerConditionActionConverter);
-                if (count > 0)
-                {
-                    ecb.AddComponent(index, abilityActionEntity, new TriggerConditionAmount() { Value = count });
-                    ecb.AddBuffer<CompletedTriggerElement>(index, abilityActionEntity);
-                    ecb.AddComponent<InTriggerConditionResolveProcessTag>(index, abilityActionEntity);
-                }
-                else
-                {
-                    ecb.AddComponent<CompletedAllTriggerConditionTag>(index, abilityActionEntity);
-                }
+                ecb.SetupTriggerCondition(index, abilityActionEntity, count);
             }
 
             return result;

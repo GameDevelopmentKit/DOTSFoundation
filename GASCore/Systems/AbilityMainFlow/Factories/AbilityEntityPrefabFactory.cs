@@ -89,16 +89,7 @@ namespace GASCore.Systems.AbilityMainFlow.Factories
                 }
 
                 //if component data contain any trigger condition, will be add TriggerConditionCount
-                if (count > 0)
-                {
-                    ecbParallel.AddComponent(index, abilityEntity, new TriggerConditionAmount() { Value = count });
-                    ecbParallel.AddBuffer<CompletedTriggerElement>(index, abilityEntity);
-                    ecbParallel.AddComponent<InTriggerConditionResolveProcessTag>(index, abilityEntity);
-                }
-                else
-                {
-                    ecbParallel.AddComponent<CompletedAllTriggerConditionTag>(index, abilityEntity);
-                }
+                ecbParallel.SetupTriggerCondition(index, abilityEntity, count);
             }
 
             // setup ability timeline prefab

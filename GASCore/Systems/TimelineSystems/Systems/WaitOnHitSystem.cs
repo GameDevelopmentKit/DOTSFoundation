@@ -45,6 +45,7 @@
                 TriggerOnHitEntities          = triggerOnHitEntities,
                 TriggerOnHitComponents        = triggerOnHitComponents,
                 ActivatedStateOwnerComponents = activatedStateOwnerComponents,
+                UntargetableLookup = SystemAPI.GetComponentLookup<UntargetableTag>(true)
             };
 
             state.Dependency = listenOnHitEventJob.ScheduleParallel(JobHandle.CombineDependencies(getEntitiesJob, getTriggerOnHitComponentJob, getActivatedStateOwnerComponentJob));
@@ -59,6 +60,9 @@
         [ReadOnly] public NativeList<Entity>                    TriggerOnHitEntities;
         [ReadOnly] public NativeList<TriggerOnHit>              TriggerOnHitComponents;
         [ReadOnly] public NativeList<ActivatedStateEntityOwner> ActivatedStateOwnerComponents;
+        
+        //TODO try to find better way later
+        [ReadOnly] public ComponentLookup<UntargetableTag> UntargetableLookup;
 
         void Execute(Entity abilityActionEntity, [EntityIndexInQuery] int entityInQueryIndex, in AbilityEffectId effectId, in DynamicBuffer<StatefulTriggerEvent> triggerEventBuffer, in ActivatedStateEntityOwner activatedStateEntityOwner)
         {
@@ -74,8 +78,9 @@
                 foreach (var triggerEvent in triggerEventBuffer)
                 {
                     if ((triggerOnHitComponent.StateType & triggerEvent.State) != triggerEvent.State) continue;
-                    isHit = true;
                     var otherEntity = triggerEvent.GetOtherEntity(abilityActionEntity);
+                    if(UntargetableLookup.HasComponent(otherEntity) && UntargetableLookup.IsComponentEnabled(otherEntity)) continue;
+                    isHit = true;
                     this.Ecb.AppendToBuffer(entityInQueryIndex, triggerOnHitEntity, new TargetableElement() { Value = otherEntity });
                 }
 

@@ -66,5 +66,15 @@
         {
             ecb.AppendToBuffer(entityInQueryIndex, triggerEntity, new CompletedTriggerElement() { Index = TypeManager.GetTypeIndex<T>() });
         }
+
+        public static void SetupTriggerCondition(this EntityCommandBuffer.ParallelWriter ecb, int entityInQueryIndex, Entity entity, int conditionCount)
+        {
+            ecb.AddComponent<CompletedAllTriggerConditionTag>(entityInQueryIndex, entity);
+            if (conditionCount <= 0) return;
+            ecb.AddComponent(entityInQueryIndex, entity, new TriggerConditionAmount() { Value = conditionCount });
+            ecb.AddBuffer<CompletedTriggerElement>(entityInQueryIndex, entity);
+            ecb.AddComponent<InTriggerConditionResolveProcessTag>(entityInQueryIndex, entity);
+            ecb.SetComponentEnabled<CompletedAllTriggerConditionTag>(entityInQueryIndex, entity, false);
+        }
     }
 }

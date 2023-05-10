@@ -6,65 +6,46 @@
     using Unity.Collections;
     using Unity.Entities;
 
-    [UpdateInGroup(typeof(GameAbilityPresentSystemGroup))]
-    [UpdateBefore(typeof(AbilityCleanupSystemGroup))]
+    [UpdateInGroup(typeof(GameAbilityInitializeSystemGroup))]
     [RequireMatchingQueriesForUpdate]
     [BurstCompile]
     public partial struct TrackingTriggerConditionProgressSystem : ISystem
     {
         [BurstCompile]
-        public void OnUpdate(ref SystemState state)
-        {
-            var ecbSingleton = SystemAPI.GetSingleton<BeginInitializationEntityCommandBufferSystem.Singleton>();
-            var ecb          = ecbSingleton.CreateCommandBuffer(state.WorldUnmanaged).AsParallelWriter();
-
-            state.Dependency = new TrackingTriggerConditionProgressJob()
-            {
-                Ecb = ecb,
-            }.ScheduleParallel(state.Dependency);
-        }
+        public void OnUpdate(ref SystemState state) { state.Dependency = new TrackingTriggerConditionProgressJob().ScheduleParallel(state.Dependency); }
     }
-
-    [WithNone(typeof(CompletedAllTriggerConditionTag))]
+    
     [WithChangeFilter(typeof(CompletedTriggerElement))]
+    [WithDisabled(typeof(CompletedAllTriggerConditionTag))]
     [BurstCompile]
     public partial struct TrackingTriggerConditionProgressJob : IJobEntity
     {
-        public EntityCommandBuffer.ParallelWriter Ecb;
-        void Execute(Entity entity, [EntityIndexInQuery] int entityInQueryIndex, ref DynamicBuffer<CompletedTriggerElement> completedTriggerBuffer, in TriggerConditionAmount conditionAmount)
+        void Execute(ref DynamicBuffer<CompletedTriggerElement> completedTriggerBuffer, in TriggerConditionAmount conditionAmount,
+            EnabledRefRW<CompletedAllTriggerConditionTag> completedAllTriggerConditionEnableState,
+            EnabledRefRW<InTriggerConditionResolveProcessTag> inTriggerConditionResolveProcessEnableState)
         {
-            if (conditionAmount.Value == 0 || (conditionAmount.Value == 1 && completedTriggerBuffer.Length == 1))
+            if (conditionAmount.Value != 0 && (conditionAmount.Value != 1 || completedTriggerBuffer.Length != 1))
             {
-                MarkCompletedAllTriggerCondition(entity, entityInQueryIndex);
-                return;
-            }
+                var conditionHashset = new NativeHashSet<int>(conditionAmount.Value, Allocator.Temp);
 
-            var conditionHashset = new NativeHashSet<int>(conditionAmount.Value, Allocator.Temp);
-
-            for (var index = 0; index < completedTriggerBuffer.Length;)
-            {
-                var completedTriggerIndex = completedTriggerBuffer[index];
-                if (!conditionHashset.Add(completedTriggerIndex.Index))
+                for (var index = 0; index < completedTriggerBuffer.Length;)
                 {
-                    completedTriggerBuffer.RemoveAtSwapBack(index);
+                    var completedTriggerIndex = completedTriggerBuffer[index];
+                    if (!conditionHashset.Add(completedTriggerIndex.Index))
+                    {
+                        completedTriggerBuffer.RemoveAtSwapBack(index);
+                    }
+                    else
+                    {
+                        index++;
+                    }
                 }
-                else
-                {
-                    index++;
-                }
+
+                if (conditionHashset.Count != conditionAmount.Value) return;
             }
 
-            if (conditionHashset.Count == conditionAmount.Value)
-            {
-                MarkCompletedAllTriggerCondition(entity, entityInQueryIndex);
-            }
-        }
-
-        void MarkCompletedAllTriggerCondition(Entity entity, int entityInQueryIndex)
-        {
-            this.Ecb.AddComponent<CompletedAllTriggerConditionTag>(entityInQueryIndex, entity);
-            this.Ecb.SetComponentEnabled<CompletedAllTriggerConditionTag>(entityInQueryIndex, entity, true);
-            this.Ecb.SetComponentEnabled<InTriggerConditionResolveProcessTag>(entityInQueryIndex, entity, false);
+            completedAllTriggerConditionEnableState.ValueRW     = true;
+            inTriggerConditionResolveProcessEnableState.ValueRW = false;
         }
     }
 }
