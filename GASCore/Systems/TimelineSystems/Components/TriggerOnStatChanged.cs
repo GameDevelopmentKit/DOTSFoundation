@@ -34,8 +34,10 @@
     }
 
     // signal on stat change
-    public struct OnStatChange : IBufferElementData, IEnableableComponent
+    public struct OnStatChangeTag : IComponentData, IEnableableComponent { }
+
+    public struct StatChangeElement : IBufferElementData
     {
-        public StatDataElement ChangedStat;
+        public StatDataElement Value;
     }
 }

@@ -21,7 +21,7 @@
         {
             using var queryBuilder = new EntityQueryBuilder(Allocator.Temp).WithAll<TriggerOnStatChanged>();
             this.triggerOnStatChangeQuery = state.GetEntityQuery(queryBuilder);
-            state.RequireForUpdate<OnStatChange>();
+            state.RequireForUpdate<OnStatChangeTag>();
         }
 
         [BurstCompile]
@@ -29,7 +29,7 @@
         {
             var triggerOnHits = this.triggerOnStatChangeQuery.ToEntityListAsync(state.WorldUpdateAllocator, out var getTriggerOnHitHandle);
 
-            var ecbSingleton = SystemAPI.GetSingleton<AbilityPresentEntityCommandBufferSystem.Singleton>();
+            var ecbSingleton = SystemAPI.GetSingleton<BeginPresentationEntityCommandBufferSystem.Singleton>();
             var ecb          = ecbSingleton.CreateCommandBuffer(state.WorldUnmanaged).AsParallelWriter();
 
             var listenOnHitEventJob = new ListenOnStatChangedJob()
@@ -46,6 +46,7 @@
 
 
     [BurstCompile]
+    [WithAll(typeof(OnStatChangeTag))]
     public partial struct ListenOnStatChangedJob : IJobEntity
     {
         public            EntityCommandBuffer.ParallelWriter    Ecb;
@@ -53,7 +54,7 @@
         [ReadOnly] public ComponentLookup<TriggerOnStatChanged> TriggerOnStatChangeComponentLookup;
         [ReadOnly] public ComponentLookup<CasterComponent>      CasterLookup;
 
-        void Execute(Entity sourceStatChangeEntity, [EntityIndexInQuery] int entityInQueryIndex, in DynamicBuffer<OnStatChange> statChangeEventBuffer)
+        void Execute(Entity sourceStatChangeEntity, [EntityIndexInQuery] int entityInQueryIndex, in DynamicBuffer<StatChangeElement> statChangeEventBuffer)
         {
             foreach (var triggerEntity in this.TriggerOnStatChangeEntities)
             {
@@ -63,11 +64,11 @@
 
                 foreach (var onStatChange in statChangeEventBuffer)
                 {
-                    if (!triggerCondition.StatName.Equals(onStatChange.ChangedStat.StatName)) continue; // wrong stat name 
+                    if (!triggerCondition.StatName.Equals(onStatChange.Value.StatName)) continue; // wrong stat name 
 
                     var currentValue = triggerCondition.Percent
-                        ? onStatChange.ChangedStat.CurrentValue / onStatChange.ChangedStat.OriginValue
-                        : onStatChange.ChangedStat.CurrentValue;
+                        ? onStatChange.Value.CurrentValue / onStatChange.Value.OriginValue
+                        : onStatChange.Value.CurrentValue;
                     if (triggerCondition.Above && currentValue >= triggerCondition.Value
                         || !triggerCondition.Above && currentValue <= triggerCondition.Value)
                     {

@@ -16,15 +16,17 @@ namespace GASCore.Systems.StatSystems.Components
         public float              AddedValue;
         public float              CurrentValue => this.BaseValue + this.AddedValue;
 
+        public bool IsDirty;
+
         public StatDataElement(FixedString64Bytes statName, float originValue)
         {
             this.StatName    = statName;
             this.OriginValue = originValue;
             this.BaseValue   = originValue;
             this.AddedValue  = 0;
+            this.IsDirty     = false;
         }
     }
-
 
     public class StatDataAuthoring : IAbilityActionComponentConverter
     {
@@ -51,43 +53,50 @@ namespace GASCore.Systems.StatSystems.Components
     {
         private BlobAssetReference<NativeHashMap<FixedString64Bytes, int>> blobValue;
 
-        public NativeHashMap<FixedString64Bytes, int> Value
-        {
-            get => this.blobValue.Value;
-            set => this.blobValue = value.CreateReference();
-        }
+        public NativeHashMap<FixedString64Bytes, int> Value { get => this.blobValue.Value; set => this.blobValue = value.CreateReference(); }
     }
 
     public readonly partial struct StatAspect : IAspect
     {
-        private readonly Entity                         sourceEntity;
         private readonly DynamicBuffer<StatDataElement> statDataBuffer;
         private readonly RefRO<StatNameToIndex>         statNameToIndex;
 
         public bool SetBaseValue(FixedString64Bytes statName, float newValue)
         {
             if (!this.statNameToIndex.ValueRO.Value.TryGetValue(statName, out var statIndex)) return false;
-            var statData = this.statDataBuffer[statIndex];
-            statData.BaseValue = newValue;
-            this.statDataBuffer.RemoveAt(statIndex);
-            this.statDataBuffer.Insert(statIndex, statData);
+            var statDataBufferTemp = this.statDataBuffer;
+            var statDataElement    = statDataBufferTemp[statIndex];
+            statDataElement.BaseValue     = newValue;
+            statDataElement.IsDirty       = true;
+            statDataBufferTemp[statIndex] = statDataElement;
             return true;
         }
 
         public bool SetAddedValue(FixedString64Bytes statName, float newValue)
         {
             if (!this.statNameToIndex.ValueRO.Value.TryGetValue(statName, out var statIndex)) return false;
-            var statData = this.statDataBuffer[statIndex];
-            statData.AddedValue = newValue;
-            this.statDataBuffer.RemoveAt(statIndex);
-            this.statDataBuffer.Insert(statIndex, statData);
+            var statDataBufferTemp = this.statDataBuffer;
+            var statDataElement    = statDataBufferTemp[statIndex];
+            statDataElement.AddedValue    = newValue;
+            statDataElement.IsDirty       = true;
+            statDataBufferTemp[statIndex] = statDataElement;
             return true;
         }
 
-        public int GetStatCount()
+        public void ResetAllAddedValue()
         {
-            return this.statDataBuffer.Length;
+            var statDataBufferTemp = this.statDataBuffer;
+            for (var index = 0; index < statDataBufferTemp.Length; index++)
+            {
+                var statDataElement = statDataBufferTemp[index];
+                if (statDataElement.AddedValue == 0) continue;
+                statDataElement.AddedValue = 0;
+                statDataElement.IsDirty    = true;
+                statDataBufferTemp[index]  = statDataElement;
+            }
         }
+
+        public int GetStatCount() { return this.statDataBuffer.Length; }
 
         public float GetBaseValue(FixedString64Bytes statName)
         {
@@ -115,25 +124,21 @@ namespace GASCore.Systems.StatSystems.Components
             return -1;
         }
 
-        public void NotifyStatChange(EntityCommandBuffer.ParallelWriter ecb, int entityInQueryIndex, FixedString64Bytes statName)
+        public StatDataElement? GetStatData(FixedString64Bytes statName)
         {
-            if (!this.statNameToIndex.ValueRO.Value.TryGetValue(statName, out var statIndex)) return;
-            ecb.SetComponentEnabled<OnStatChange>(entityInQueryIndex, this.sourceEntity, true);
-            ecb.AppendToBuffer(entityInQueryIndex, this.sourceEntity, new OnStatChange()
-            {
-                ChangedStat = this.statDataBuffer[statIndex]
-            });
+            return this.statNameToIndex.ValueRO.Value.TryGetValue(statName, out var statIndex)
+                ? this.statDataBuffer[statIndex]
+                : null;
         }
 
-        public bool HasStat(FixedString64Bytes statName)
-        {
-            return this.statNameToIndex.ValueRO.Value.ContainsKey(statName);
-        }
+        public bool HasStat(FixedString64Bytes statName) { return this.statNameToIndex.ValueRO.Value.ContainsKey(statName); }
 
         public float CalculateStatValue(ModifierAggregatorData aggregator)
         {
             //todo handle case override = 0
-            return aggregator.Override != 0 ? aggregator.Override : (GetBaseValue(aggregator.TargetStat) + aggregator.Add) * aggregator.Multiply / aggregator.Divide;
+            return aggregator.Override != 0
+                ? aggregator.Override
+                : (GetBaseValue(aggregator.TargetStat) + aggregator.Add) * aggregator.Multiply / aggregator.Divide;
         }
     }
 }

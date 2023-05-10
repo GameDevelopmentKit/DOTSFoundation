@@ -13,6 +13,8 @@
     using Unity.Entities;
     using Zenject;
 
+    #region Stat Modifier Components
+
     public struct ModifierAggregatorData : IBufferElementData
     {
         public FixedString64Bytes TargetStat;
@@ -23,8 +25,28 @@
         public float Override;
 
         public bool IsChangeBaseValue;
-    }
 
+        public ModifierAggregatorData(FixedString64Bytes targetStat)
+        {
+            this.TargetStat        = targetStat;
+            this.Add               = 0;
+            this.Multiply          = 1;
+            this.Divide            = 1;
+            this.Override          = 0;
+            this.IsChangeBaseValue = false;
+        }
+
+        public ModifierAggregatorData(FixedString64Bytes targetStat, float addValue)
+        {
+            this.TargetStat        = targetStat;
+            this.Add               = addValue;
+            this.Multiply          = 1;
+            this.Divide            = 1;
+            this.Override          = 0;
+            this.IsChangeBaseValue = false;
+        }
+    }
+    
     public struct StatModifierEntityElement : IBufferElementData
     {
         public                          Entity Value;
@@ -49,7 +71,8 @@
 
                 return new EntityConverter.EntityData<IComponentConverter>() { components = temp1 };
             }).ToList();
-            var listEntityActionPrefab = this.actionEntityPrefabFactory.CreateAbilityActionEntityPrefabsFromJson(ecb, index, temp);
+            var listEntityActionPrefab =
+                this.actionEntityPrefabFactory.CreateAbilityActionEntityPrefabsFromJson(ecb, index, temp);
             foreach (var statModifierPrefab in listEntityActionPrefab)
             {
                 statModifierBuffers.Add(new StatModifierEntityElement() { Value = statModifierPrefab });
@@ -59,7 +82,9 @@
         }
     }
 
-    #region stat modifier data
+    #endregion
+
+    #region Stat modifier element data
 
     public struct StatModifierData : IComponentData
     {

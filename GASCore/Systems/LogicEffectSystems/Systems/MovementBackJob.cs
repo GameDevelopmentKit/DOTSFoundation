@@ -9,11 +9,11 @@
     using Unity.Mathematics;
     using Unity.Transforms;
 
+    [BurstCompile]
     public partial struct MovementBackJob : IJobEntity
     {
-        [ReadOnly] public ComponentLookup<LocalTransform>     TargetLocalTransform;
-        [ReadOnly] public ComponentLookup<IgnoreKnockBackTag> IgnoreKnockBackLookup;
-        public            EntityCommandBuffer.ParallelWriter  Ecb;
+        [NativeDisableParallelForRestriction] public ComponentLookup<LocalTransform>     TargetLocalTransform;
+        [ReadOnly]                            public ComponentLookup<IgnoreKnockBackTag> IgnoreKnockBackLookup;
 
         void Execute([EntityIndexInQuery] int entityInQueryIndex, in MoveBackComponent moveBackComponent, in AffectedTargetComponent affectedTargetComponent, in CasterComponent casterComponent)
         {
@@ -23,7 +23,8 @@
             float3         direction       = casterTransform.Position - targetTransform.Position;
             targetTransform.Position   -= math.normalize(direction) * moveBackComponent.PushBackForce;
             targetTransform.Position.y =  casterTransform.Position.y;
-            this.Ecb.SetComponent(entityInQueryIndex, affectedTargetComponent.Value, targetTransform);
+
+            this.TargetLocalTransform[affectedTargetComponent.Value] = targetTransform;
         }
     }
 
@@ -33,20 +34,14 @@
     public partial struct MovementBackSystem : ISystem
     {
         [BurstCompile]
-        public void OnCreate(ref SystemState state)
-        {
-            state.RequireForUpdate<MoveBackComponent>();
-        }
+        public void OnCreate(ref SystemState state) { state.RequireForUpdate<MoveBackComponent>(); }
 
         [BurstCompile]
         public void OnUpdate(ref SystemState state)
         {
-            var ecbSingleton = SystemAPI.GetSingleton<BeginInitializationEntityCommandBufferSystem.Singleton>();
-            var ecb          = ecbSingleton.CreateCommandBuffer(state.WorldUnmanaged).AsParallelWriter();
             new MovementBackJob()
             {
-                Ecb                   = ecb,
-                TargetLocalTransform  = SystemAPI.GetComponentLookup<LocalTransform>(true),
+                TargetLocalTransform  = SystemAPI.GetComponentLookup<LocalTransform>(),
                 IgnoreKnockBackLookup = SystemAPI.GetComponentLookup<IgnoreKnockBackTag>(true),
             }.ScheduleParallel();
         }
