@@ -11,7 +11,7 @@
     [UpdateInGroup(typeof(AbilityVisualEffectGroup))]
     [RequireMatchingQueriesForUpdate]
     [BurstCompile]
-    public partial struct ChangeAnimationStateSystem : ISystem
+    public partial struct TriggerAnimationSystem : ISystem
     {
         [BurstCompile]
         public void OnUpdate(ref SystemState state)
