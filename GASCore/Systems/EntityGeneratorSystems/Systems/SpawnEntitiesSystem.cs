@@ -61,7 +61,7 @@
             if (spawnData.Clockwise == 0)
             {
                 spawnData.CurrentAngle = this.Random.NextFloat(spawnData.StartAngleRange.min, spawnData.StartAngleRange.max);
-                spawnData.Clockwise    = this.Random.NextBool() ? 1 : -1;
+                spawnData.Clockwise    = 1;
             }
 
             var amount                     = this.Random.NextInt(spawnData.AmountRange.min, spawnData.AmountRange.max);
