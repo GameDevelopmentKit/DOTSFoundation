@@ -20,6 +20,7 @@
         public bool IsSetChild;
         public bool IsLookSpawnerRotation;
         public bool IsResetRotationAfterSpawn;
+        public bool IsSetStartAngle;
 
         public float SpawnerRadius;
 
@@ -43,7 +44,8 @@
         public bool  IsSetChild                = false;
         public bool  IsLookSpawnerRotation     = false;
         public bool  IsResetRotationAfterSpawn = false;
-        public float SpawnerRadius             = 0;
+        public float SpawnerRadius = 0;
+        public int   Clockwise     = 1;
 
         public SimpleIntRange                                  AmountRange       = new() { min = 1, max = 1 };
         public SimpleFloatRange                                StartAngleRange   = new() { min = 0, max = 0 };
@@ -73,7 +75,7 @@
                 StartAngleRange   = new SimpleFloatRange() { min = math.radians(this.StartAngleRange.min), max   = math.radians(this.StartAngleRange.max) },
                 AngleStepRange    = new SimpleFloatRange() { min = math.radians(this.AngleStepRange.min), max    = math.radians(this.AngleStepRange.max) },
                 PositionStepRange = new SimpleFloatRange() { min = math.radians(this.PositionStepRange.min), max = math.radians(this.PositionStepRange.max) },
-                Clockwise         = 0,
+                Clockwise         = this.Clockwise,
             });
             if (this.AttachToAffectedTarget)
                 ecb.AddComponent<AttachToAffectedTarget>(index, entity);

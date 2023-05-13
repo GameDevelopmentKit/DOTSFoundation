@@ -18,7 +18,10 @@
     public partial struct SpawnEntitiesSystem : ISystem
     {
         [BurstCompile]
-        public void OnCreate(ref SystemState state) { state.RequireForUpdate(SystemAPI.QueryBuilder().WithAll<EntitySpawner>().WithNone<EndTimeComponent>().Build()); }
+        public void OnCreate(ref SystemState state)
+        {
+            state.RequireForUpdate(SystemAPI.QueryBuilder().WithAll<EntitySpawner>().WithNone<EndTimeComponent>().Build());
+        }
 
         [BurstCompile]
         public void OnUpdate(ref SystemState state)
@@ -29,9 +32,9 @@
 
             new SpawnEntitiesJob()
             {
-                Ecb        = ecb,
-                Random     = random,
-                TeamLookup = SystemAPI.GetComponentLookup<TeamOwnerId>(true),
+                Ecb             = ecb,
+                Random          = random,
+                TeamLookup      = SystemAPI.GetComponentLookup<TeamOwnerId>(true),
             }.ScheduleParallel();
         }
     }
@@ -45,7 +48,6 @@
         public            EntityCommandBuffer.ParallelWriter Ecb;
         public            Random                             Random;
         [ReadOnly] public ComponentLookup<TeamOwnerId>       TeamLookup;
-
         private void Execute(
             Entity spawnerEntity,
             [EntityIndexInQuery] int index,
@@ -58,10 +60,11 @@
         {
             if (this.Random.NextFloat(0f, 1f) > spawnData.SpawnChance) return;
 
-            if (spawnData.Clockwise == 0)
+            if (!spawnData.IsSetStartAngle)
             {
                 spawnData.CurrentAngle = this.Random.NextFloat(spawnData.StartAngleRange.min, spawnData.StartAngleRange.max);
-                spawnData.Clockwise    = 1;
+
+                spawnData.IsSetStartAngle = true;
             }
 
             var amount                     = this.Random.NextInt(spawnData.AmountRange.min, spawnData.AmountRange.max);
