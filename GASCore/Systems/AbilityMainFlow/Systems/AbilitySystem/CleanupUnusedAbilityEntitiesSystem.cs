@@ -7,6 +7,7 @@
     using Unity.Burst;
     using Unity.Collections;
     using Unity.Entities;
+    using Unity.Jobs;
 
     [UpdateInGroup(typeof(AbilityCleanupSystemGroup))]
     [RequireMatchingQueriesForUpdate]
@@ -38,18 +39,19 @@
             this.onDestroyAbilityActionElementLookup.Update(ref state);
             var ecbSingleton = SystemAPI.GetSingleton<BeginInitializationEntityCommandBufferSystem.Singleton>();
             var ecb          = ecbSingleton.CreateCommandBuffer(state.WorldUnmanaged).AsParallelWriter();
+
             
-            new CleanupAbilityActionEntitiesJob()
+            state.Dependency = new CleanupAbilityActionEntitiesJob()
             {
                 Ecb = ecb, OnDestroyAbilityActionElementLookup = this.onDestroyAbilityActionElementLookup
-            }.ScheduleParallel(normalCleanupEntityQuery);
+            }.ScheduleParallel(normalCleanupEntityQuery, state.Dependency);
 
-            new CleanupAbilityActionEntitiesJob()
+            state.Dependency = new CleanupAbilityActionEntitiesJob()
             {
                 Ecb = ecb, OnDestroyAbilityActionElementLookup = this.onDestroyAbilityActionElementLookup
-            }.ScheduleParallel(forceCleanupEntityQuery);
+            }.ScheduleParallel(forceCleanupEntityQuery, state.Dependency);
 
-            new CleanupActivatedStateAbilityEntitiesJob() { Ecb = ecb }.ScheduleParallel();
+            state.Dependency = new CleanupActivatedStateAbilityEntitiesJob() { Ecb = ecb }.ScheduleParallel(state.Dependency);
         }
     }
 
