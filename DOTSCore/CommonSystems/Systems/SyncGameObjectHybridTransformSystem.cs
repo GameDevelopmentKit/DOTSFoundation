@@ -5,7 +5,6 @@
     using Unity.Collections;
     using Unity.Entities;
     using Unity.Transforms;
-    using UnityEngine;
     using UnityEngine.Jobs;
 
     //copy from Unity.Entities.CompanionGameObjectUpdateTransformSystem but modify a bit
@@ -14,6 +13,7 @@
     }
 
     [WorldSystemFilter(WorldSystemFilterFlags.Default | WorldSystemFilterFlags.Editor)]
+    [UpdateInGroup(typeof(SimulationSystemGroup), OrderLast = true)]
     [UpdateAfter(typeof(LateSimulationSystemGroup))]
     [BurstCompile]
     partial class SyncGameObjectTransformSystem : SystemBase

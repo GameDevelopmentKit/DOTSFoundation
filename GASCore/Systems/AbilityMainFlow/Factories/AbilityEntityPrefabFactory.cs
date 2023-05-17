@@ -77,11 +77,11 @@ namespace GASCore.Systems.AbilityMainFlow.Factories
             }
 
             //setup to auto activate ability by trigger condition 
-            if (!string.IsNullOrEmpty(levelRecord.AbilityActivateCondition))
+            var triggerComponentsData = levelRecord.AbilityActivateCondition.ConvertJsonToComponentsData<IComponentConverter>();
+            if (triggerComponentsData?.Count > 0)
             {
                 ecbParallel.AddComponent<AutoActiveTag>(index, abilityEntity);
-                var triggerComponentsData = levelRecord.AbilityActivateCondition.ConvertJsonToComponentsData<IComponentConverter>();
-                var count                 = 0;
+                var count = 0;
                 foreach (var component in triggerComponentsData)
                 {
                     component.Convert(ecbParallel, index, abilityEntity);
