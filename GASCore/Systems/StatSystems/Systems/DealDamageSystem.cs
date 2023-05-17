@@ -24,7 +24,11 @@
         public void OnUpdate(ref SystemState state)
         {
             this.statAspectLookup.Update(ref state);
-            new DealDamageJob() { StatAspectLookup = this.statAspectLookup }.ScheduleParallel();
+            new DealDamageJob()
+            {
+                StatAspectLookup = this.statAspectLookup ,
+                StatDataLookup = SystemAPI.GetBufferLookup<StatDataElement>(true)
+            }.ScheduleParallel();
         }
     }
 
@@ -33,6 +37,7 @@
     [WithChangeFilter(typeof(ModifierAggregatorData))]
     public partial struct DealDamageJob : IJobEntity
     {
+        [ReadOnly] public BufferLookup<StatDataElement> StatDataLookup;
         [ReadOnly] public StatAspect.Lookup StatAspectLookup;
         public void Execute([EntityIndexInQuery] int entityInQueryIndex, ref DynamicBuffer<ModifierAggregatorData> modifierAggregatorBuffer, in CasterComponent caster,
             in AffectedTargetComponent affectedTarget)
@@ -41,18 +46,27 @@
             {
                 var aggregatorData = modifierAggregatorBuffer[index];
                 if (!aggregatorData.TargetStat.Equals(StatName.Damage)) continue;
-                var casterStatAspect         = this.StatAspectLookup[caster.Value];
-                var affectedTargetStatAspect = this.StatAspectLookup[affectedTarget.Value];
 
-                // Calculate base damage from aggregator
-                var damage = casterStatAspect.CalculateStatValue(aggregatorData);
-                // critical or not
-                var random = Random.CreateFromIndex((uint)entityInQueryIndex);
-                if (random.NextFloat() < casterStatAspect.GetCurrentValue(StatName.CriticalStrikeChance))
+                var damage = 0f;
+                // If caster has stat data
+                if (StatDataLookup.HasBuffer(caster))
                 {
-                    damage += damage * casterStatAspect.GetCurrentValue(StatName.CriticalStrikeDamage);
+                    // Calculate base damage from aggregator
+                    var casterStatAspect         = this.StatAspectLookup[caster.Value];
+                    damage = casterStatAspect.CalculateStatValue(aggregatorData);
+                    // critical or not
+                    var random = Random.CreateFromIndex((uint) entityInQueryIndex);
+                    if (random.NextFloat() < casterStatAspect.GetCurrentValue(StatName.CriticalStrikeChance))
+                    {
+                        damage += damage * casterStatAspect.GetCurrentValue(StatName.CriticalStrikeDamage);
+                    }
+                }
+                else
+                {
+                    damage = aggregatorData.Add * aggregatorData.Multiply / aggregatorData.Divide;
                 }
 
+                var affectedTargetStatAspect = this.StatAspectLookup[affectedTarget.Value];
                 //add caster armor
                 damage = Math.Max(damage - affectedTargetStatAspect.GetCurrentValue(StatName.Armor), 0);
                 var currentHealth = affectedTargetStatAspect.GetCurrentValue(StatName.Health);

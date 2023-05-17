@@ -13,12 +13,14 @@ namespace GASCore.Systems.TargetDetectionSystems.Systems.Filters
     [BurstCompile]
     public partial struct FilterIncludeTagNameSystem : ISystem
     {
+        [BurstCompile]
         public void OnCreate(ref SystemState state)
         {
             state.RequireForUpdate<FindTargetComponent>();
             state.RequireForUpdate<FilterIncludeTagName>();
         }
 
+        [BurstCompile]
         public void OnUpdate(ref SystemState state)
         {
             state.Dependency = new FilterIncludeTagNameJob

@@ -4,7 +4,6 @@ namespace GASCore.Systems.TargetDetectionSystems.Systems.Filters
     using GASCore.Systems.TargetDetectionSystems.Components;
     using GASCore.Systems.TargetDetectionSystems.Components.Filters;
     using GASCore.Systems.TargetDetectionSystems.Components.Trackers;
-    using GASCore.Systems.TimelineSystems.Components;
     using Unity.Burst;
     using Unity.Collections;
     using Unity.Entities;
@@ -16,12 +15,14 @@ namespace GASCore.Systems.TargetDetectionSystems.Systems.Filters
     [BurstCompile]
     public partial struct FilterInsideCastRangeSystem : ISystem
     {
+        [BurstCompile]
         public void OnCreate(ref SystemState state)
         {
             state.RequireForUpdate<FindTargetComponent>();
             state.RequireForUpdate<FilterInsideCastRange>();
         }
 
+        [BurstCompile]
         public void OnUpdate(ref SystemState state)
         {
             state.Dependency = new FilterInsideCastRangeJob

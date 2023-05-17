@@ -17,8 +17,10 @@ namespace GASCore.Systems.TargetDetectionSystems.Systems
     {
         private EntityQuery entityQuery;
 
+        [BurstCompile]
         public void OnCreate(ref SystemState state) { this.entityQuery = SystemAPI.QueryBuilder().WithAll<LocalToWorld, StatNameToIndex, TeamOwnerId>().WithNone<UntargetableTag>().Build(); }
 
+        [BurstCompile]
         public void OnUpdate(ref SystemState state)
         {
             var entities = this.entityQuery.ToEntityListAsync(state.WorldUpdateAllocator, state.Dependency, out var queryJob);

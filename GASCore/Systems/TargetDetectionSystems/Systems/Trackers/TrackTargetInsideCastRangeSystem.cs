@@ -13,12 +13,14 @@ namespace GASCore.Systems.TargetDetectionSystems.Systems.Trackers
     [BurstCompile]
     public partial struct TrackTargetInsideCastRangeSystem : ISystem
     {
+        [BurstCompile]
         public void OnCreate(ref SystemState state)
         {
             state.RequireForUpdate<FindTargetComponent>();
             state.RequireForUpdate(SystemAPI.QueryBuilder().WithAny<FilterInsideCastRange, FilterOutsideCastRange>().Build());
         }
 
+        [BurstCompile]
         public void OnUpdate(ref SystemState state)
         {
             var ecbSingleton = SystemAPI.GetSingleton<EndSimulationEntityCommandBufferSystem.Singleton>();

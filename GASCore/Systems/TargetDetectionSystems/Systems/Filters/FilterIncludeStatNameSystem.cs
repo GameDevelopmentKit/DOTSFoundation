@@ -14,12 +14,14 @@ namespace GASCore.Systems.TargetDetectionSystems.Systems.Filters
     [BurstCompile]
     public partial struct FilterIncludeStatNameSystem : ISystem
     {
+        [BurstCompile]
         public void OnCreate(ref SystemState state)
         {
             state.RequireForUpdate<FindTargetComponent>();
             state.RequireForUpdate(SystemAPI.QueryBuilder().WithAny<FilterIncludeStatName, FilterKillCounter>().Build());
         }
 
+        [BurstCompile]
         public void OnUpdate(ref SystemState state)
         {
             var ecbSingleton = SystemAPI.GetSingleton<EndSimulationEntityCommandBufferSystem.Singleton>();

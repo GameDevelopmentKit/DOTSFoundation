@@ -14,12 +14,14 @@ namespace GASCore.Systems.TargetDetectionSystems.Systems.Filters
     [BurstCompile]
     public partial struct FilterNearestSystem : ISystem
     {
+        [BurstCompile]
         public void OnCreate(ref SystemState state)
         {
             state.RequireForUpdate<FindTargetComponent>();
             state.RequireForUpdate<FilterNearest>();
         }
 
+        [BurstCompile]
         public void OnUpdate(ref SystemState state)
         {
             state.Dependency = new FilterNearestJob
