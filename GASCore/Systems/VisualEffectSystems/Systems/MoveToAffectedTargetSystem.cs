@@ -7,6 +7,7 @@
     using Unity.Burst;
     using Unity.Collections;
     using Unity.Entities;
+    using Unity.Mathematics;
     using Unity.Transforms;
 
     [UpdateInGroup(typeof(AbilityVisualEffectGroup))]
@@ -38,9 +39,9 @@
         public EntityCommandBuffer.ParallelWriter Ecb;
 
         [ReadOnly] public ComponentLookup<LocalToWorld> PositionLookup;
-        void Execute([EntityIndexInQuery] int entityInQueryIndex, in AffectedTargetComponent affectedTarget, in MoveToAffectedTarget data, in SourceComponent source)
+        void Execute([EntityIndexInQuery] int entityInQueryIndex, in AffectedTargetComponent affectedTarget,in MoveToAffectedTarget data, in SourceComponent source)
         {
-            this.Ecb.AddComponent(entityInQueryIndex, source.Value, new TargetPosition(this.PositionLookup[affectedTarget.Value].Position));
+            this.Ecb.AddComponent(entityInQueryIndex, source, new MovementDirection(){Value = math.normalize(this.PositionLookup[affectedTarget.Value].Position - this.PositionLookup[source.Value].Position)});
             
             if(data.RotateSpeed <= 0) return;
             this.Ecb.AddComponent(entityInQueryIndex, source, new RotationSpeed()
