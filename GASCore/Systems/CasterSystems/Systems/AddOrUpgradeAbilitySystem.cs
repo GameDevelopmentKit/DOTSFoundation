@@ -44,49 +44,63 @@
                         abilityContainerBuffer = ecb.AddBuffer<AbilityContainerElement>(entityInQueryIndex, casterEntity);
 
                     var listAbilityEntity = new NativeList<Entity>(Allocator.Temp);
+
                     foreach (var requestAddOrUpgradeAbility in requestAddOrUpgradeAbilities)
                     {
+                        bool isExist = false; //is true if this found the same ability (name, level)
+                        
                         // request remove old ability if exist
                         foreach (var abilityContainerElement in abilityContainerBuffer)
                         {
                             if (!requestAddOrUpgradeAbility.AbilityId.Equals(abilityContainerElement.AbilityId)) continue;
                             //skip this request if caster already have this ability with same level
                             // if not request remove the old one to add new one
-                            if (requestAddOrUpgradeAbility.Level == abilityContainerElement.Level) return;
-
-                            if (!HasBuffer<RequestRemoveAbility>(casterEntity)) ecb.AddBuffer<RequestRemoveAbility>(entityInQueryIndex, casterEntity);
-
-                            Debug.Log($"Request remove ability {abilityContainerElement.AbilityId}_Lv{abilityContainerElement.Level}");
-                            ecb.AppendToBuffer(entityInQueryIndex, casterEntity, new RequestRemoveAbility(abilityContainerElement.AbilityId, abilityContainerElement.Level));
-                        }
-
-                        // try to add new ability flow
-                        // Debug.Log($"requestInitializeAbility + {requestAddOrUpgradeAbility.AbilityLevelKey} ");
-                        if (abilityNameToLevelPrefabs.TryGetValue(requestAddOrUpgradeAbility.AbilityLevelKey, out var abilityPrefab))
-                        {
-                            // instantiate ability and log to AbilityContainerElement
-                            var abilityEntity = ecb.Instantiate(entityInQueryIndex, abilityPrefab);
-
-                            if (requestAddOrUpgradeAbility.IsPrefab)
+                            if (requestAddOrUpgradeAbility.Level == abilityContainerElement.Level)
                             {
-                                ecb.AddComponent<Prefab>(entityInQueryIndex, abilityEntity);
+                                isExist = true;
                             }
-
-                            ecb.AppendToBuffer(entityInQueryIndex, casterEntity, new AbilityContainerElement()
+                            else
                             {
-                                AbilityId       = requestAddOrUpgradeAbility.AbilityId,
-                                Level           = requestAddOrUpgradeAbility.Level,
-                                AbilityInstance = abilityEntity
-                            });
+                                if (!HasBuffer<RequestRemoveAbility>(casterEntity)) ecb.AddBuffer<RequestRemoveAbility>(entityInQueryIndex, casterEntity);
 
-                            ecb.AddComponent(entityInQueryIndex, abilityEntity, new CasterComponent() { Value = casterEntity });
-                            ecb.SetParent(entityInQueryIndex, abilityEntity, casterEntity);
-                            listAbilityEntity.Add(abilityEntity);
+                                Debug.Log($"Request remove ability {abilityContainerElement.AbilityId}_Lv{abilityContainerElement.Level}");
+                                ecb.AppendToBuffer(entityInQueryIndex, casterEntity, new RequestRemoveAbility(abilityContainerElement.AbilityId, abilityContainerElement.Level));   
+
+                            }
+                            break;
                         }
-                        else
+
+                        if (!isExist)
                         {
-                            Debug.LogError($"Ability {requestAddOrUpgradeAbility.AbilityLevelKey} is not found in Pool. Please recheck this Id in AbilityBlueprint");
-                            return;
+                            
+                            // try to add new ability flow
+                            // Debug.Log($"requestInitializeAbility + {requestAddOrUpgradeAbility.AbilityLevelKey} ");
+                            if (abilityNameToLevelPrefabs.TryGetValue(requestAddOrUpgradeAbility.AbilityLevelKey, out var abilityPrefab))
+                            {
+                                // instantiate ability and log to AbilityContainerElement
+                                var abilityEntity = ecb.Instantiate(entityInQueryIndex, abilityPrefab);
+
+                                if (requestAddOrUpgradeAbility.IsPrefab)
+                                {
+                                    ecb.AddComponent<Prefab>(entityInQueryIndex, abilityEntity);
+                                }
+
+                                ecb.AppendToBuffer(entityInQueryIndex, casterEntity, new AbilityContainerElement()
+                                {
+                                    AbilityId       = requestAddOrUpgradeAbility.AbilityId,
+                                    Level           = requestAddOrUpgradeAbility.Level,
+                                    AbilityInstance = abilityEntity
+                                });
+
+                                ecb.AddComponent(entityInQueryIndex, abilityEntity, new CasterComponent() { Value = casterEntity });
+                                ecb.SetParent(entityInQueryIndex, abilityEntity, casterEntity);
+                                listAbilityEntity.Add(abilityEntity);
+                            }
+                            else
+                            {
+                                Debug.LogError($"Ability {requestAddOrUpgradeAbility.AbilityLevelKey} is not found in Pool. Please recheck this Id in AbilityBlueprint");
+                                return;
+                            }
                         }
                     }
 
