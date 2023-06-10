@@ -5,9 +5,9 @@
 
     public struct RequestAddOrUpgradeAbility : IBufferElementData
     {
-        public   FixedString64Bytes AbilityId { get;}
-        public   int                Level     { get; }
-        public   bool               IsPrefab  { get; }
+        public   FixedString64Bytes AbilityId;
+        public   int                Level;
+        public   bool               IsPrefab;
         internal FixedString64Bytes AbilityLevelKey;
         public RequestAddOrUpgradeAbility(FixedString64Bytes abilityId, int level, bool isPrefab = false)
         {
