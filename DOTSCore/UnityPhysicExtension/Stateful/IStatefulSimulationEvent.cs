@@ -24,7 +24,10 @@ namespace Unity.Physics.Stateful
     /// <summary>
     /// Extends ISimulationEvent with extra <see cref="StatefulEventState"/>.
     /// </summary>
-    public interface IStatefulSimulationEvent<T> : IBufferElementData, ISimulationEvent<T>
+    public interface IStatefulSimulationEvent<T> : IBufferElementData
+#if UNITY_PHYSICS_CUSTOM
+        , ISimulationEvent<T>
+#endif
     {
         public StatefulEventState State { get; set; }
     }

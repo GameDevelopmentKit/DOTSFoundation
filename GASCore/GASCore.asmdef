@@ -16,7 +16,9 @@
         "Zenject-Source",
         "Unity.TextMeshPro",
         "UniTask",
-        "DOTween.Modules"
+        "DOTween.Modules",
+        "Unity.Physics.Custom",
+        "ProjectDawn.Navigation"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

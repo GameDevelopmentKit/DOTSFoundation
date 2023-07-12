@@ -7,6 +7,7 @@
     /// </summary>
     public struct EndTimeComponent : IComponentData, IEnableableComponent
     {
-        public double Value;
+        public float AmountTime;
+        public double NextEndTimeValue;
     }
 }

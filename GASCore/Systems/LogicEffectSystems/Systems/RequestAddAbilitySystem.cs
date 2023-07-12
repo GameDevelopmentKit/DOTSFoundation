@@ -14,7 +14,7 @@
         [BurstCompile]
         public void OnCreate(ref SystemState state)
         {
-            state.RequireForUpdate<AddAbilityElement>();
+            state.RequireForUpdate(SystemAPI.QueryBuilder().WithAll<AddAbilityElement>().WithNone<RequestAddOrUpgradeAbility>().Build());
         }
 
         [BurstCompile]
@@ -36,7 +36,7 @@
     {
         public EntityCommandBuffer.ParallelWriter Ecb;
 
-        void Execute(Entity entity,[EntityIndexInQuery] int entityInQueryIndex, in DynamicBuffer<AddAbilityElement> addAbilityElements)
+        void Execute(SourceComponent entity,[EntityIndexInQuery] int entityInQueryIndex, in DynamicBuffer<AddAbilityElement> addAbilityElements)
         {
             var requestAddAbilities = this.Ecb.AddBuffer<RequestAddOrUpgradeAbility>(entityInQueryIndex, entity);
 

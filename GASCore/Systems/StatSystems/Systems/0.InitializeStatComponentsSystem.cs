@@ -1,6 +1,5 @@
 ﻿namespace GASCore.Systems.StatSystems.Systems
 {
-    using DOTSCore.Extension;
     using GASCore.Groups;
     using GASCore.Systems.StatSystems.Components;
     using GASCore.Systems.TimelineSystems.Components;

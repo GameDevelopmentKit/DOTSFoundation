@@ -10,7 +10,7 @@
     {
         protected override void OnUpdate()
         {
-            this.Entities.WithoutBurst().WithStructuralChanges().WithNone<AssetPathComponent>().ForEach((Entity entity, in GameObjectHybridLink hybridLink) =>
+            this.Entities.WithoutBurst().WithStructuralChanges().WithNone<AddressablePathComponent>().ForEach((Entity entity, in GameObjectHybridLink hybridLink) =>
             {
                 var destroyListener = hybridLink.Value.GetComponent<IDestroyListener>();
                 if (destroyListener == null)

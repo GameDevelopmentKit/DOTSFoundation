@@ -24,10 +24,10 @@ namespace GASCore.Systems.TargetDetectionSystems.Systems.Filters
         [BurstCompile]
         public void OnUpdate(ref SystemState state)
         {
-            state.Dependency = new FilterNearestJob
+            new FilterNearestJob
             {
                 WorldTransformLookup = SystemAPI.GetComponentLookup<LocalToWorld>(true),
-            }.ScheduleParallel(state.Dependency);
+            }.ScheduleParallel();
         }
     }
 

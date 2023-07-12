@@ -1,4 +1,67 @@
-﻿namespace DOTSCore.CommonSystems.Systems
+﻿// namespace DOTSCore.CommonSystems.Systems
+// {
+//     using DOTSCore.CommonSystems.Components;
+//     using Unity.Burst;
+//     using Unity.Collections;
+//     using Unity.Entities;
+//     using Unity.Transforms;
+//     using UnityEngine.Jobs;
+//     using static Unity.Entities.SystemAPI;
+//     
+//     [UpdateInGroup(typeof(SimulationSystemGroup), OrderLast = true)]
+//     [UpdateAfter(typeof(LateSimulationSystemGroup))]
+//     [RequireMatchingQueriesForUpdate]
+//     [BurstCompile]
+//     public partial struct SyncHybridTransformSystem : ISystem
+//     {
+//         EntityQuery                   entityQuery;
+//         HybridTransformAccessArray    hybridTransformAccessArray;
+//
+//         [BurstCompile]
+//         public void OnCreate(ref SystemState state)
+//         {
+//             this.entityQuery = QueryBuilder()
+//                 .WithAllRW<GameObjectHybridLink>()
+//                 .WithAll<LocalToWorld>()
+//                 .WithNone<IgnoreSysnTransformComponent>()
+//                 .Build();
+//         }
+//         
+//         public void OnUpdate(ref SystemState state)
+//         {
+//             var entities = this.entityQuery.ToEntityArray(Allocator.TempJob);
+//             this.hybridTransformAccessArray.Update(ref this.entityQuery);
+//
+//             state.Dependency = new ReadHybridTransformJob
+//             {
+//                 Entities        = entities,
+//                 TransformLookup = GetComponentLookup<LocalToWorld>(true),
+//             }.Schedule(this.hybridTransformAccessArray, state.Dependency);
+//         }
+//
+//         [BurstCompile]
+//         struct ReadHybridTransformJob : IJobParallelForTransform
+//         {
+//             [DeallocateOnJobCompletion] public NativeArray<Entity> Entities;
+//
+//             [ReadOnly] public ComponentLookup<LocalToWorld> TransformLookup;
+//
+//             public unsafe void Execute(int index, TransformAccess transformAccess)
+//             {
+//                 Entity entity = Entities[index];
+//
+//                 var ltw = TransformLookup[entity];
+//                 var mat = *(UnityEngine.Matrix4x4*)&ltw;
+//
+//                 transformAccess.position   = ltw.Position;
+//                 transformAccess.rotation   = mat.rotation;
+//                 transformAccess.localScale = mat.lossyScale;
+//             }
+//         }
+//     }
+// }
+
+namespace DOTSCore.CommonSystems.Systems
 {
     using DOTSCore.CommonSystems.Components;
     using Unity.Burst;
@@ -8,13 +71,10 @@
     using UnityEngine.Jobs;
 
     //copy from Unity.Entities.CompanionGameObjectUpdateTransformSystem but modify a bit
-    struct SyncGameObjectTransformCleanup : ICleanupComponentData
-    {
-    }
+    struct SyncGameObjectTransformCleanup : ICleanupComponentData { }
 
-    [WorldSystemFilter(WorldSystemFilterFlags.Default | WorldSystemFilterFlags.Editor)]
     [UpdateInGroup(typeof(SimulationSystemGroup), OrderLast = true)]
-    [UpdateAfter(typeof(LateSimulationSystemGroup))]
+    [UpdateAfter(typeof(EndSimulationEntityCommandBufferSystem))]
     [BurstCompile]
     partial class SyncGameObjectTransformSystem : SystemBase
     {
@@ -47,7 +107,7 @@
                 new EntityQueryDesc
                 {
                     All  = new[] { ComponentType.ReadOnly<SyncGameObjectTransformCleanup>() },
-                    None = new[] { ComponentType.ReadOnly<AssetPathComponent>() }
+                    None = new[] { ComponentType.ReadOnly<AddressablePathComponent>() }
                 }
             );
         }
@@ -137,18 +197,18 @@
 
             Dependency = new CopyTransformJob
             {
-                localToWorld    = GetComponentLookup<LocalToWorld>(),
+                localToWorld    = GetComponentLookup<LocalToWorld>(true),
                 entities        = m_Entities,
-                ignoreTransform = GetComponentLookup<IgnoreSysnTransformComponent>()
+                ignoreTransform = GetComponentLookup<IgnoreSysnTransformComponent>(true)
             }.Schedule(m_TransformAccessArray, Dependency);
         }
 
         [BurstCompile]
         struct CopyTransformJob : IJobParallelForTransform
         {
-            [NativeDisableParallelForRestriction] public ComponentLookup<LocalToWorld>                 localToWorld;
-            [ReadOnly]                            public NativeList<Entity>                            entities;
-            [NativeDisableParallelForRestriction] public ComponentLookup<IgnoreSysnTransformComponent> ignoreTransform;
+            [ReadOnly] public ComponentLookup<LocalToWorld>                 localToWorld;
+            [ReadOnly] public NativeList<Entity>                            entities;
+            [ReadOnly] public ComponentLookup<IgnoreSysnTransformComponent> ignoreTransform;
             public unsafe void Execute(int index, TransformAccess transform)
             {
                 var entity = this.entities[index];

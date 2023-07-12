@@ -15,18 +15,21 @@
     public partial struct WaitOnStatChangeSystem : ISystem
     {
         private EntityQuery triggerOnStatChangeQuery;
+        private EntityQuery statChangeEntityQuery;
 
         [BurstCompile]
         public void OnCreate(ref SystemState state)
         {
             using var queryBuilder = new EntityQueryBuilder(Allocator.Temp).WithAll<TriggerOnStatChanged>();
             this.triggerOnStatChangeQuery = state.GetEntityQuery(queryBuilder);
-            state.RequireForUpdate<OnStatChangeTag>();
+            statChangeEntityQuery         = SystemAPI.QueryBuilder().WithAll<OnStatChangeTag, StatChangeElement>().Build();
+            state.RequireForUpdate(statChangeEntityQuery);
         }
 
         [BurstCompile]
         public void OnUpdate(ref SystemState state)
         {
+            if(statChangeEntityQuery.IsEmpty) return;
             var triggerOnHits = this.triggerOnStatChangeQuery.ToEntityListAsync(state.WorldUpdateAllocator, out var getTriggerOnHitHandle);
 
             var ecbSingleton = SystemAPI.GetSingleton<BeginPresentationEntityCommandBufferSystem.Singleton>();

@@ -10,6 +10,7 @@
     using Unity.Entities;
     using Unity.Mathematics;
     using Unity.Transforms;
+    using UnityEngine;
     using Random = Unity.Mathematics.Random;
 
     [UpdateInGroup(typeof(AbilityLogicEffectGroup))]
@@ -17,24 +18,27 @@
     [BurstCompile]
     public partial struct SpawnEntitiesSystem : ISystem
     {
+        EntityQuery entityQuery;
         [BurstCompile]
         public void OnCreate(ref SystemState state)
         {
-            state.RequireForUpdate(SystemAPI.QueryBuilder().WithAll<EntitySpawner>().WithNone<EndTimeComponent>().Build());
+            this.entityQuery = SystemAPI.QueryBuilder().WithAll<EntitySpawner>().WithNone<EndTimeComponent>().Build();
+            state.RequireForUpdate(this.entityQuery);
         }
 
         [BurstCompile]
         public void OnUpdate(ref SystemState state)
         {
+            if (this.entityQuery.IsEmpty) return;
             var ecbSingleton = SystemAPI.GetSingleton<EndSimulationEntityCommandBufferSystem.Singleton>();
             var ecb          = ecbSingleton.CreateCommandBuffer(state.WorldUnmanaged).AsParallelWriter();
             var random       = new Random((uint)(SystemAPI.Time.ElapsedTime * 100000));
 
             new SpawnEntitiesJob()
             {
-                Ecb             = ecb,
-                Random          = random,
-                TeamLookup      = SystemAPI.GetComponentLookup<TeamOwnerId>(true),
+                Ecb        = ecb,
+                Random     = random,
+                TeamLookup = SystemAPI.GetComponentLookup<TeamOwnerId>(true),
             }.ScheduleParallel();
         }
     }
@@ -73,14 +77,18 @@
             while (amount-- > 0)
             {
                 var newEntity = this.Ecb.Instantiate(index, spawnData.EntityPrefab);
-                this.Ecb.RemoveParent(index, newEntity);
 
                 math.sincos(spawnData.CurrentAngle, out var sinA, out var cosA);
                 var position = new float3(sinA, 0.0f, cosA) * spawnData.SpawnerRadius;
                 if (spawnData.IsSetChild)
+                {
                     this.Ecb.SetParent(index, newEntity, spawnerEntity);
+                }
                 else
+                {
+                    this.Ecb.RemoveParent(index, newEntity);
                     position += spawnerTransform.Position;
+                }
 
 
                 var rotateY = quaternion.RotateY(spawnData.CurrentAngle);

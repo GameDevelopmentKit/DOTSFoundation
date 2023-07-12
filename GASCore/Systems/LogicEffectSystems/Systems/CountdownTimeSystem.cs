@@ -3,27 +3,36 @@
     using GASCore.Groups;
     using GASCore.Systems.LogicEffectSystems.Components;
     using Unity.Burst;
+    using Unity.Collections;
     using Unity.Entities;
 
-    [UpdateInGroup(typeof(AbilityLogicEffectGroup))]
+    [UpdateInGroup(typeof(AbilityVisualEffectGroup))]
     [RequireMatchingQueriesForUpdate]
     [BurstCompile]
     public partial struct CountdownTimeSystem : ISystem
     {
         [BurstCompile]
-        public void OnCreate(ref SystemState state)
+        public void OnUpdate(ref SystemState state)
         {
-            state.RequireForUpdate<Duration>();
+            new CountDownJob()
+            {
+                DeltaTime      = SystemAPI.Time.DeltaTime,
+                DurationLookup = SystemAPI.GetComponentLookup<Duration>()
+            }.ScheduleParallel();
         }
 
         [BurstCompile]
-        public void OnUpdate(ref SystemState state)
+        [WithAll(typeof(Duration))]
+        public partial struct CountDownJob : IJobEntity
         {
-            var deltaTime = SystemAPI.Time.DeltaTime;
-            foreach (var (duration, entity) in SystemAPI.Query<RefRW<Duration>>().WithEntityAccess())
+            public                                       float                     DeltaTime;
+            [NativeDisableParallelForRestriction] public ComponentLookup<Duration> DurationLookup;
+            void Execute(Entity entity)
             {
-                duration.ValueRW.Value -= deltaTime;
-                if (duration.ValueRO.Value <= 0) SystemAPI.SetComponentEnabled<Duration>(entity, false);
+                var duration = this.DurationLookup[entity];
+                duration.Value              -= DeltaTime;
+                this.DurationLookup[entity] =  duration;
+                if (duration.Value <= 0) this.DurationLookup.SetComponentEnabled(entity, false);
             }
         }
     }

@@ -16,26 +16,26 @@ namespace GASCore.Systems.TargetDetectionSystems.Systems.Trackers
         [BurstCompile]
         public void OnCreate(ref SystemState state)
         {
-            state.RequireForUpdate<FindTargetComponent>();
-            state.RequireForUpdate(SystemAPI.QueryBuilder().WithAny<FilterInsideCastRange, FilterOutsideCastRange>().Build());
+            state.RequireForUpdate<FilterOutsideCastRange>();
         }
 
         [BurstCompile]
         public void OnUpdate(ref SystemState state)
         {
             var ecbSingleton = SystemAPI.GetSingleton<EndSimulationEntityCommandBufferSystem.Singleton>();
-            var ecb          = ecbSingleton.CreateCommandBuffer(state.WorldUnmanaged).AsParallelWriter();
+            var ecb          = ecbSingleton.CreateCommandBuffer(state.WorldUnmanaged);
 
+            ecb.ShouldPlayback = false;
             var trackJob = new TrackTargetInsideCastRangeJob
             {
                 Ecb          = ecb,
                 TracksLookup = SystemAPI.GetBufferLookup<TrackTargetInCastRange>(),
-            }.ScheduleParallel(state.Dependency);
+            }.Schedule(state.Dependency);
 
             state.Dependency = new UntrackTargetOutsideCastRangeJob
             {
                 Ecb = ecb,
-            }.ScheduleParallel(trackJob);
+            }.Schedule(trackJob);
         }
     }
 
@@ -44,25 +44,26 @@ namespace GASCore.Systems.TargetDetectionSystems.Systems.Trackers
     [BurstCompile]
     public partial struct TrackTargetInsideCastRangeJob : IJobEntity
     {
-        public            EntityCommandBuffer.ParallelWriter   Ecb;
+        public            EntityCommandBuffer   Ecb;
         [ReadOnly] public BufferLookup<TrackTargetInCastRange> TracksLookup;
 
         private void Execute(
-            [EntityIndexInQuery] int index,
             in DynamicBuffer<TargetableElement> targetables,
             in FilterInsideCastRange param,
             in ActivatedStateEntityOwner owner
         )
         {
             if (!param.Track) return;
+            if(targetables.IsEmpty) return;
+            this.Ecb.ShouldPlayback = true;
             foreach (var target in targetables)
             {
                 if (!this.TracksLookup.HasBuffer(target))
                 {
-                    this.Ecb.AddBuffer<TrackTargetInCastRange>(index, target);
+                    this.Ecb.AddBuffer<TrackTargetInCastRange>(target);
                 }
 
-                this.Ecb.AppendToBuffer(index, target, new TrackTargetInCastRange { Owner = owner });
+                this.Ecb.AppendToBuffer(target, new TrackTargetInCastRange { Owner = owner });
             }
         }
     }
@@ -72,17 +73,18 @@ namespace GASCore.Systems.TargetDetectionSystems.Systems.Trackers
     [BurstCompile]
     public partial struct UntrackTargetOutsideCastRangeJob : IJobEntity
     {
-        public EntityCommandBuffer.ParallelWriter Ecb;
+        public EntityCommandBuffer Ecb;
 
         private void Execute(
-            [EntityIndexInQuery] int index,
             in DynamicBuffer<TargetableElement> targetables,
             in ActivatedStateEntityOwner owner
         )
         {
+            if(targetables.IsEmpty) return;
+            this.Ecb.ShouldPlayback = true;
             foreach (var target in targetables)
             {
-                var tracks = this.Ecb.SetBuffer<TrackTargetInCastRange>(index, target);
+                var tracks = this.Ecb.SetBuffer<TrackTargetInCastRange>(target);
                 for (var i = 0; i < tracks.Length; ++i)
                 {
                     if (tracks[i].Owner.Value == owner.Value)

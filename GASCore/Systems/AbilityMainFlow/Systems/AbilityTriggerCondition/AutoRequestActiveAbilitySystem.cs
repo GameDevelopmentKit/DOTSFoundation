@@ -1,7 +1,6 @@
 ﻿namespace GASCore.Systems.AbilityMainFlow.Systems.AbilityTriggerCondition
 {
     using GASCore.Groups;
-    using GASCore.Services;
     using GASCore.Systems.AbilityMainFlow.Components;
     using GASCore.Systems.LogicEffectSystems.Components;
     using GASCore.Systems.TimelineSystems.Components;
@@ -15,19 +14,13 @@
     public partial struct AutoRequestActiveAbilitySystem : ISystem
     {
         [BurstCompile]
-        public void OnCreate(ref SystemState state) { }
-        [BurstCompile]
         public void OnUpdate(ref SystemState state)
         {
-            var ecbSingleton = SystemAPI.GetSingleton<EndInitializationEntityCommandBufferSystem.Singleton>();
-            var ecb          = ecbSingleton.CreateCommandBuffer(state.WorldUnmanaged).AsParallelWriter();
-
-            new AutoTriggerAbilityAfterCooldownJob() { Ecb = ecb }.ScheduleParallel();
-            new AutoTriggerAbilityOnStartJob() { Ecb       = ecb }.ScheduleParallel();
+            new AutoTriggerAbilityAfterCooldownJob().ScheduleParallel();
+            new AutoTriggerAbilityOnStartJob().ScheduleParallel();
 
             new AutoRequestActiveAbilityJob()
             {
-                Ecb                  = ecb,
                 RecycleTriggerLookup = SystemAPI.GetComponentLookup<RecycleTriggerEntityTag>(true)
             }.ScheduleParallel();
         }
@@ -37,20 +30,19 @@
 
     [BurstCompile]
     [WithAll(typeof(AbilityId), typeof(CompletedAllTriggerConditionTag), typeof(AutoActiveTag))]
-    [WithNone(typeof(RequestActivate))]
+    [WithDisabled(typeof(RequestActivate))]
     public partial struct AutoRequestActiveAbilityJob : IJobEntity
     {
-        public            EntityCommandBuffer.ParallelWriter       Ecb;
         [ReadOnly] public ComponentLookup<RecycleTriggerEntityTag> RecycleTriggerLookup;
-        void Execute(Entity abilityEntity, [EntityIndexInQuery] int entityInQueryIndex, in AbilityId abilityId)
+        void Execute(Entity abilityEntity, EnabledRefRW<AutoActiveTag> autoActiveEnableState, EnabledRefRW<RequestActivate> requestActivateEnableState)
         {
             // Debug.Log($"AutoRequestActiveAbilityJob ability {abilityId.Value}");
             if (!this.RecycleTriggerLookup.HasComponent(abilityEntity))
             {
-                this.Ecb.SetComponentEnabled<AutoActiveTag>(entityInQueryIndex, abilityEntity, false);
+                autoActiveEnableState.ValueRW = false;
             }
 
-            this.Ecb.SetComponentEnabled<RequestActivate>(entityInQueryIndex, abilityEntity, true);
+            requestActivateEnableState.ValueRW = true;
         }
     }
 
@@ -59,12 +51,9 @@
     [WithNone(typeof(Duration))]
     public partial struct AutoTriggerAbilityAfterCooldownJob : IJobEntity
     {
-        public EntityCommandBuffer.ParallelWriter Ecb;
-
-        void Execute(Entity abilityEntity, [EntityIndexInQuery] int entityInQueryIndex)
+        void Execute(ref DynamicBuffer<CompletedTriggerElement> completedTriggerBuffer)
         {
-            // Debug.Log($"AutoTriggerAbilityAfterCooldownJob ability Index {abilityEntity.Index}");
-            this.Ecb.MarkTriggerConditionComplete<AutoActiveAfterCooldownTag>(abilityEntity, entityInQueryIndex);
+            completedTriggerBuffer.Add(new CompletedTriggerElement() { Index = TypeManager.GetTypeIndex<AutoActiveAfterCooldownTag>() });
         }
     }
 
@@ -73,12 +62,9 @@
     [WithChangeFilter(typeof(AutoActiveOnStartTag))]
     public partial struct AutoTriggerAbilityOnStartJob : IJobEntity
     {
-        public EntityCommandBuffer.ParallelWriter Ecb;
-
-        void Execute(Entity abilityEntity, [EntityIndexInQuery] int entityInQueryIndex)
+        void Execute(ref DynamicBuffer<CompletedTriggerElement> completedTriggerBuffer)
         {
-            // Debug.Log($"AutoTriggerAbilityOnStartJob ability Index {abilityEntity.Index}");
-            this.Ecb.MarkTriggerConditionComplete<AutoActiveOnStartTag>(abilityEntity, entityInQueryIndex);
+            completedTriggerBuffer.Add(new CompletedTriggerElement() { Index = TypeManager.GetTypeIndex<AutoActiveOnStartTag>() });
         }
     }
 }

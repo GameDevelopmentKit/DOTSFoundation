@@ -2,6 +2,7 @@
 {
     using GASCore.Groups;
     using GASCore.Systems.LogicEffectSystems.Components;
+    using GASCore.Systems.StatSystems.Components;
     using Unity.Burst;
     using Unity.Entities;
     using Unity.Mathematics;
@@ -12,11 +13,11 @@
     {
         public float  DeltaTime;
         public float3 UpVector;
-        void Execute(ref LocalTransform transform, in MovementDirection movementDirection, in RotationSpeed speed)
+        void Execute(ref LocalTransform transform, in MovementDirection movementDirection, StatAspect statAspect)
         {
-            if (movementDirection.Value.Equals(float3.zero)) return;
-            var toRotation        = quaternion.LookRotation(movementDirection.Value, this.UpVector);
-            transform.Rotation = math.slerp(transform.Rotation, toRotation, speed.Value * this.DeltaTime);
+            if (movementDirection.Value.Equals(float3.zero) || !statAspect.HasStat(StatName.RotateSpeed)) return;
+            var toRotation = quaternion.LookRotation(movementDirection.Value, this.UpVector);
+            transform.Rotation = math.slerp(transform.Rotation, toRotation, statAspect.GetCurrentValue(StatName.RotateSpeed) * this.DeltaTime);
         }
     }
 
@@ -35,7 +36,7 @@
             new OrientTowardJob()
             {
                 DeltaTime = deltaTime,
-                UpVector =  this.upVector
+                UpVector  = this.upVector
             }.ScheduleParallel();
         }
     }

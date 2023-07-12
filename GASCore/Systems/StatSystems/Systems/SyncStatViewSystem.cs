@@ -14,11 +14,11 @@
     {
         protected override void OnUpdate()
         {
-            Entities.WithoutBurst().WithAll<OnStatChangeTag>().ForEach((Entity entity, in DynamicBuffer<StatChangeElement> onStatChangeBuffer) =>
+            Entities.WithoutBurst().WithAll<OnStatChangeTag, ListenerCollector>().ForEach((in EventQueue eventQueue,in DynamicBuffer<StatChangeElement> onStatChangeBuffer) =>
             {
                 foreach (var onStatChange in onStatChangeBuffer)
                 {
-                    EntityManager.TryEnqueueViewEvent(entity, new ChangeStatEvent() { ChangedStat = onStatChange.Value });
+                    eventQueue.Value.Enqueue(new ChangeStatEvent() { ChangedStat = onStatChange.Value });
                 }
             }).Run();
         }

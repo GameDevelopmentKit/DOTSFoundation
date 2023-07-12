@@ -3,8 +3,8 @@
     using Unity.Collections;
     using Unity.Entities;
 
-    public struct AssetPathComponent : IComponentData
+    public struct ViewPrefabEntityComponent : IComponentData
     {
-        public FixedString128Bytes Path;
+        public FixedString64Bytes Value;
     }
 }

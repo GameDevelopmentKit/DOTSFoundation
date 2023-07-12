@@ -2,5 +2,5 @@
 {
     using Unity.Entities;
 
-    public struct ForceCleanupTag : IComponentData { }
+    public struct ForceCleanupTag : IComponentData, IEnableableComponent { }
 }

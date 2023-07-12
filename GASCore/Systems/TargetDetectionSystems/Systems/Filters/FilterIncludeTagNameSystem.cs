@@ -8,7 +8,7 @@ namespace GASCore.Systems.TargetDetectionSystems.Systems.Filters
     using Unity.Collections;
     using Unity.Entities;
 
-    [UpdateInGroup(typeof(FilterTargetGroup))]
+    [UpdateInGroup(typeof(FilterTargetGroup), OrderFirst = true)]
     [RequireMatchingQueriesForUpdate]
     [BurstCompile]
     public partial struct FilterIncludeTagNameSystem : ISystem
@@ -23,10 +23,10 @@ namespace GASCore.Systems.TargetDetectionSystems.Systems.Filters
         [BurstCompile]
         public void OnUpdate(ref SystemState state)
         {
-            state.Dependency = new FilterIncludeTagNameJob
+            new FilterIncludeTagNameJob
             {
                 TagLookup = SystemAPI.GetComponentLookup<TagComponent>(true),
-            }.ScheduleParallel(state.Dependency);
+            }.ScheduleParallel();
         }
     }
 

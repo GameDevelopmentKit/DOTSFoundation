@@ -9,58 +9,18 @@ namespace GASCore.Systems.TargetDetectionSystems.Systems.Filters
     using Unity.Collections;
     using Unity.Entities;
 
-    [UpdateInGroup(typeof(FilterTargetGroup))]
+    [UpdateInGroup(typeof(FilterTargetGroup), OrderFirst = true)]
     [RequireMatchingQueriesForUpdate]
     [BurstCompile]
     public partial struct FilterIncludeStatNameSystem : ISystem
     {
         [BurstCompile]
-        public void OnCreate(ref SystemState state)
-        {
-            state.RequireForUpdate<FindTargetComponent>();
-            state.RequireForUpdate(SystemAPI.QueryBuilder().WithAny<FilterIncludeStatName, FilterKillCounter>().Build());
-        }
+        public void OnCreate(ref SystemState state) { state.RequireForUpdate<FindTargetComponent>(); }
 
         [BurstCompile]
         public void OnUpdate(ref SystemState state)
         {
-            var ecbSingleton = SystemAPI.GetSingleton<EndSimulationEntityCommandBufferSystem.Singleton>();
-            var ecb          = ecbSingleton.CreateCommandBuffer(state.WorldUnmanaged).AsParallelWriter();
-
-            var convertKillCounterJob = new ConvertFilterKillCounterToFilterIncludeStatNameJob
-            {
-                Ecb            = ecb,
-                FilterLookup   = SystemAPI.GetBufferLookup<FilterIncludeStatName>(),
-                StatNameLookup = SystemAPI.GetComponentLookup<UpdateKillCountStatNameComponent>(true),
-            }.ScheduleParallel(state.Dependency);
-
-            state.Dependency = new FilterIncludeStatNameJob
-            {
-                StatNamesLookup = SystemAPI.GetComponentLookup<StatNameToIndex>(true),
-            }.ScheduleParallel(convertKillCounterJob);
-        }
-    }
-
-    [WithChangeFilter(typeof(FilterKillCounter))]
-    [BurstCompile]
-    public partial struct ConvertFilterKillCounterToFilterIncludeStatNameJob : IJobEntity
-    {
-        public            EntityCommandBuffer.ParallelWriter                Ecb;
-        [ReadOnly] public BufferLookup<FilterIncludeStatName>               FilterLookup;
-        [ReadOnly] public ComponentLookup<UpdateKillCountStatNameComponent> StatNameLookup;
-
-        private void Execute(
-            Entity entity,
-            [EntityIndexInQuery] int index,
-            in CasterComponent caster
-        )
-        {
-            if (!this.FilterLookup.HasBuffer(entity))
-            {
-                this.Ecb.AddBuffer<FilterIncludeStatName>(index, entity);
-            }
-
-            this.Ecb.AppendToBuffer(index, entity, new FilterIncludeStatName { Value = this.StatNameLookup[caster] });
+            new FilterIncludeStatNameJob{StatNamesLookup = SystemAPI.GetComponentLookup<StatNameToIndex>(true),}.ScheduleParallel();
         }
     }
 
@@ -79,7 +39,7 @@ namespace GASCore.Systems.TargetDetectionSystems.Systems.Filters
             for (var i = 0; i < targetables.Length;)
             {
                 var targetStatNames = this.StatNamesLookup[targetables[i]].Value;
-                var isValid = true;
+                var isValid         = true;
                 foreach (var statName in statNames)
                 {
                     if (!targetStatNames.ContainsKey(statName))
@@ -97,6 +57,58 @@ namespace GASCore.Systems.TargetDetectionSystems.Systems.Filters
                 }
 
                 ++i;
+            }
+        }
+    }
+
+    [UpdateInGroup(typeof(FilterTargetGroup))]
+    [UpdateBefore(typeof(FilterIncludeStatNameSystem))]
+    [RequireMatchingQueriesForUpdate]
+    [BurstCompile]
+    public partial struct ConvertFilterKillCounterToFilterIncludeStatNameSystem : ISystem
+    {
+        [BurstCompile]
+        public void OnCreate(ref SystemState state)
+        {
+            state.RequireForUpdate<FindTargetComponent>();
+            state.RequireForUpdate(SystemAPI.QueryBuilder().WithAll<FilterKillCounter>().WithNone<FilterIncludeStatName>().Build());
+        }
+
+        [BurstCompile]
+        public void OnUpdate(ref SystemState state)
+        {
+            var ecbSingleton = SystemAPI.GetSingleton<EndSimulationEntityCommandBufferSystem.Singleton>();
+            var ecb          = ecbSingleton.CreateCommandBuffer(state.WorldUnmanaged).AsParallelWriter();
+
+            new ConvertFilterKillCounterToFilterIncludeStatNameJob
+            {
+                Ecb            = ecb,
+                FilterLookup   = SystemAPI.GetBufferLookup<FilterIncludeStatName>(),
+                StatNameLookup = SystemAPI.GetComponentLookup<UpdateKillCountStatNameComponent>(true),
+            }.ScheduleParallel();
+        }
+
+        [WithAll(typeof(FilterKillCounter))]
+        [WithNone(typeof(FilterIncludeStatName))]
+        [BurstCompile]
+        public partial struct ConvertFilterKillCounterToFilterIncludeStatNameJob : IJobEntity
+        {
+            public            EntityCommandBuffer.ParallelWriter                Ecb;
+            [ReadOnly] public BufferLookup<FilterIncludeStatName>               FilterLookup;
+            [ReadOnly] public ComponentLookup<UpdateKillCountStatNameComponent> StatNameLookup;
+
+            private void Execute(
+                Entity entity,
+                [EntityIndexInQuery] int index,
+                in CasterComponent caster
+            )
+            {
+                if (!this.FilterLookup.HasBuffer(entity))
+                {
+                    this.Ecb.AddBuffer<FilterIncludeStatName>(index, entity);
+                }
+
+                this.Ecb.AppendToBuffer(index, entity, new FilterIncludeStatName { Value = this.StatNameLookup[caster] });
             }
         }
     }

@@ -32,7 +32,8 @@
                         {
                             if (!team.HasComponent(targetElement.Value))
                             {
-                                Debug.Log($"missing team component - {targetElement.Value}");
+                                //todo check this case 
+                                // Debug.Log($"missing team component - {targetElement.Value}");
                                 continue;
                             }
 
@@ -49,7 +50,8 @@
                         {
                             if (!team.HasComponent(targetElement.Value))
                             {
-                                Debug.Log($"missing team component - {targetElement.Value}");
+                                //todo check this case 
+                                // Debug.Log($"missing team component - {targetElement.Value}");
                                 continue;
                             }
 

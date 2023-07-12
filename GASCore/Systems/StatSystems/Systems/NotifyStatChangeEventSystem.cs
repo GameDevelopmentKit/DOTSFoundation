@@ -10,7 +10,7 @@
     using Unity.Entities;
     
     [UpdateInGroup(typeof(AbilityLogicEffectGroup))]
-    [UpdateAfter(typeof(ApplyTempStatModifierSystem))]
+    [UpdateAfter(typeof(CalculateAddedStatValueSystem))]
     [RequireMatchingQueriesForUpdate]
     [BurstCompile]
     public partial struct NotifyStatChangeEventSystem : ISystem

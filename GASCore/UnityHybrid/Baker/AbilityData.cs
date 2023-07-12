@@ -14,7 +14,9 @@
     {
         public override void Bake(AbilityData authoring)
         {
-            var bufferElement = this.AddBuffer<AddAbilityElement>();
+            var entity        = this.GetEntity(TransformUsageFlags.Dynamic);
+            this.AddComponent(entity, new SourceComponent(){Value = entity});
+            var bufferElement = this.AddBuffer<AddAbilityElement>(entity);
 
             foreach (var abilityInfo in authoring.AbilityInfos)
             {

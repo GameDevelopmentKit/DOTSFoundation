@@ -41,7 +41,7 @@ namespace GASCore.Systems.EntityGeneratorSystems.Systems
 
         private void Execute(in SourceComponent sourceComponent, in AffectedTargetComponent affectedTarget)
         {
-            Helpers.ComputeWorldTransformMatrix(affectedTarget, out var affectedTargetWorldMat, ref this.LocalTransformLookup, ref this.ParentLookup, ref this.PostTransformMatrixLookup);
+            TransformHelpers.ComputeWorldTransformMatrix(affectedTarget, out var affectedTargetWorldMat, ref this.LocalTransformLookup, ref this.ParentLookup, ref this.PostTransformMatrixLookup);
 
             var sourceTransform = LocalTransformLookup[sourceComponent];
 

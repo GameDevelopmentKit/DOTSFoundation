@@ -12,6 +12,6 @@
 
     public class ViewAssetPathBaker : Baker<ViewAssetPath>
     {
-        public override void Bake(ViewAssetPath authoring) { this.AddComponent(this.GetEntity(TransformUsageFlags.Dynamic),new AssetPathComponent() { Path = authoring.AddressablePath }); }
+        public override void Bake(ViewAssetPath authoring) { this.AddComponent(this.GetEntity(TransformUsageFlags.Dynamic),new AddressablePathComponent() { Value = authoring.AddressablePath }); }
     }
 }

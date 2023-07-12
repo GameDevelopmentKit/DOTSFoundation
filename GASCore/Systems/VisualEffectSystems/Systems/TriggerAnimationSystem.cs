@@ -16,10 +16,11 @@
         [BurstCompile]
         public void OnUpdate(ref SystemState state)
         {
-            new ChangeAnimationStateJob()
+            var job = new ChangeAnimationStateJob()
             {
                 AnimationStateLookup = SystemAPI.GetComponentLookup<AnimationTriggerComponent>()
-            }.Schedule();
+            }.Schedule(state.Dependency);
+            job.Complete();
         }
     }
 

@@ -17,22 +17,23 @@
     [BurstCompile]
     public partial struct TriggerAttachedTriggerSystem : ISystem
     {
+        EntityQuery entityQuery;
         [BurstCompile]
         public void OnCreate(ref SystemState state)
         {
-            using var entityQuery = new EntityQueryBuilder(Allocator.Temp).WithAll<WaitToTrigger, CompletedAllTriggerConditionTag>();
-            state.RequireForUpdate(state.GetEntityQuery(entityQuery));
+            this.entityQuery = SystemAPI.QueryBuilder().WithAll<WaitToTrigger, CompletedAllTriggerConditionTag>().Build();
+            state.RequireForUpdate(this.entityQuery);
         }
         
         [BurstCompile]
         public void OnUpdate(ref SystemState state)
         {
+            if(this.entityQuery.IsEmpty) return;
             var ecbSingleton = SystemAPI.GetSingleton<EndSimulationEntityCommandBufferSystem.Singleton>();
-            var ecb          = ecbSingleton.CreateCommandBuffer(state.WorldUnmanaged).AsParallelWriter();
 
             var setEndTimeTriggerAfterSecondJob = new TriggerAttachedTriggerJob()
             {
-                Ecb = ecb,
+                Ecb           = ecbSingleton.CreateCommandBuffer(state.WorldUnmanaged).AsParallelWriter(),
                 TriggerLookup = SystemAPI.GetComponentLookup<TriggerByAnotherTrigger>(true)
             };
             setEndTimeTriggerAfterSecondJob.ScheduleParallel();

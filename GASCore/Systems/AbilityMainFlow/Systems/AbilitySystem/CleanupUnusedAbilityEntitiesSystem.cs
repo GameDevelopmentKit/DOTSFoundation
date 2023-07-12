@@ -3,13 +3,14 @@
     using GASCore.Groups;
     using GASCore.Systems.AbilityMainFlow.Components;
     using GASCore.Systems.LogicEffectSystems.Components;
+    using GASCore.Systems.LogicEffectSystems.Systems;
     using GASCore.Systems.TimelineSystems.Components;
     using Unity.Burst;
     using Unity.Collections;
     using Unity.Entities;
-    using Unity.Jobs;
 
     [UpdateInGroup(typeof(AbilityCleanupSystemGroup))]
+    [UpdateBefore(typeof(DestroyTargetSystem))]
     [RequireMatchingQueriesForUpdate]
     [BurstCompile]
     public partial struct CleanupUnusedAbilityEntitiesSystem : ISystem
@@ -31,24 +32,22 @@
         }
 
         [BurstCompile]
-        public void OnDestroy(ref SystemState state) { }
-
-        [BurstCompile]
         public void OnUpdate(ref SystemState state)
         {
             this.onDestroyAbilityActionElementLookup.Update(ref state);
-            var ecbSingleton = SystemAPI.GetSingleton<BeginInitializationEntityCommandBufferSystem.Singleton>();
-            var ecb          = ecbSingleton.CreateCommandBuffer(state.WorldUnmanaged).AsParallelWriter();
-
-            
+            var ecbSingleton       = SystemAPI.GetSingleton<BeginInitializationEntityCommandBufferSystem.Singleton>();
+            var ecb                = ecbSingleton.CreateCommandBuffer(state.WorldUnmanaged).AsParallelWriter();
+            var totalEntityDestroy = normalCleanupEntityQuery.CalculateEntityCount() + forceCleanupEntityQuery.CalculateEntityCount();
             state.Dependency = new CleanupAbilityActionEntitiesJob()
             {
-                Ecb = ecb, OnDestroyAbilityActionElementLookup = this.onDestroyAbilityActionElementLookup
+                Ecb = ecb, OnDestroyAbilityActionElementLookup = this.onDestroyAbilityActionElementLookup,
+                TotalEnemyDestroy = totalEntityDestroy
             }.ScheduleParallel(normalCleanupEntityQuery, state.Dependency);
 
             state.Dependency = new CleanupAbilityActionEntitiesJob()
             {
-                Ecb = ecb, OnDestroyAbilityActionElementLookup = this.onDestroyAbilityActionElementLookup
+                Ecb               = ecb, OnDestroyAbilityActionElementLookup = this.onDestroyAbilityActionElementLookup,
+                TotalEnemyDestroy = totalEntityDestroy
             }.ScheduleParallel(forceCleanupEntityQuery, state.Dependency);
 
             state.Dependency = new CleanupActivatedStateAbilityEntitiesJob() { Ecb = ecb }.ScheduleParallel(state.Dependency);
@@ -58,6 +57,7 @@
     [BurstCompile]
     public partial struct CleanupAbilityActionEntitiesJob : IJobEntity
     {
+        public            int                                         TotalEnemyDestroy;
         public            EntityCommandBuffer.ParallelWriter          Ecb;
         [ReadOnly] public BufferLookup<OnDestroyAbilityActionElement> OnDestroyAbilityActionElementLookup;
         [BurstCompile]
@@ -67,7 +67,7 @@
                 this.Ecb.AppendToBuffer(entityInQueryIndex, activatedStateEntityOwner.Value, new OnDestroyAbilityActionElement() { AbilityActionEntity = abilityActionEntity });
 
             this.Ecb.RemoveComponent<ActivatedStateEntityOwner>(entityInQueryIndex, abilityActionEntity);
-            this.Ecb.DestroyEntity(entityInQueryIndex, abilityActionEntity);
+            this.Ecb.DestroyEntity(TotalEnemyDestroy + entityInQueryIndex, abilityActionEntity);
         }
     }
 

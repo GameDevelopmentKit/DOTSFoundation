@@ -1,9 +1,5 @@
-﻿using Unity.Physics.Systems;
-
-namespace GASCore.Groups
+﻿namespace GASCore.Groups
 {
-    using Unity.Collections;
-    using Unity.Collections.LowLevel.Unsafe;
     using Unity.Entities;
     using Unity.Transforms;
 
@@ -23,7 +19,7 @@ namespace GASCore.Groups
     [UpdateBefore(typeof(TransformSystemGroup))]
     public partial class GameAbilityBeginSimulationSystemGroup { }
     
-    [UpdateInGroup(typeof(AfterPhysicsSystemGroup))]
+    [UpdateInGroup(typeof(FixedStepSimulationSystemGroup))]
     public partial class GameAbilityFixedUpdateSystemGroup { }
 
     [UpdateInGroup(typeof(LateSimulationSystemGroup))]

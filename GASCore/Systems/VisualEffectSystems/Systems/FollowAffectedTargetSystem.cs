@@ -53,12 +53,6 @@ namespace GASCore.Systems.VisualEffectSystems.Systems
             {
                 RadiusSq = data.Radius * data.Radius
             });
-            
-            if(data.RotateSpeed <= 0) return;
-            this.Ecb.AddComponent(entityInQueryIndex, source, new RotationSpeed()
-            {
-                Value = data.RotateSpeed
-            });
         }
     }
 }

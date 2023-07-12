@@ -21,20 +21,27 @@
 
         [NativeDisableParallelForRestriction] private BufferLookup<AbilityContainerElement> abilityContainerLookup;
 
+        EntityQuery requestAddAbilityQuery;
+
         protected override void OnCreate()
         {
-            this.RequireForUpdate<AbilityPrefabPool>();
-            abilityContainerLookup = SystemAPI.GetBufferLookup<AbilityContainerElement>(true);
+            abilityContainerLookup  = SystemAPI.GetBufferLookup<AbilityContainerElement>(true);
             this.beginInitEcbSystem = this.World.GetExistingSystemManaged<BeginInitializationEntityCommandBufferSystem>();
+
+            this.RequireForUpdate<AbilityPrefabPool>();
+
+            this.requestAddAbilityQuery = SystemAPI.QueryBuilder().WithAll<RequestAddOrUpgradeAbility>().Build();
+            this.requestAddAbilityQuery.SetChangedVersionFilter(typeof(RequestAddOrUpgradeAbility));
         }
 
 
         protected override void OnUpdate()
         {
+            if(this.requestAddAbilityQuery.IsEmpty) return;
             var ecb                       = this.beginInitEcbSystem.CreateCommandBuffer().AsParallelWriter();
             var abilityNameToLevelPrefabs = SystemAPI.GetSingleton<AbilityPrefabPool>().AbilityNameToLevelPrefabs.Value;
             var temp                      = abilityContainerLookup.UpdateBufferLookup(this);
-
+           
             // Manage adding ability flow
             Entities.WithBurst().WithEntityQueryOptions(EntityQueryOptions.IncludePrefab).WithReadOnly(temp).WithReadOnly(abilityNameToLevelPrefabs).WithChangeFilter<RequestAddOrUpgradeAbility>().ForEach(
                 (Entity casterEntity, int entityInQueryIndex, ref DynamicBuffer<RequestAddOrUpgradeAbility> requestAddOrUpgradeAbilities) =>
@@ -80,17 +87,17 @@
                                 // instantiate ability and log to AbilityContainerElement
                                 var abilityEntity = ecb.Instantiate(entityInQueryIndex, abilityPrefab);
 
-                                if (requestAddOrUpgradeAbility.IsPrefab)
-                                {
-                                    ecb.AddComponent<Prefab>(entityInQueryIndex, abilityEntity);
-                                }
+                            if (requestAddOrUpgradeAbility.IsPrefab)
+                            {
+                                ecb.AddComponent<Prefab>(entityInQueryIndex, abilityEntity);
+                            }
 
-                                ecb.AppendToBuffer(entityInQueryIndex, casterEntity, new AbilityContainerElement()
-                                {
-                                    AbilityId       = requestAddOrUpgradeAbility.AbilityId,
-                                    Level           = requestAddOrUpgradeAbility.Level,
-                                    AbilityInstance = abilityEntity
-                                });
+                            ecb.AppendToBuffer(entityInQueryIndex, casterEntity, new AbilityContainerElement()
+                            {
+                                AbilityId       = requestAddOrUpgradeAbility.AbilityId,
+                                Level           = requestAddOrUpgradeAbility.Level,
+                                AbilityInstance = abilityEntity
+                            });
 
                                 ecb.AddComponent(entityInQueryIndex, abilityEntity, new CasterComponent() { Value = casterEntity });
                                 ecb.SetParent(entityInQueryIndex, abilityEntity, casterEntity);
@@ -104,25 +111,25 @@
                         }
                     }
 
-                    requestAddOrUpgradeAbilities.Clear();
+                        requestAddOrUpgradeAbilities.Clear();
 
-                    // try get linked group and child group to setup this ability to child of caster ability on hierarchy
-                    if (!HasBuffer<LinkedEntityGroup>(casterEntity))
-                    {
-                        var linkedGroup = ecb.AddBuffer<LinkedEntityGroup>(entityInQueryIndex, casterEntity);
-                        linkedGroup.Add(new LinkedEntityGroup() { Value = casterEntity });
-                    }
+                        // try get linked group and child group to setup this ability to child of caster ability on hierarchy
+                        if (!HasBuffer<LinkedEntityGroup>(casterEntity))
+                        {
+                            var linkedGroup = ecb.AddBuffer<LinkedEntityGroup>(entityInQueryIndex, casterEntity);
+                            linkedGroup.Add(new LinkedEntityGroup() { Value = casterEntity });
+                        }
 
-                    if (!HasBuffer<Child>(casterEntity)) ecb.AddBuffer<Child>(entityInQueryIndex, casterEntity);
+                        if (!HasBuffer<Child>(casterEntity)) ecb.AddBuffer<Child>(entityInQueryIndex, casterEntity);
 
-                    foreach (var abilityEntity in listAbilityEntity)
-                    {
-                        ecb.AppendToBuffer(entityInQueryIndex, casterEntity, new LinkedEntityGroup() { Value = abilityEntity });
-                    }
+                        foreach (var abilityEntity in listAbilityEntity)
+                        {
+                            ecb.AppendToBuffer(entityInQueryIndex, casterEntity, new LinkedEntityGroup() { Value = abilityEntity });
+                        }
 
-                    listAbilityEntity.Dispose();
-                }).ScheduleParallel();
-            
+                        listAbilityEntity.Dispose();
+                    }).ScheduleParallel();
+
             this.beginInitEcbSystem.AddJobHandleForProducer(this.Dependency);
         }
     }

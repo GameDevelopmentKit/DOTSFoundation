@@ -44,7 +44,7 @@
         [ReadOnly] public BufferLookup<LinkedEntityGroup> LinkedEntityBufferLookup;
         void Execute([EntityIndexInQuery] int entityInQueryIndex, in ActivatedStateEntityOwner activatedStateEntityOwner)
         {
-            Debug.Log("ForceCleanupActivatedAbilityJob");
+            // Debug.Log("ForceCleanupActivatedAbilityJob");
             if (this.LinkedEntityBufferLookup.TryGetBuffer(activatedStateEntityOwner.Value, out var linkedEntityGroups))
             {
                 foreach (var linkedEntity in linkedEntityGroups)

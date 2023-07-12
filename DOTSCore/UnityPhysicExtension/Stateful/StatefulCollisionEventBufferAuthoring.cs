@@ -1,3 +1,4 @@
+#if UNITY_PHYSICS_CUSTOM
 using Unity.Entities;
 using UnityEngine;
 
@@ -32,3 +33,4 @@ namespace Unity.Physics.Stateful
         }
     }
 }
+#endif

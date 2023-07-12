@@ -20,7 +20,7 @@
         private StatAspect.Lookup statAspectLookup;
 
         [BurstCompile]
-        public void OnCreate(ref SystemState state) { this.statAspectLookup = new StatAspect.Lookup(ref state, true); }
+        public void OnCreate(ref SystemState state) { this.statAspectLookup = new StatAspect.Lookup(ref state); }
 
         [BurstCompile]
         public void OnDestroy(ref SystemState state) { }

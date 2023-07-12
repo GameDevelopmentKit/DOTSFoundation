@@ -25,12 +25,12 @@ namespace GASCore.Systems.TargetDetectionSystems.Systems.Filters
         [BurstCompile]
         public void OnUpdate(ref SystemState state)
         {
-            state.Dependency = new FilterOutsideCastRangeJob
+            new FilterOutsideCastRangeJob
             {
                 WorldTransformLookup = SystemAPI.GetComponentLookup<LocalToWorld>(true),
                 CastRangeLookup      = SystemAPI.GetComponentLookup<CastRangeComponent>(true),
                 TrackLookup          = SystemAPI.GetBufferLookup<TrackTargetInCastRange>(true),
-            }.ScheduleParallel(state.Dependency);
+            }.ScheduleParallel();
         }
     }
 

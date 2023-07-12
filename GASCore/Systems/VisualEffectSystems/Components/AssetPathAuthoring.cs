@@ -7,6 +7,17 @@ namespace GASCore.Systems.VisualEffectSystems.Components
     public class AssetPathAuthoring : IAbilityActionComponentConverter
     {
         public string PrefabAssetName;
-        public void   Convert(EntityCommandBuffer.ParallelWriter ecb, int index, Entity entity) { ecb.AddComponent(index, entity, new AssetPathComponent() { Path = this.PrefabAssetName }); }
+        public bool   IsUsingAddressable = true;
+        public void Convert(EntityCommandBuffer.ParallelWriter ecb, int index, Entity entity)
+        {
+            if (this.IsUsingAddressable)
+            {
+                ecb.AddComponent(index, entity, new AddressablePathComponent() { Value = this.PrefabAssetName });
+            }
+            else
+            {
+                ecb.AddComponent(index, entity, new ViewPrefabEntityComponent() { Value = this.PrefabAssetName });
+            }
+        }
     }
 }

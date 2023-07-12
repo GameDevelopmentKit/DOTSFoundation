@@ -2,12 +2,15 @@
 using System.Collections.Generic;
 using DOTSCore.Extension;
 using GASCore.Interfaces;
-using GASCore.Systems.TimelineSystems.Components;
 using Unity.Collections;
 using Unity.Entities;
 
 namespace GASCore.Systems.StatSystems.Components
 {
+    using System.Linq;
+    using System.Reflection;
+    using Sirenix.OdinInspector;
+
     public struct StatDataElement : IBufferElementData
     {
         public FixedString64Bytes StatName;
@@ -33,8 +36,18 @@ namespace GASCore.Systems.StatSystems.Components
         [Serializable]
         public class StatElement
         {
+            [ValueDropdown("GetFieldValues")]
             public string StatName;
             public float  BaseValue;
+            
+            public static List<string> GetFieldValues()
+            {
+                return typeof(StatName)
+                    .GetFields(BindingFlags.Public | BindingFlags.Static)
+                    .Where(f => f.FieldType == typeof(FixedString64Bytes))
+                    .Select(f => ((FixedString64Bytes)f.GetValue(null)).Value)
+                    .ToList();
+            }
         }
 
         public List<StatElement> Value;

@@ -15,13 +15,20 @@
     public partial class RemoveAbilitySystemSystem : SystemBase
     {
         private BeginInitializationEntityCommandBufferSystem beginInitEcbSystem;
+        
+        EntityQuery                                          requestRemoveAbilityQuery;
 
-
-        protected override void OnCreate() { this.beginInitEcbSystem = this.World.GetExistingSystemManaged<BeginInitializationEntityCommandBufferSystem>(); }
+        protected override void OnCreate()
+        {
+            this.beginInitEcbSystem        = this.World.GetExistingSystemManaged<BeginInitializationEntityCommandBufferSystem>(); 
+            this.requestRemoveAbilityQuery = SystemAPI.QueryBuilder().WithAll<RequestRemoveAbility>().Build();
+            this.requestRemoveAbilityQuery.SetChangedVersionFilter(typeof(RequestRemoveAbility));
+        }
 
 
         protected override void OnUpdate()
         {
+            if(this.requestRemoveAbilityQuery.IsEmpty) return;
             var ecb = this.beginInitEcbSystem.CreateCommandBuffer().AsParallelWriter();
 
             //Manage removing ability flow
@@ -30,7 +37,7 @@
                 {
                     foreach (var requestRemoveAbility in requestRemoveAbilities)
                     {
-                        Debug.Log($"remove ability {requestRemoveAbility.AbilityId}_Lv{requestRemoveAbility.Level}");
+                        // Debug.Log($"remove ability {requestRemoveAbility.AbilityId}_Lv{requestRemoveAbility.Level}");
                         for (var index = 0; index < abilityContainerBuffer.Length; index++)
                         {
                             var abilityContainerElement = abilityContainerBuffer[index];
