@@ -1,7 +1,10 @@
 ﻿namespace GASCore.Systems.TimelineSystems.Components
 {
+    using System.Collections.Generic;
     using GASCore.Interfaces;
+    using GASCore.Services;
     using GASCore.Systems.StatSystems.Components;
+    using Sirenix.OdinInspector;
     using Unity.Collections;
     using Unity.Entities;
 
@@ -15,11 +18,14 @@
 
         public class _ : ITriggerConditionActionConverter, IAbilityActivateConditionConverter
         {
+            [ValueDropdown("GetFieldValues")]
             public string StatName;
             public float  Value;
             public bool   Percent;
             public bool   Above;
 
+            public List<string> GetFieldValues() => AbilityHelper.GetListStatName();
+            
             public void Convert(EntityCommandBuffer.ParallelWriter ecb, int index, Entity entity)
             {
                 ecb.AddComponent(index, entity, new TriggerOnStatChanged()

@@ -1,4 +1,4 @@
-﻿namespace GASCore.Systems.LogicEffectSystems.Components
+﻿namespace Gameplay.Logic.Components.Character
 {
     using GASCore.Interfaces;
     using Unity.Entities;

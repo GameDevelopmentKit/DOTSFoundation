@@ -7,8 +7,7 @@ using Unity.Entities;
 
 namespace GASCore.Systems.StatSystems.Components
 {
-    using System.Linq;
-    using System.Reflection;
+    using GASCore.Services;
     using Sirenix.OdinInspector;
 
     public struct StatDataElement : IBufferElementData
@@ -40,14 +39,7 @@ namespace GASCore.Systems.StatSystems.Components
             public string StatName;
             public float  BaseValue;
             
-            public static List<string> GetFieldValues()
-            {
-                return typeof(StatName)
-                    .GetFields(BindingFlags.Public | BindingFlags.Static)
-                    .Where(f => f.FieldType == typeof(FixedString64Bytes))
-                    .Select(f => ((FixedString64Bytes)f.GetValue(null)).Value)
-                    .ToList();
-            }
+            public List<string> GetFieldValues() => AbilityHelper.GetListStatName();
         }
 
         public List<StatElement> Value;

@@ -18,9 +18,9 @@
     public partial class AddOrUpgradeAbilitySystem : SystemBase
     {
         private BeginInitializationEntityCommandBufferSystem beginInitEcbSystem;
-
+        
         [NativeDisableParallelForRestriction] private BufferLookup<AbilityContainerElement> abilityContainerLookup;
-
+        
         EntityQuery requestAddAbilityQuery;
 
         protected override void OnCreate()
@@ -37,55 +37,72 @@
 
         protected override void OnUpdate()
         {
-            if(this.requestAddAbilityQuery.IsEmpty) return;
+            if (this.requestAddAbilityQuery.IsEmpty) return;
             var ecb                       = this.beginInitEcbSystem.CreateCommandBuffer().AsParallelWriter();
             var abilityNameToLevelPrefabs = SystemAPI.GetSingleton<AbilityPrefabPool>().AbilityNameToLevelPrefabs.Value;
             var temp                      = abilityContainerLookup.UpdateBufferLookup(this);
-           
+
             // Manage adding ability flow
-            Entities.WithBurst().WithEntityQueryOptions(EntityQueryOptions.IncludePrefab).WithReadOnly(temp).WithReadOnly(abilityNameToLevelPrefabs).WithChangeFilter<RequestAddOrUpgradeAbility>().ForEach(
-                (Entity casterEntity, int entityInQueryIndex, ref DynamicBuffer<RequestAddOrUpgradeAbility> requestAddOrUpgradeAbilities) =>
+            Entities.WithBurst().WithEntityQueryOptions(EntityQueryOptions.IncludePrefab).WithReadOnly(temp).WithReadOnly(abilityNameToLevelPrefabs).WithChangeFilter<RequestAddOrUpgradeAbility>()
+                .ForEach((Entity casterEntity, int entityInQueryIndex, ref DynamicBuffer<RequestAddOrUpgradeAbility> requestAddOrUpgradeAbilities) =>
                 {
                     // try get ability container buffer
                     if (!temp.TryGetBuffer(casterEntity, out var abilityContainerBuffer))
                         abilityContainerBuffer = ecb.AddBuffer<AbilityContainerElement>(entityInQueryIndex, casterEntity);
 
-                    var listAbilityEntity = new NativeList<Entity>(Allocator.Temp);
-
-                    foreach (var requestAddOrUpgradeAbility in requestAddOrUpgradeAbilities)
+                    var requestFilter = new NativeHashMap<FixedString64Bytes, RequestAddOrUpgradeAbility>(requestAddOrUpgradeAbilities.Length, Allocator.Temp);
+                    foreach (var request in requestAddOrUpgradeAbilities)
                     {
+                        if (requestFilter.TryGetValue(request.AbilityId, out var tempRequest) && tempRequest.Level >= request.Level) continue;
+
                         bool isExist = false; //is true if this found the same ability (name, level)
-                        
+
                         // request remove old ability if exist
                         foreach (var abilityContainerElement in abilityContainerBuffer)
                         {
-                            if (!requestAddOrUpgradeAbility.AbilityId.Equals(abilityContainerElement.AbilityId)) continue;
+                            if (!request.AbilityId.Equals(abilityContainerElement.AbilityId)) continue;
                             //skip this request if caster already have this ability with same level
                             // if not request remove the old one to add new one
-                            if (requestAddOrUpgradeAbility.Level == abilityContainerElement.Level)
-                            {
-                                isExist = true;
-                            }
-                            else
+                            if (request.Level != abilityContainerElement.Level && !requestFilter.ContainsKey(request.AbilityId))
                             {
                                 if (!HasBuffer<RequestRemoveAbility>(casterEntity)) ecb.AddBuffer<RequestRemoveAbility>(entityInQueryIndex, casterEntity);
 
                                 Debug.Log($"Request remove ability {abilityContainerElement.AbilityId}_Lv{abilityContainerElement.Level}");
-                                ecb.AppendToBuffer(entityInQueryIndex, casterEntity, new RequestRemoveAbility(abilityContainerElement.AbilityId, abilityContainerElement.Level));   
-
+                                ecb.AppendToBuffer(entityInQueryIndex, casterEntity, new RequestRemoveAbility(abilityContainerElement.AbilityId, abilityContainerElement.Level));
                             }
+                            else
+                            {
+                                isExist = true;
+                            }
+
                             break;
                         }
 
-                        if (!isExist)
+                        if (isExist) continue;
+                        requestFilter[request.AbilityId] = request;
+                    }
+                    requestAddOrUpgradeAbilities.Clear();
+
+                    if(requestFilter.Count == 0) return;
+                    
+                    // try get linked group and child group to setup this ability to child of caster ability on hierarchy
+                    if (!HasBuffer<LinkedEntityGroup>(casterEntity))
+                    {
+                        var linkedGroup = ecb.AddBuffer<LinkedEntityGroup>(entityInQueryIndex, casterEntity);
+                        linkedGroup.Add(new LinkedEntityGroup() { Value = casterEntity });
+                    }
+
+                    if (!HasBuffer<Child>(casterEntity)) ecb.AddBuffer<Child>(entityInQueryIndex, casterEntity);
+
+                    foreach (var request in requestFilter)
+                    {
+                        // try to add new ability flow
+                        // Debug.Log($"requestInitializeAbility + {requestAddOrUpgradeAbility.AbilityLevelKey} ");
+                        var requestAddOrUpgradeAbility = request.Value;
+                        if (abilityNameToLevelPrefabs.TryGetValue(requestAddOrUpgradeAbility.AbilityLevelKey, out var abilityPrefab))
                         {
-                            
-                            // try to add new ability flow
-                            // Debug.Log($"requestInitializeAbility + {requestAddOrUpgradeAbility.AbilityLevelKey} ");
-                            if (abilityNameToLevelPrefabs.TryGetValue(requestAddOrUpgradeAbility.AbilityLevelKey, out var abilityPrefab))
-                            {
-                                // instantiate ability and log to AbilityContainerElement
-                                var abilityEntity = ecb.Instantiate(entityInQueryIndex, abilityPrefab);
+                            // instantiate ability and log to AbilityContainerElement
+                            var abilityEntity = ecb.Instantiate(entityInQueryIndex, abilityPrefab);
 
                             if (requestAddOrUpgradeAbility.IsPrefab)
                             {
@@ -99,36 +116,18 @@
                                 AbilityInstance = abilityEntity
                             });
 
-                                ecb.AddComponent(entityInQueryIndex, abilityEntity, new CasterComponent() { Value = casterEntity });
-                                ecb.SetParent(entityInQueryIndex, abilityEntity, casterEntity);
-                                listAbilityEntity.Add(abilityEntity);
-                            }
-                            else
-                            {
-                                Debug.LogError($"Ability {requestAddOrUpgradeAbility.AbilityLevelKey} is not found in Pool. Please recheck this Id in AbilityBlueprint");
-                                return;
-                            }
+                            ecb.AddComponent(entityInQueryIndex, abilityEntity, new CasterComponent() { Value = casterEntity });
+                            ecb.SetParent(entityInQueryIndex, abilityEntity, casterEntity);
+                            ecb.AppendToBuffer(entityInQueryIndex, casterEntity, new LinkedEntityGroup() { Value = abilityEntity });
+                        }
+                        else
+                        {
+                            Debug.LogError($"Ability {requestAddOrUpgradeAbility.AbilityLevelKey} is not found in Pool. Please recheck this Id in AbilityBlueprint");
+                            return;
                         }
                     }
 
-                        requestAddOrUpgradeAbilities.Clear();
-
-                        // try get linked group and child group to setup this ability to child of caster ability on hierarchy
-                        if (!HasBuffer<LinkedEntityGroup>(casterEntity))
-                        {
-                            var linkedGroup = ecb.AddBuffer<LinkedEntityGroup>(entityInQueryIndex, casterEntity);
-                            linkedGroup.Add(new LinkedEntityGroup() { Value = casterEntity });
-                        }
-
-                        if (!HasBuffer<Child>(casterEntity)) ecb.AddBuffer<Child>(entityInQueryIndex, casterEntity);
-
-                        foreach (var abilityEntity in listAbilityEntity)
-                        {
-                            ecb.AppendToBuffer(entityInQueryIndex, casterEntity, new LinkedEntityGroup() { Value = abilityEntity });
-                        }
-
-                        listAbilityEntity.Dispose();
-                    }).ScheduleParallel();
+                }).ScheduleParallel();
 
             this.beginInitEcbSystem.AddJobHandleForProducer(this.Dependency);
         }

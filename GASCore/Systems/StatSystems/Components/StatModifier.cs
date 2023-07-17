@@ -9,6 +9,7 @@
     using GASCore.Systems.AbilityMainFlow.Factories;
     using GASCore.Systems.LogicEffectSystems.Components;
     using GASCore.Systems.VisualEffectSystems.Components;
+    using Sirenix.OdinInspector;
     using Unity.Collections;
     using Unity.Entities;
     using Zenject;
@@ -95,8 +96,11 @@
 
         public class _ : IStatModifierComponentConverter
         {
+            [ValueDropdown("GetFieldValues")]
             public string               Stat;
             public ModifierOperatorType ModifierOperator;
+
+            public List<string> GetFieldValues() => AbilityHelper.GetListStatName();
 
             public void Convert(EntityCommandBuffer.ParallelWriter ecb, int index, Entity entity)
             {
@@ -153,9 +157,11 @@
         public class _ : IStatModifierComponentConverter
         {
             public float      Coefficient = 1.0f;
+            [ValueDropdown("GetFieldValues")]
             public string     SourceStat;
             public SourceType SourceType;
 
+            public List<string> GetFieldValues() => AbilityHelper.GetListStatName();
             public void Convert(EntityCommandBuffer.ParallelWriter ecb, int index, Entity entity)
             {
                 ecb.AddComponent(index, entity, new StatBasedMagnitudeCalculation()

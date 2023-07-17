@@ -1,9 +1,9 @@
 ﻿namespace GASCore.Systems.LogicEffectSystems.Systems
 {
     using DOTSCore.Extension;
+    using Gameplay.Logic.Components.Character;
     using GASCore.Groups;
     using GASCore.Systems.AbilityMainFlow.Components;
-    using GASCore.Systems.LogicEffectSystems.Components;
     using Unity.Entities;
 
     [UpdateInGroup(typeof(AbilityLogicEffectGroup))]

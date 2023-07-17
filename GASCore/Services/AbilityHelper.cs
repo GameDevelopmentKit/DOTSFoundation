@@ -1,12 +1,15 @@
 ﻿namespace GASCore.Services
 {
+    using System.Collections.Generic;
+    using System.Linq;
+    using System.Reflection;
     using GASCore.Blueprints;
     using GASCore.Systems.LogicEffectSystems.Components;
+    using GASCore.Systems.StatSystems.Components;
     using GASCore.Systems.TargetDetectionSystems.Components;
     using GASCore.Systems.TimelineSystems.Components;
     using Unity.Collections;
     using Unity.Entities;
-    using UnityEngine;
 
     public static class AbilityHelper
     {
@@ -77,6 +80,15 @@
             ecb.AddBuffer<CompletedTriggerElement>(entityInQueryIndex, entity);
             ecb.AddComponent<InTriggerConditionResolveProcessTag>(entityInQueryIndex, entity);
             ecb.SetComponentEnabled<CompletedAllTriggerConditionTag>(entityInQueryIndex, entity, false);
+        }
+        
+        public static List<string> GetListStatName()
+        {
+            return typeof(StatName)
+                .GetFields(BindingFlags.Public | BindingFlags.Static)
+                .Where(f => f.FieldType == typeof(FixedString64Bytes))
+                .Select(f => ((FixedString64Bytes)f.GetValue(null)).Value)
+                .ToList();
         }
     }
 }
