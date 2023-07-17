@@ -1,3 +1,4 @@
+#if USING_AGENT_NAVIGATION
 namespace GASCore.Systems.TargetDetectionSystems.Systems
 {
     using GASCore.Systems.VisualEffectSystems.Components;
@@ -23,7 +24,7 @@ namespace GASCore.Systems.TargetDetectionSystems.Systems
 
             var job = new EntityColliderJob
             {
-                Spatial       = spatial.ValueRO,
+                Spatial = spatial.ValueRO,
             };
             job.ScheduleParallel();
         }
@@ -36,7 +37,8 @@ namespace GASCore.Systems.TargetDetectionSystems.Systems
     {
         [ReadOnly] public AgentSpatialPartitioningSystem.Singleton Spatial;
 
-        public void Execute(Entity entity, in LocalToWorld transform, ref DynamicBuffer<StatefulTriggerEvent> statefulTriggerEvents, in EntityColliderData entityColliderData, EnabledRefRW<OnCollisionTag> onCollisionEnableState)
+        public void Execute(Entity entity, in LocalToWorld transform, ref DynamicBuffer<StatefulTriggerEvent> statefulTriggerEvents, in EntityColliderData entityColliderData,
+            EnabledRefRW<OnCollisionTag> onCollisionEnableState)
         {
             for (var index = 0; index < statefulTriggerEvents.Length;)
             {
@@ -183,3 +185,4 @@ namespace GASCore.Systems.TargetDetectionSystems.Systems
         }
     }
 }
+#endif
