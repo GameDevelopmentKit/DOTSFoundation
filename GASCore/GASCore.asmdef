@@ -32,6 +32,11 @@
             "name": "com.projectdawn.navigation",
             "expression": "",
             "define": "USING_AGENT_NAVIGATION"
+        },
+        {
+            "name": "com.unity.physics",
+            "expression": "",
+            "define": "UNITY_PHYSICS_CUSTOM"
         }
     ],
     "noEngineReferences": false

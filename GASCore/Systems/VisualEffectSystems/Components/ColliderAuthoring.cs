@@ -1,9 +1,14 @@
 ﻿namespace GASCore.Systems.VisualEffectSystems.Components
 {
+    using System;
+    using DOTSCore.UnityPhysicExtension.Utils;
     using GASCore.Interfaces;
     using GASCore.Systems.AbilityMainFlow.Components;
+    using Newtonsoft.Json;
     using Unity.Entities;
     using Unity.Mathematics;
+    using Unity.Physics;
+    using Unity.Physics.Authoring;
     using Unity.Physics.Stateful;
 
 #if UNITY_PHYSICS_CUSTOM
