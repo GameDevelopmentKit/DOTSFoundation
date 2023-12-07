@@ -9,6 +9,7 @@
     using GASCore.Systems.AbilityMainFlow.Factories;
     using GASCore.Systems.LogicEffectSystems.Components;
     using GASCore.Systems.VisualEffectSystems.Components;
+    using Sirenix.OdinInspector;
     using Unity.Collections;
     using Unity.Entities;
     using Zenject;
@@ -24,16 +25,13 @@
         public float Divide;
         public float Override;
 
-        public bool IsChangeBaseValue;
-
         public ModifierAggregatorData(FixedString64Bytes targetStat)
         {
             this.TargetStat        = targetStat;
             this.Add               = 0;
             this.Multiply          = 1;
             this.Divide            = 1;
-            this.Override          = 0;
-            this.IsChangeBaseValue = false;
+            this.Override          = -1;
         }
 
         public ModifierAggregatorData(FixedString64Bytes targetStat, float addValue)
@@ -42,11 +40,21 @@
             this.Add               = addValue;
             this.Multiply          = 1;
             this.Divide            = 1;
-            this.Override          = 0;
-            this.IsChangeBaseValue = false;
+            this.Override          = -1;
+        }
+
+        public static ModifierAggregatorData GetDefault()
+        {
+            return new ModifierAggregatorData()
+            {
+                Add               = 0,
+                Multiply          = 1,
+                Divide            = 1,
+                Override          = -1,
+            };
         }
     }
-    
+
     public struct StatModifierEntityElement : IBufferElementData
     {
         public                          Entity Value;
@@ -95,8 +103,10 @@
 
         public class _ : IStatModifierComponentConverter
         {
-            public string               Stat;
-            public ModifierOperatorType ModifierOperator;
+            [ValueDropdown("GetFieldValues")] public string               Stat;
+            public                                   ModifierOperatorType ModifierOperator;
+
+            public List<string> GetFieldValues() => AbilityHelper.GetListStatName();
 
             public void Convert(EntityCommandBuffer.ParallelWriter ecb, int index, Entity entity)
             {
@@ -152,10 +162,11 @@
 
         public class _ : IStatModifierComponentConverter
         {
-            public float      Coefficient = 1.0f;
-            public string     SourceStat;
-            public SourceType SourceType;
+            public                                   float      Coefficient = 1.0f;
+            [ValueDropdown("GetFieldValues")] public string     SourceStat;
+            public                                   SourceType SourceType;
 
+            public List<string> GetFieldValues() => AbilityHelper.GetListStatName();
             public void Convert(EntityCommandBuffer.ParallelWriter ecb, int index, Entity entity)
             {
                 ecb.AddComponent(index, entity, new StatBasedMagnitudeCalculation()

@@ -1,14 +1,12 @@
 ﻿namespace GASCore.Systems.SoundSystems.Components
 {
-    using DOTSCore.Extension;
     using GASCore.Interfaces;
-    using Unity.Collections;
+    using global::System;
     using Unity.Entities;
-    using UnityEngine;
 
-    public struct PlaySoundComponent : IComponentData
+    public struct PlaySoundComponent : ISharedComponentData, IEquatable<PlaySoundComponent>
     {
-        public FixedString64Bytes SoundAssetPath;
+        public string SoundAssetPath;
         public bool   IsLoop;
         public class _: IAbilityActionComponentConverter
         {
@@ -16,8 +14,21 @@
             public bool   IsLoop;
             public void Convert(EntityCommandBuffer.ParallelWriter ecb, int index, Entity entity)
             {
-                ecb.AddComponent(index,entity,new PlaySoundComponent(){SoundAssetPath = this.SoundAssetPath,IsLoop = this.IsLoop});
+                ecb.AddSharedComponentManaged(index,entity,new PlaySoundComponent(){SoundAssetPath = this.SoundAssetPath,IsLoop = this.IsLoop});
             }
+        }
+
+        public bool Equals(PlaySoundComponent other)
+        {
+            return this.SoundAssetPath == other.SoundAssetPath && this.IsLoop == other.IsLoop;
+        }
+        public override bool Equals(object obj)
+        {
+            return obj is PlaySoundComponent other && Equals(other);
+        }
+        public override int GetHashCode()
+        {
+            return HashCode.Combine(this.SoundAssetPath, this.IsLoop);
         }
     }
 }

@@ -1,53 +1,63 @@
 ﻿namespace GASCore.Systems.CasterSystems.Systems
 {
     using GASCore.Groups;
-    using GASCore.Systems.AbilityMainFlow.Systems.AbilitySystem;
     using GASCore.Systems.CasterSystems.Components;
     using Unity.Burst;
     using Unity.Entities;
     using Unity.Mathematics;
-    using UnityEngine;
 
-    [UpdateInGroup(typeof(AbilityCleanupSystemGroup))]
-    [UpdateAfter(typeof(CleanupUnusedAbilityEntitiesSystem))]
+    [UpdateInGroup(typeof(GameAbilityInitializeSystemGroup))]
     [RequireMatchingQueriesForUpdate]
     [BurstCompile]
-    public partial class RemoveAbilitySystemSystem : SystemBase
+    public partial struct RemoveAbilitySystemSystem : ISystem
     {
-        private BeginInitializationEntityCommandBufferSystem beginInitEcbSystem;
+        EntityQuery requestRemoveAbilityQuery;
 
-
-        protected override void OnCreate() { this.beginInitEcbSystem = this.World.GetExistingSystemManaged<BeginInitializationEntityCommandBufferSystem>(); }
-
-
-        protected override void OnUpdate()
+        [BurstCompile]
+        public void OnCreate(ref SystemState state)
         {
-            var ecb = this.beginInitEcbSystem.CreateCommandBuffer().AsParallelWriter();
+            state.RequireForUpdate<BeginInitializationEntityCommandBufferSystem.Singleton>();
+            this.requestRemoveAbilityQuery = SystemAPI.QueryBuilder().WithAll<RequestRemoveAbility, AbilityContainerElement>().Build();
+            this.requestRemoveAbilityQuery.SetChangedVersionFilter(ComponentType.ReadOnly<RequestRemoveAbility>());
+            state.RequireForUpdate(this.requestRemoveAbilityQuery);
+        }
 
-            //Manage removing ability flow
-            this.Entities.WithBurst().WithChangeFilter<RequestRemoveAbility>().ForEach(
-                (int entityInQueryIndex, ref DynamicBuffer<RequestRemoveAbility> requestRemoveAbilities, ref DynamicBuffer<AbilityContainerElement> abilityContainerBuffer) =>
+        [BurstCompile]
+        public void OnUpdate(ref SystemState state)
+        {
+            if (this.requestRemoveAbilityQuery.IsEmpty) return;
+
+            new RemoveAbilityJob()
+            {
+                ECB = SystemAPI.GetSingleton<BeginInitializationEntityCommandBufferSystem.Singleton>().CreateCommandBuffer(state.WorldUnmanaged).AsParallelWriter()
+            }.ScheduleParallel(this.requestRemoveAbilityQuery);
+        }
+
+        [BurstCompile]
+        [WithChangeFilter(typeof(RequestRemoveAbility))]
+        public partial struct RemoveAbilityJob : IJobEntity
+        {
+            public EntityCommandBuffer.ParallelWriter ECB;
+            void Execute([EntityIndexInQuery] int entityInQueryIndex, ref DynamicBuffer<RequestRemoveAbility> requestRemoveAbilities, ref DynamicBuffer<AbilityContainerElement> abilityContainerBuffer)
+            {
+                foreach (var requestRemoveAbility in requestRemoveAbilities)
                 {
-                    foreach (var requestRemoveAbility in requestRemoveAbilities)
+                    // Debug.Log($"remove ability {requestRemoveAbility.AbilityId}_Lv{requestRemoveAbility.Level}");
+                    for (var index = 0; index < abilityContainerBuffer.Length; index++)
                     {
-                        Debug.Log($"remove ability {requestRemoveAbility.AbilityId}_Lv{requestRemoveAbility.Level}");
-                        for (var index = 0; index < abilityContainerBuffer.Length; index++)
+                        var abilityContainerElement = abilityContainerBuffer[index];
+                        if (!requestRemoveAbility.AbilityId.Equals(abilityContainerElement.AbilityId)) continue;
+                        if (requestRemoveAbility.Level == abilityContainerElement.Level)
                         {
-                            var abilityContainerElement = abilityContainerBuffer[index];
-                            if (!requestRemoveAbility.AbilityId.Equals(abilityContainerElement.AbilityId)) continue;
-                            if (requestRemoveAbility.Level == abilityContainerElement.Level)
-                            {
-                                abilityContainerBuffer.RemoveAtSwapBack(index);
-                                index = math.max(index - 1, 0);
-                                ecb.DestroyEntity(entityInQueryIndex, abilityContainerElement.AbilityInstance);
-                            }
+                            abilityContainerBuffer.RemoveAtSwapBack(index);
+                            index = math.max(index - 1, 0);
+                            this.ECB.DestroyEntity(entityInQueryIndex, abilityContainerElement.AbilityInstance);
                         }
                     }
+                }
 
-                    requestRemoveAbilities.Clear();
-                }).ScheduleParallel();
-
-            this.beginInitEcbSystem.AddJobHandleForProducer(this.Dependency);
+                requestRemoveAbilities.Clear();
+            }
         }
     }
 }

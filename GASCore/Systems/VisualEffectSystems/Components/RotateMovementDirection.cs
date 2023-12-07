@@ -14,14 +14,20 @@ namespace GASCore.Systems.VisualEffectSystems.Components
 
     public struct RotateMovementDirection : IComponentData, IEnableableComponent
     {
+        public float IdleInterval;
         public float RotateInterval;
-        public float RotateTimer;
         public float RotateSpeed;
         public int   RotateCount;
         public int   RotateDirection;
 
+        public float RotateTimer;
+        public float IdleTimer;
+
         public class _ : IAbilityActionComponentConverter
         {
+            [PropertyTooltip("idle time before rotating, in second")]
+            public float IdleInterval;
+
             public                     float           RotateIntervalSecond = 0.1f;
             public                     float           RotateAngleDegree    = 1f;
             public                     int             RotateCount          = -1;
@@ -31,6 +37,8 @@ namespace GASCore.Systems.VisualEffectSystems.Components
             {
                 ecb.AddComponent(index, entity, new RotateMovementDirection
                 {
+                    IdleInterval    = this.IdleInterval,
+                    IdleTimer       = this.IdleInterval,
                     RotateInterval  = this.RotateIntervalSecond,
                     RotateTimer     = this.RotateIntervalSecond,
                     RotateSpeed     = math.radians(this.RotateAngleDegree),

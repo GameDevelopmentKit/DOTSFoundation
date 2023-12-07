@@ -11,7 +11,7 @@ namespace GASCore.Systems.TargetDetectionSystems.Systems
     public partial struct FinalizeFindTargetSystem : ISystem
     {
         [BurstCompile]
-        public void OnUpdate(ref SystemState state) { state.Dependency = new FinalizeFindTargetJob().ScheduleParallel(state.Dependency); }
+        public void OnUpdate(ref SystemState state) { new FinalizeFindTargetJob().ScheduleParallel(); }
     }
 
     [WithAll(typeof(FindTargetComponent))]

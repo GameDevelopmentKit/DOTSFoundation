@@ -13,10 +13,7 @@ namespace GASCore.Systems.VisualEffectSystems.Systems
     [BurstCompile]
     public partial struct RotateMovementDirectionSystem : ISystem
     {
-        public void OnCreate(ref SystemState state)
-        {
-            state.RequireForUpdate<RotateMovementDirection>();
-        }
+        public void OnCreate(ref SystemState state) { state.RequireForUpdate<RotateMovementDirection>(); }
 
         public void OnUpdate(ref SystemState state)
         {
@@ -46,8 +43,7 @@ namespace GASCore.Systems.VisualEffectSystems.Systems
             [EntityIndexInQuery] int index,
             ref MovementDirection movementDirection,
             ref RotateMovementDirection rotateMovementDirection,
-            in LocalToWorld worldTransform
-        )
+            in LocalToWorld worldTransform)
         {
             if (rotateMovementDirection.RotateDirection == 0)
             {
@@ -56,10 +52,18 @@ namespace GASCore.Systems.VisualEffectSystems.Systems
 
             rotateMovementDirection.RotateTimer -= this.DeltaTime;
             if (rotateMovementDirection.RotateTimer > 0) return;
-            rotateMovementDirection.RotateTimer += rotateMovementDirection.RotateInterval;
+            rotateMovementDirection.IdleTimer -= this.DeltaTime;
+            if (rotateMovementDirection.IdleTimer > 0)
+            {
+                movementDirection.Value = float3.zero;
+                return;
+            }
+
+            rotateMovementDirection.IdleTimer   = rotateMovementDirection.IdleInterval;
+            rotateMovementDirection.RotateTimer = rotateMovementDirection.RotateInterval;
             movementDirection.Value = math.forward(
                 math.mul(
-                    quaternion.LookRotation(movementDirection.Value, worldTransform.Up),
+                    worldTransform.Rotation,
                     quaternion.RotateY(rotateMovementDirection.RotateSpeed * rotateMovementDirection.RotateDirection)
                 )
             );

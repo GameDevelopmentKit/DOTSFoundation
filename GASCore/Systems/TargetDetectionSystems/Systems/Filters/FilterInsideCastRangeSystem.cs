@@ -25,17 +25,16 @@ namespace GASCore.Systems.TargetDetectionSystems.Systems.Filters
         [BurstCompile]
         public void OnUpdate(ref SystemState state)
         {
-            state.Dependency = new FilterInsideCastRangeJob
+            new FilterInsideCastRangeJob
             {
                 WorldTransformLookup = SystemAPI.GetComponentLookup<LocalToWorld>(true),
                 CastRangeLookup      = SystemAPI.GetComponentLookup<CastRangeComponent>(true),
                 TrackLookup          = SystemAPI.GetBufferLookup<TrackTargetInCastRange>(true),
-            }.ScheduleParallel(state.Dependency);
+            }.ScheduleParallel();
         }
     }
 
-    [WithAll(typeof(FindTargetComponent))]
-    [WithAll(typeof(FilterInsideCastRange))]
+    [WithAll(typeof(FindTargetComponent), typeof(FilterInsideCastRange))]
     [BurstCompile]
     public partial struct FilterInsideCastRangeJob : IJobEntity
     {
@@ -74,8 +73,7 @@ namespace GASCore.Systems.TargetDetectionSystems.Systems.Filters
                     }
                 }
 
-                var distanceSq = math.distancesq(casterPosition, this.WorldTransformLookup[targetables[i]].Position);
-                if (distanceSq > castRange.ValueSqr)
+                if (!this.WorldTransformLookup.HasComponent(targetables[i]) || math.distancesq(casterPosition, this.WorldTransformLookup[targetables[i]].Position) > castRange.ValueSqr)
                 {
                     // out of cast range
                     targetables.RemoveAtSwapBack(i);

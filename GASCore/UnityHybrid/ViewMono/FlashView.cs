@@ -18,7 +18,7 @@
 
         private void Awake()
         {
-            this.material = this.GetComponentInChildren<SkinnedMeshRenderer>().materials[0];
+            // this.material = this.GetComponentInChildren<Renderer>().materials[0];
         }
 
         private async UniTask FlashHit()
@@ -36,7 +36,7 @@
 
         public override void UpdateStatView(StatDataElement _, float __)
         {
-            this.FlashHit().Forget();
+            // this.FlashHit().Forget();
         }
     }
 }

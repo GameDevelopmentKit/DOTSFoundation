@@ -9,15 +9,15 @@ namespace GASCore.Systems.StatSystems.Systems
 
     [UpdateInGroup(typeof(AbilityLogicEffectGroup))]
     [UpdateAfter(typeof(AggregateStatModifierSystem))]
+    [UpdateBefore(typeof(ApplyInstantStatModifierSystem))]
     [RequireMatchingQueriesForUpdate]
     [BurstCompile]
     public partial struct UpdateKillCountStatSystem : ISystem
     {
-        public void OnCreate(ref SystemState state)
-        {
-            state.RequireForUpdate<UpdateKillCountStat>();
-        }
+        [BurstCompile]
+        public void OnCreate(ref SystemState state) { state.RequireForUpdate<UpdateKillCountStat>(); }
 
+        [BurstCompile]
         public void OnUpdate(ref SystemState state)
         {
             state.Dependency = new UpdateKillCountJob
@@ -27,6 +27,7 @@ namespace GASCore.Systems.StatSystems.Systems
         }
     }
 
+    [WithAll(typeof(UpdateKillCountStat))]
     [WithChangeFilter(typeof(UpdateKillCountStat))]
     [BurstCompile]
     public partial struct UpdateKillCountJob : IJobEntity
@@ -35,13 +36,7 @@ namespace GASCore.Systems.StatSystems.Systems
 
         private void Execute(ref DynamicBuffer<ModifierAggregatorData> modifierAggregatorBuffer, in CasterComponent caster)
         {
-            modifierAggregatorBuffer.Add(new ModifierAggregatorData()
-            {
-                TargetStat = this.StatNameLookup[caster],
-                Add        = -1,
-                Multiply   = 1,
-                Divide     = 1,
-            });
+            modifierAggregatorBuffer.Add(new ModifierAggregatorData(this.StatNameLookup[caster], -1));
         }
     }
 }

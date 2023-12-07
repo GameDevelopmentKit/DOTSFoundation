@@ -30,8 +30,6 @@ namespace GASCore.Blueprints
         public string            Description;
         public AbilityType       Type;
         public string            Icon;
-        public List<TargetType>  Target;
-        public AbilityEffectType EffectCategory;
 
         public BlueprintByRow<AbilityLevelRecord> LevelRecords;
 
@@ -45,6 +43,7 @@ namespace GASCore.Blueprints
         public int                       LevelIndex;
         public float                     Cooldown;
         public Dictionary<string, float> Cost;
+        public Dictionary<string, float> Sell;
         public float                     CastRange;
 
         public string                        AbilityActivateCondition;

@@ -2,21 +2,26 @@
 {
     using System;
     using GASCore.Blueprints;
+    using GASCore.Interfaces;
     using Unity.Collections;
     using Unity.Entities;
 
     #region Ability status
 
-    public struct RequestActivate : IComponentData, IEnableableComponent
-    {
-    }
+    public struct RequestActivate : IComponentData, IEnableableComponent { }
 
-    public struct GrantedActivation : IComponentData, IEnableableComponent
-    {
-    }
+    public struct RequestEnd : IComponentData, IEnableableComponent { }
 
-    public struct FinishedComponent : IComponentData, IEnableableComponent
+    public struct GrantedActivation : IComponentData, IEnableableComponent { }
+
+
+    public struct ActivatedTag : IComponentData, IEnableableComponent { }
+
+    public struct FinishedComponent : IComponentData, IEnableableComponent { }
+
+    public struct ActiveOneTimeTag : IComponentData, IAbilityActivateConditionConverter
     {
+        public void Convert(EntityCommandBuffer.ParallelWriter ecb, int index, Entity entity) { ecb.AddComponent<ActiveOneTimeTag>(index, entity); }
     }
 
     #endregion
@@ -27,13 +32,14 @@
         public FixedString64Bytes Value;
     }
 
-    public struct PassiveAbilityTag : IComponentData
+    public struct AbilityLevel : IComponentData
     {
+        public int Value;
     }
 
-    public struct ActiveAbilityTag : IComponentData
-    {
-    }
+    public struct PassiveAbilityTag : IComponentData { }
+
+    public struct ActiveAbilityTag : IComponentData { }
 
     public struct AbilityCost : IBufferElementData
     {
@@ -50,14 +56,6 @@
     public struct Cooldown : IComponentData
     {
         public float Value;
-    }
-
-    //Use for detect targetable objects of an ability
-    public struct TargetTypeElement : IBufferElementData
-    {
-        public                          TargetType Value;
-        public static implicit operator TargetType(TargetTypeElement targetType) => targetType.Value;
-        public static implicit operator TargetTypeElement(TargetType targetType) => new() { Value = targetType };
     }
 
     public struct AbilityTimelinePrefabComponent : IComponentData
@@ -88,7 +86,5 @@
         public int     AoEWidth;
     }
 
-    public struct MaxLevelTag : IComponentData
-    {
-    }
+    public struct MaxLevelTag : IComponentData { }
 }

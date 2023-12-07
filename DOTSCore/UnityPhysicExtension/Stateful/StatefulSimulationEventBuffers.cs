@@ -1,3 +1,4 @@
+#if UNITY_PHYSICS_CUSTOM
 using Unity.Burst;
 using Unity.Collections;
 using Unity.Entities;
@@ -192,3 +193,4 @@ namespace Unity.Physics.Stateful
         }
     }
 }
+#endif

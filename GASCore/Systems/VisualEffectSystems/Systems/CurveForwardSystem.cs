@@ -1,8 +1,11 @@
 ﻿namespace GASCore.Systems.VisualEffectSystems.Systems
 {
+    using DOTSCore.CommonSystems.Components;
+    using Gameplay.View.ViewMono;
     using GASCore.Groups;
     using GASCore.Systems.VisualEffectSystems.Components;
     using Unity.Burst;
+    using Unity.Collections;
     using Unity.Collections.LowLevel.Unsafe;
     using Unity.Entities;
     using Unity.Mathematics;
@@ -34,6 +37,7 @@
     [BurstCompile]
     public partial struct CurveForwardJob : IJobEntity
     {
+        
         public float                              DeltaTime;
 
         [NativeSetThreadIndex] private int threadId;
@@ -51,6 +55,7 @@
             }
 
             // arrive at destination
+            //gameObjectHybridLink.Value.GetComponent<TargetViewOfProjectile>().UpdateTargetPosition(data.Destination);
             if (math.distancesq(transform.Position, data.Destination) < .1f)
             {
                 return;

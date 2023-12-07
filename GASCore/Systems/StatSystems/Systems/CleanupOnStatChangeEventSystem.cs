@@ -19,8 +19,6 @@
     [BurstCompile]
     public partial struct CleanupOnStatChangeEventJob : IJobEntity
     {
-        public EntityCommandBuffer.ParallelWriter Ecb;
-
         void Execute(ref DynamicBuffer<StatChangeElement> statChangeEventBuffer, EnabledRefRW<OnStatChangeTag> statChangeEnableState)
         {
             statChangeEventBuffer.Clear();

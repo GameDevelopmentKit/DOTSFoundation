@@ -13,7 +13,8 @@
         "Unity.Entities.Hybrid",
         "UniTask",
         "Unity.Physics",
-        "Unity.Physics.Hybrid"
+        "Unity.Physics.Hybrid",
+        "Unity.Physics.Custom"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],
@@ -22,6 +23,12 @@
     "precompiledReferences": [],
     "autoReferenced": true,
     "defineConstraints": [],
-    "versionDefines": [],
+    "versionDefines": [
+        {
+            "name": "com.unity.physics",
+            "expression": "",
+            "define": "UNITY_PHYSICS_CUSTOM"
+        }
+    ],
     "noEngineReferences": false
 }

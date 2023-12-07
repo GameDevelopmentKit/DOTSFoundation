@@ -55,5 +55,29 @@
 
             return vec;
         }
+        
+        /// <summary>
+        ///   <para>Calculate a position between the points specified by current and target, moving no farther than the distance specified by maxDistanceDelta.</para>
+        /// </summary>
+        /// <param name="current">The position to move from.</param>
+        /// <param name="target">The position to move towards.</param>
+        /// <param name="maxDistanceDelta">Distance to move current per call.</param>
+        /// <returns>
+        ///   <para>The new position.</para>
+        /// </returns>
+        public static float3 MoveTowards(
+            float3 current,
+            float3 target,
+            float maxDistanceDelta)
+        {
+            float num1 = target.x - current.x;
+            float num2 = target.y - current.y;
+            float num3 = target.z - current.z;
+            float d    = (float) (num1 * (double) num1 + num2 * (double) num2 + num3 * (double) num3);
+            if (d == 0.0 || maxDistanceDelta >= 0.0 && d <= maxDistanceDelta * (double) maxDistanceDelta)
+                return target;
+            float num4 = (float) math.sqrt((double) d);
+            return new float3(current.x + num1 / num4 * maxDistanceDelta, current.y + num2 / num4 * maxDistanceDelta, current.z + num3 / num4 * maxDistanceDelta);
+        }
     }
 }

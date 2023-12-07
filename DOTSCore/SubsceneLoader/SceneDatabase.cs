@@ -32,7 +32,8 @@
     public class SceneDatabase : SerializedScriptableObject
     {
 #if UNITY_EDITOR
-        [FolderPath] [SerializeField] private string[] sceneDirectoryPaths;
+        [InlineButton("OnValidate", SdfIconType.Recycle, "Refresh")] [FolderPath] [SerializeField]
+        private string[] sceneDirectoryPaths;
 
         private void OnValidate()
         {
@@ -63,9 +64,6 @@
                 }
             }
         }
-
-        [Button]
-        public void Refresh() { this.OnValidate(); }
 #endif
 
         private class SceneItem

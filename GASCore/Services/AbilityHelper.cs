@@ -1,12 +1,15 @@
 ﻿namespace GASCore.Services
 {
+    using System.Collections.Generic;
+    using System.Linq;
+    using System.Reflection;
     using GASCore.Blueprints;
     using GASCore.Systems.LogicEffectSystems.Components;
+    using GASCore.Systems.StatSystems.Components;
     using GASCore.Systems.TargetDetectionSystems.Components;
     using GASCore.Systems.TimelineSystems.Components;
     using Unity.Collections;
     using Unity.Entities;
-    using UnityEngine;
 
     public static class AbilityHelper
     {
@@ -32,7 +35,8 @@
                         {
                             if (!team.HasComponent(targetElement.Value))
                             {
-                                Debug.Log($"missing team component - {targetElement.Value}");
+                                //todo check this case 
+                                // Debug.Log($"missing team component - {targetElement.Value}");
                                 continue;
                             }
 
@@ -49,7 +53,8 @@
                         {
                             if (!team.HasComponent(targetElement.Value))
                             {
-                                Debug.Log($"missing team component - {targetElement.Value}");
+                                //todo check this case 
+                                // Debug.Log($"missing team component - {targetElement.Value}");
                                 continue;
                             }
 
@@ -75,6 +80,25 @@
             ecb.AddBuffer<CompletedTriggerElement>(entityInQueryIndex, entity);
             ecb.AddComponent<InTriggerConditionResolveProcessTag>(entityInQueryIndex, entity);
             ecb.SetComponentEnabled<CompletedAllTriggerConditionTag>(entityInQueryIndex, entity, false);
+        }
+
+        public static void SetupTriggerCondition(this EntityManager ecb, Entity entity, int conditionCount)
+        {
+            ecb.AddComponent<CompletedAllTriggerConditionTag>(entity);
+            if (conditionCount <= 0) return;
+            ecb.AddComponentData(entity, new TriggerConditionAmount() { Value = conditionCount });
+            ecb.AddBuffer<CompletedTriggerElement>(entity);
+            ecb.AddComponent<InTriggerConditionResolveProcessTag>(entity);
+            ecb.SetComponentEnabled<CompletedAllTriggerConditionTag>(entity, false);
+        }
+
+        public static List<string> GetListStatName()
+        {
+            return typeof(StatName)
+                .GetFields(BindingFlags.Public | BindingFlags.Static)
+                .Where(f => f.FieldType == typeof(FixedString64Bytes))
+                .Select(f => ((FixedString64Bytes)f.GetValue(null)).Value)
+                .ToList();
         }
     }
 }

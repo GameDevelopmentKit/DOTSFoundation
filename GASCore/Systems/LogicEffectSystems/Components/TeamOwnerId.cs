@@ -11,17 +11,14 @@
         {
             public TeamType Value;
 
-            public void Convert(EntityCommandBuffer.ParallelWriter ecb, int index, Entity entity)
-            {
-                ecb.AddComponent(index, entity, new TeamOwnerId() { Value = (int)this.Value });
-            }
+            public void Convert(EntityCommandBuffer.ParallelWriter ecb, int index, Entity entity) { ecb.AddComponent(index, entity, new TeamOwnerId() { Value = (int)this.Value }); }
         }
     }
 
     public enum TeamType
     {
-        None     = 0,
-        Ally     = 1,
-        Opponent = 2,
+        None      = 0,
+        Character = 1,
+        Monster   = 2,
     }
 }

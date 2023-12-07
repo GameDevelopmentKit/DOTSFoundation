@@ -6,17 +6,18 @@ namespace GASCore.UnityHybrid.ViewMono
 
     public class CoinPopupView : TextPopupView
     {
-        [SerializeField] private Color textColor = Color.yellow;
+        [SerializeField] private Color color = Color.yellow;
 
         public override FixedString64Bytes StatName => Systems.StatSystems.Components.StatName.Coin;
 
-        public override void InitStatView(StatDataElement stat)
+        protected override Color  GetColor(StatDataElement _, float value)
         {
+            return this.color;
         }
 
-        public override void UpdateStatView(StatDataElement _, float coin)
+        protected override Sprite GetSprite(StatDataElement stat, float value)
         {
-            this.PopupText($"{coin:N0}", this.textColor, new(0f, 1f, 0f));
+            return null;
         }
     }
 }

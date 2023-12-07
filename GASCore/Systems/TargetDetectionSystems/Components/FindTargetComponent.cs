@@ -10,6 +10,8 @@ namespace GASCore.Systems.TargetDetectionSystems.Components
         public bool WaitForOtherTriggers;
     }
 
+    public struct OverrideFindTargetTag : IComponentData { }
+
     [InternalBufferCapacity(0)]
     public struct TargetableElement : IBufferElementData
     {
@@ -20,9 +22,7 @@ namespace GASCore.Systems.TargetDetectionSystems.Components
 
     public class FindTargetAuthoring : ITriggerConditionActionConverter
     {
-        public interface IOptionConverter : IComponentConverter
-        {
-        }
+        public interface IOptionConverter : IComponentConverter { }
 
         public                      bool                   WaitForOtherTriggers = true;
         [SerializeReference] public List<IOptionConverter> Options              = new();

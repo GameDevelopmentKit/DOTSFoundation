@@ -17,19 +17,19 @@
         [BurstCompile]
         public void OnCreate(ref SystemState state)
         {
-            using var entityQuery = new EntityQueryBuilder(Allocator.Temp).WithAll<ForceCleanupActivatedAbilityTag,CompletedAllTriggerConditionTag>();
+            using var entityQuery = new EntityQueryBuilder(Allocator.Temp).WithAll<ForceCleanupActivatedAbilityTag, CompletedAllTriggerConditionTag>();
             state.RequireForUpdate(state.GetEntityQuery(entityQuery));
         }
 
         [BurstCompile]
         public void OnUpdate(ref SystemState state)
         {
-            var ecbSingleton    = SystemAPI.GetSingleton<EndSimulationEntityCommandBufferSystem.Singleton>();
-            var ecb             = ecbSingleton.CreateCommandBuffer(state.WorldUnmanaged).AsParallelWriter();
+            var ecbSingleton = SystemAPI.GetSingleton<EndSimulationEntityCommandBufferSystem.Singleton>();
+            var ecb          = ecbSingleton.CreateCommandBuffer(state.WorldUnmanaged).AsParallelWriter();
 
             new ForceCleanupActivatedAbilityJob()
             {
-                Ecb                = ecb,
+                Ecb                      = ecb,
                 LinkedEntityBufferLookup = SystemAPI.GetBufferLookup<LinkedEntityGroup>(true)
             }.ScheduleParallel();
         }
@@ -44,14 +44,15 @@
         [ReadOnly] public BufferLookup<LinkedEntityGroup> LinkedEntityBufferLookup;
         void Execute([EntityIndexInQuery] int entityInQueryIndex, in ActivatedStateEntityOwner activatedStateEntityOwner)
         {
-            Debug.Log("ForceCleanupActivatedAbilityJob");
-            if (this.LinkedEntityBufferLookup.TryGetBuffer(activatedStateEntityOwner.Value, out var linkedEntityGroups))
-            {
-                foreach (var linkedEntity in linkedEntityGroups)
-                {
-                    this.Ecb.AddComponent<ForceCleanupTag>(entityInQueryIndex, linkedEntity.Value);
-                }
-            }
+            this.Ecb.DestroyEntity(entityInQueryIndex, activatedStateEntityOwner.Value);
+            // Debug.Log("ForceCleanupActivatedAbilityJob");
+            // if (this.LinkedEntityBufferLookup.TryGetBuffer(activatedStateEntityOwner.Value, out var linkedEntityGroups))
+            // {
+            //     foreach (var linkedEntity in linkedEntityGroups)
+            //     {
+            //         this.Ecb.AddComponent<ForceCleanupTag>(entityInQueryIndex, linkedEntity.Value);
+            //     }
+            // }
         }
     }
 }

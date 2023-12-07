@@ -9,6 +9,8 @@ namespace GASCore.Systems.LogicEffectSystems.Systems
     using Unity.Mathematics;
     using Unity.Transforms;
 
+    public struct MoveTowardTarget : IComponentData { }
+
     [BurstCompile]
     public partial struct UpdateMoveDirJob : IJobEntity
     {
@@ -62,16 +64,6 @@ namespace GASCore.Systems.LogicEffectSystems.Systems
         }
     }
 
-    [WithAll(typeof(TargetPosition))]
-    [WithNone(typeof(MovementDirection))]
-    [BurstCompile]
-    public partial struct AddMoveDirComponentJob : IJobEntity
-    {
-        public EntityCommandBuffer.ParallelWriter Ecb;
-
-        private void Execute(Entity entity, [EntityIndexInQuery] int index) { this.Ecb.AddComponent<MovementDirection>(index, entity); }
-    }
-
 
     [UpdateInGroup(typeof(GameAbilityBeginSimulationSystemGroup))]
     [RequireMatchingQueriesForUpdate]
@@ -79,16 +71,23 @@ namespace GASCore.Systems.LogicEffectSystems.Systems
     public partial struct AddMoveDirComponentSystem : ISystem
     {
         [BurstCompile]
-        public void OnCreate(ref SystemState state)
-        {
-            state.RequireForUpdate(SystemAPI.QueryBuilder().WithAll<TargetPosition>().WithNone<MovementDirection>().Build());
-        }
+        public void OnCreate(ref SystemState state) { state.RequireForUpdate(SystemAPI.QueryBuilder().WithAll<TargetPosition>().WithNone<MovementDirection>().Build()); }
         [BurstCompile]
         public void OnUpdate(ref SystemState state)
         {
             var ecbSingleton = SystemAPI.GetSingleton<BeginSimulationEntityCommandBufferSystem.Singleton>();
             var ecb          = ecbSingleton.CreateCommandBuffer(state.WorldUnmanaged).AsParallelWriter();
             new AddMoveDirComponentJob() { Ecb = ecb }.ScheduleParallel();
+        }
+
+        [WithAll(typeof(TargetPosition), typeof(MoveTowardTarget))]
+        [WithNone(typeof(MovementDirection))]
+        [BurstCompile]
+        public partial struct AddMoveDirComponentJob : IJobEntity
+        {
+            public EntityCommandBuffer.ParallelWriter Ecb;
+
+            private void Execute(Entity entity, [EntityIndexInQuery] int index) { this.Ecb.AddComponent<MovementDirection>(index, entity); }
         }
     }
 }

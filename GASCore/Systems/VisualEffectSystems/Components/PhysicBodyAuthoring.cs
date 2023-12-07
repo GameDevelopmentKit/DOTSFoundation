@@ -1,10 +1,11 @@
-﻿namespace GASCore.Systems.VisualEffectSystems.Components
+﻿#if UNITY_PHYSICS_CUSTOM
+namespace GASCore.Systems.VisualEffectSystems.Components
 {
     using DOTSCore.UnityPhysicExtension.Utils;
     using GASCore.Interfaces;
     using Unity.Entities;
     using Unity.Physics.Authoring;
-
+    
     public class PhysicBodyAuthoring : IAbilityActionComponentConverter
     {
         public BodyMotionType BodyMotionType;
@@ -14,3 +15,4 @@
         }
     }
 }
+#endif

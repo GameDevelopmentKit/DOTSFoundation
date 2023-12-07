@@ -23,48 +23,21 @@ namespace GASCore.Systems.TargetDetectionSystems.Systems
         [BurstCompile]
         public void OnUpdate(ref SystemState state)
         {
-            var entities = this.entityQuery.ToEntityListAsync(state.WorldUpdateAllocator, state.Dependency, out var queryJob);
+            var entities = this.entityQuery.ToEntityArray(state.WorldUpdateAllocator);
 
-            var recycleJob = new RecycleFindTargetComponentJob()
-            {
-                FindTargetLookup = SystemAPI.GetComponentLookup<FindTargetComponent>()
-            }.ScheduleParallel(state.Dependency);
-
-            state.Dependency = new FindTargetJob
+            new FindTargetJob
             {
                 Entities = entities
-            }.ScheduleParallel(JobHandle.CombineDependencies(queryJob, recycleJob));
-        }
-    }
-
-    [WithDisabled(typeof(FindTargetComponent))]
-    [BurstCompile]
-    public partial struct RecycleFindTargetComponentJob : IJobEntity
-    {
-        [NativeDisableParallelForRestriction] public ComponentLookup<FindTargetComponent> FindTargetLookup;
-        private void Execute(
-            Entity entity,
-            in TriggerConditionAmount triggersAmount,
-            in DynamicBuffer<CompletedTriggerElement> completedTriggers)
-        {
-            var findTargetTrigger = TypeManager.GetTypeIndex<FindTargetComponent>().Index;
-            foreach (var trigger in completedTriggers)
-            {
-                // completed, wait for recycle
-                if (trigger == findTargetTrigger) return;
-            }
-
-            // wait for other triggers
-            if (this.FindTargetLookup[entity].WaitForOtherTriggers && completedTriggers.Length < triggersAmount - 1) return;
-            this.FindTargetLookup.SetComponentEnabled(entity, true);
+            }.ScheduleParallel();
         }
     }
 
     [WithAll(typeof(FindTargetComponent))]
+    [WithNone(typeof(OverrideFindTargetTag))]
     [BurstCompile]
     public partial struct FindTargetJob : IJobEntity
     {
-        [ReadOnly] public NativeList<Entity> Entities;
+        [ReadOnly] public NativeArray<Entity> Entities;
 
         private void Execute(ref DynamicBuffer<TargetableElement> targetables)
         {

@@ -6,7 +6,7 @@
     using Unity.Collections;
     using Unity.Entities;
 
-    [UpdateInGroup(typeof(GameAbilityInitializeSystemGroup))]
+    [UpdateInGroup(typeof(AbilityMainFlowGroup))]
     [RequireMatchingQueriesForUpdate]
     [BurstCompile]
     public partial struct TrackingTriggerConditionProgressSystem : ISystem

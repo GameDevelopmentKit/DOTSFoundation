@@ -19,9 +19,7 @@
             using var entityQuery = new EntityQueryBuilder(Allocator.Temp).WithAll<AbilityId, AbilityEffectElement>().WithNone<AbilityEffectPoolComponent>();
             state.RequireForUpdate(state.GetEntityQuery(entityQuery));
         }
-
-        [BurstCompile]
-        public void OnDestroy(ref SystemState state) { }
+        
         [BurstCompile]
         public void OnUpdate(ref SystemState state)
         {

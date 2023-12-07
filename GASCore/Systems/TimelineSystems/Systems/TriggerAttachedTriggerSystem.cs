@@ -11,28 +11,29 @@
     using Unity.Entities;
     using Unity.Transforms;
 
-    [UpdateInGroup(typeof(GameAbilityInitializeSystemGroup))]
+    [UpdateInGroup(typeof(AbilityMainFlowGroup))]
     [UpdateBefore(typeof(InstantiateAbilityEffectFromPoolSystem))]
     [RequireMatchingQueriesForUpdate]
     [BurstCompile]
     public partial struct TriggerAttachedTriggerSystem : ISystem
     {
+        EntityQuery entityQuery;
         [BurstCompile]
         public void OnCreate(ref SystemState state)
         {
-            using var entityQuery = new EntityQueryBuilder(Allocator.Temp).WithAll<WaitToTrigger, CompletedAllTriggerConditionTag>();
-            state.RequireForUpdate(state.GetEntityQuery(entityQuery));
+            this.entityQuery = SystemAPI.QueryBuilder().WithAll<WaitToTrigger, CompletedAllTriggerConditionTag>().Build();
+            state.RequireForUpdate(this.entityQuery);
         }
         
         [BurstCompile]
         public void OnUpdate(ref SystemState state)
         {
-            var ecbSingleton = SystemAPI.GetSingleton<EndSimulationEntityCommandBufferSystem.Singleton>();
-            var ecb          = ecbSingleton.CreateCommandBuffer(state.WorldUnmanaged).AsParallelWriter();
+            if(this.entityQuery.IsEmpty) return;
+            var ecbSingleton = SystemAPI.GetSingleton<BeginInitializationEntityCommandBufferSystem.Singleton>();
 
             var setEndTimeTriggerAfterSecondJob = new TriggerAttachedTriggerJob()
             {
-                Ecb = ecb,
+                Ecb           = ecbSingleton.CreateCommandBuffer(state.WorldUnmanaged).AsParallelWriter(),
                 TriggerLookup = SystemAPI.GetComponentLookup<TriggerByAnotherTrigger>(true)
             };
             setEndTimeTriggerAfterSecondJob.ScheduleParallel();
@@ -55,7 +56,6 @@
                 this.Ecb.AddComponent(entityInQueryIndex, abilityTimelineAction, caster);
                 this.Ecb.RemoveComponent<Parent>(entityInQueryIndex, abilityTimelineAction);
                 this.Ecb.AppendToBuffer(entityInQueryIndex, activatedStateEntity.Value, new LinkedEntityGroup() { Value = abilityTimelineAction });
-                this.Ecb.MarkTriggerConditionComplete<TriggerByAnotherTrigger>(abilityTimelineAction, entityInQueryIndex);
 
                 var targetBufferClone                = this.Ecb.AddBuffer<TargetableElement>(entityInQueryIndex, abilityTimelineAction);
                 var triggerByAnother                 = this.TriggerLookup[waitToTrigger.TriggerEntity];

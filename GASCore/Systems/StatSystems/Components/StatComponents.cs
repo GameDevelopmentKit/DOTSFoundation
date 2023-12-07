@@ -2,12 +2,14 @@
 using System.Collections.Generic;
 using DOTSCore.Extension;
 using GASCore.Interfaces;
-using GASCore.Systems.TimelineSystems.Components;
 using Unity.Collections;
 using Unity.Entities;
 
 namespace GASCore.Systems.StatSystems.Components
 {
+    using GASCore.Services;
+    using Sirenix.OdinInspector;
+
     public struct StatDataElement : IBufferElementData
     {
         public FixedString64Bytes StatName;
@@ -33,8 +35,19 @@ namespace GASCore.Systems.StatSystems.Components
         [Serializable]
         public class StatElement
         {
+            public bool IsCustomStatName;
+
+            [ValueDropdown("GetFieldValues"), HideIf("IsCustomStatName")]
             public string StatName;
-            public float  BaseValue;
+
+            public List<string> GetFieldValues() => AbilityHelper.GetListStatName();
+
+            [OnValueChanged("OnCustomStatNameChanged"), ShowIf("IsCustomStatName")]
+            public string customStatName;
+
+            private void OnCustomStatNameChanged() { this.StatName = this.customStatName; }
+
+            public float BaseValue;
         }
 
         public List<StatElement> Value;
@@ -68,6 +81,16 @@ namespace GASCore.Systems.StatSystems.Components
             var statDataElement    = statDataBufferTemp[statIndex];
             statDataElement.BaseValue     = newValue;
             statDataElement.IsDirty       = true;
+            statDataBufferTemp[statIndex] = statDataElement;
+            return true;
+        }
+
+        public bool SetBaseValueWithoutNotify(FixedString64Bytes statName, float newValue)
+        {
+            if (!this.statNameToIndex.ValueRO.Value.TryGetValue(statName, out var statIndex)) return false;
+            var statDataBufferTemp = this.statDataBuffer;
+            var statDataElement    = statDataBufferTemp[statIndex];
+            statDataElement.BaseValue     = newValue;
             statDataBufferTemp[statIndex] = statDataElement;
             return true;
         }
@@ -135,8 +158,7 @@ namespace GASCore.Systems.StatSystems.Components
 
         public float CalculateStatValue(ModifierAggregatorData aggregator)
         {
-            //todo handle case override = 0
-            return aggregator.Override != 0
+            return aggregator.Override >= 0
                 ? aggregator.Override
                 : (GetBaseValue(aggregator.TargetStat) + aggregator.Add) * aggregator.Multiply / aggregator.Divide;
         }

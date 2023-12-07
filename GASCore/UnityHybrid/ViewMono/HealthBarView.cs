@@ -13,7 +13,7 @@
 
         public override void InitStatView(StatDataElement stat)
         {
-            this.uiHpBarView.Init(stat.CurrentValue, stat.BaseValue, 0);
+            this.uiHpBarView.Init(stat.CurrentValue, stat.OriginValue, 0);
         }
 
         public override void UpdateStatView(StatDataElement health, float _)

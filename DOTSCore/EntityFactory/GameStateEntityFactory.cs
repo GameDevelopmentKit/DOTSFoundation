@@ -1,6 +1,7 @@
 ﻿namespace DOTSCore.EntityFactory
 {
     using DOTSCore.CommonSystems.Components;
+    using DOTSCore.Extension;
     using Unity.Collections;
     using Unity.Entities;
 
@@ -10,8 +11,7 @@
         {
             entityManager.AddComponentData(gameStateEntity, new CurrentGameState() { Value = initGameState });
             entityManager.AddComponent<PreviousGameState>(gameStateEntity);
-            entityManager.AddComponent<RequestChangeGameState>(gameStateEntity);
-            entityManager.SetComponentEnabled<RequestChangeGameState>(gameStateEntity, false);
+            entityManager.AddEnableableComponentTag<RequestChangeGameState>(gameStateEntity);
             entityManager.SetName(gameStateEntity, "GameState");
         }
     }

@@ -16,7 +16,10 @@
         "Zenject-Source",
         "Unity.TextMeshPro",
         "UniTask",
-        "DOTween.Modules"
+        "DOTween.Modules",
+        "Unity.Physics.Custom",
+        "ProjectDawn.Navigation",
+        "Unity.Scenes"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],
@@ -25,6 +28,17 @@
     "precompiledReferences": [],
     "autoReferenced": true,
     "defineConstraints": [],
-    "versionDefines": [],
+    "versionDefines": [
+        {
+            "name": "com.projectdawn.navigation",
+            "expression": "",
+            "define": "USING_AGENT_NAVIGATION"
+        },
+        {
+            "name": "com.unity.physics",
+            "expression": "",
+            "define": "UNITY_PHYSICS_CUSTOM"
+        }
+    ],
     "noEngineReferences": false
 }

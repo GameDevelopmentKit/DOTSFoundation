@@ -17,10 +17,7 @@
     public partial struct AttachToAffectedTargetSystem : ISystem
     {
         [BurstCompile]
-        public void OnCreate(ref SystemState state) { state.RequireForUpdate<AttachToAffectedTarget>(); }
-
-        [BurstCompile]
-        public void OnDestroy(ref SystemState state) { }
+        public void OnCreate(ref SystemState state) { state.RequireForUpdate(SystemAPI.QueryBuilder().WithAll<AttachToAffectedTarget>().WithNone<Parent>().Build()); }
 
         [BurstCompile]
         public void OnUpdate(ref SystemState state)
@@ -38,7 +35,7 @@
 
 
     [WithAll(typeof(AttachToAffectedTarget))]
-    [WithChangeFilter(typeof(AffectedTargetComponent))]
+    [WithNone(typeof(Parent))]
     [BurstCompile]
     public partial struct AttachToAffectedTargetJob : IJobEntity
     {

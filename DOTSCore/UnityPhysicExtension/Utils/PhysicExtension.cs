@@ -1,4 +1,5 @@
-﻿namespace DOTSCore.UnityPhysicExtension.Utils
+﻿#if UNITY_PHYSICS_CUSTOM
+namespace DOTSCore.UnityPhysicExtension.Utils
 {
     using Unity.Entities;
     using Unity.Mathematics;
@@ -12,7 +13,7 @@
             PhysicsCategoryTags colliderBelongsTo, PhysicsCategoryTags colliderCollidesWith)
         {
             var colliderFilter = CollisionFilter.Default;
-            colliderFilter.BelongsTo    = colliderBelongsTo.Value;
+            colliderFilter.BelongsTo = colliderBelongsTo.Value;
             colliderFilter.CollidesWith = colliderCollidesWith.Value;
 
             var colliderMaterial = Material.Default;
@@ -21,9 +22,9 @@
             var colliderBlob = BoxCollider.Create(new BoxGeometry
             {
                 BevelRadius = 0.05f,
-                Center      = center,
+                Center = center,
                 Orientation = quaternion.identity,
-                Size        = size
+                Size = size
             }, colliderFilter, colliderMaterial);
 
             ecb.AddComponent(index, entity, new PhysicsCollider { Value = colliderBlob });
@@ -34,7 +35,7 @@
             PhysicsCategoryTags colliderBelongsTo, PhysicsCategoryTags colliderCollidesWith)
         {
             var colliderFilter = CollisionFilter.Default;
-            colliderFilter.BelongsTo    = colliderBelongsTo.Value;
+            colliderFilter.BelongsTo = colliderBelongsTo.Value;
             colliderFilter.CollidesWith = colliderCollidesWith.Value;
 
             var colliderMaterial = Material.Default;
@@ -68,7 +69,7 @@
 
             var physicsVelocity = new PhysicsVelocity
             {
-                Linear  = physicBodyData.InitialLinearVelocity,
+                Linear = physicBodyData.InitialLinearVelocity,
                 Angular = physicBodyData.InitialAngularVelocity
             };
             ecb.AddComponent(index, entity, physicsVelocity);
@@ -77,7 +78,7 @@
             {
                 ecb.AddComponent(index, entity, new PhysicsDamping
                 {
-                    Linear  = physicBodyData.LinearDamping,
+                    Linear = physicBodyData.LinearDamping,
                     Angular = physicBodyData.AngularDamping
                 });
                 if (physicBodyData.GravityFactor != 1)
@@ -104,7 +105,7 @@
                     ecb.AddComponent(index, entity, new PhysicsGraphicalInterpolationBuffer
                     {
                         PreviousTransform = Math.DecomposeRigidBodyTransform(float4x4.identity),
-                        PreviousVelocity  = physicsVelocity,
+                        PreviousVelocity = physicsVelocity,
                     });
                 }
             }
@@ -118,12 +119,12 @@
         public bool             OverrideDefaultMassDistribution = false;
         public MassDistribution CustomMassDistribution;
 
-        public float3 InitialLinearVelocity  = float3.zero;
+        public float3 InitialLinearVelocity = float3.zero;
         public float3 InitialAngularVelocity = float3.zero;
 
-        public float         LinearDamping  = 0.01f;
+        public float         LinearDamping = 0.01f;
         public float         AngularDamping = 0.05f;
-        public BodySmoothing Smoothing      = BodySmoothing.None;
+        public BodySmoothing Smoothing = BodySmoothing.None;
 
         public uint                  WorldIndex = 0;
         public CustomPhysicsBodyTags CustomTags = CustomPhysicsBodyTags.Nothing;
@@ -144,3 +145,4 @@
         private float m_gravityFactor = 1f;
     }
 }
+#endif

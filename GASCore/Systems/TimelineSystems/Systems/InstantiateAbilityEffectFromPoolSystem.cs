@@ -11,7 +11,7 @@
     using Unity.Entities;
     using Unity.Transforms;
 
-    [UpdateInGroup(typeof(GameAbilityInitializeSystemGroup))]
+    [UpdateInGroup(typeof(AbilityMainFlowGroup))]
     [RequireMatchingQueriesForUpdate]
     public partial class InstantiateAbilityEffectFromPoolSystem : SystemBase
     {

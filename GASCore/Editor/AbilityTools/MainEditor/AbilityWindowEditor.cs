@@ -63,6 +63,8 @@ namespace GASCore.Editor.AbilityTools.MainEditor
             //Hook up button click events
             this.rootVisualElement.Q<VisualElement>("ItemsTab").Q<Button>("btnAdd").clicked += this.AddItem_OnClick;
             this.detailPanelView.Q<Button>("btnDelete").clicked                             += this.DeleteItem_OnClick;
+            this.detailPanelView.Q<Button>("btnPing").clicked                               += this.PingItem_OnClick;
+            this.detailPanelView.Q<Button>("btnDuplicate").clicked                          += this.DuplicateAbility_OnClick;
 
             //Register Value Changed Callbacks for new items added to the ListView
             this.rootVisualElement.Q<Button>("btnPullFromSpreadSheet").clicked += this.PullDataFromSpreadSheet;
@@ -139,6 +141,7 @@ namespace GASCore.Editor.AbilityTools.MainEditor
             this.RebuildListAbilityItemRowView();
 
             this.abilityItemListView.SetSelection(this.abilityInventory.Count - 1);
+            this.abilityItemListView.ScrollToItem(this.abilityInventory.Count - 1);
         }
 
         private void DeleteItem_OnClick()
@@ -155,13 +158,36 @@ namespace GASCore.Editor.AbilityTools.MainEditor
             this.detailPanelView.style.visibility = Visibility.Hidden;
         }
 
+        private void PingItem_OnClick()
+        {
+            //highlight on folder
+            EditorGUIUtility.PingObject(this.activeItem);
+        }
+
+        private void DuplicateAbility_OnClick()
+        {
+            string filePath      = AssetDatabase.GetAssetPath(this.activeItem);
+            string fileName      = Path.GetFileNameWithoutExtension(filePath);
+            string fileExtension = Path.GetExtension(filePath);
+            string newFilePath   = Path.Combine(Path.GetDirectoryName(filePath), $"{fileName}_{DateTimeOffset.Now.ToUnixTimeSeconds()}{fileExtension}");
+            AssetDatabase.CopyAsset(filePath, newFilePath);
+
+            //Add it to the item list
+            this.abilityInventory.Add(AssetDatabase.LoadAssetAtPath<AbilityItem>(newFilePath));
+
+            //Refresh the ListView so everything is redrawn again
+            this.RebuildListAbilityItemRowView();
+
+            this.abilityItemListView.SetSelection(this.abilityInventory.Count - 1);
+            this.abilityItemListView.ScrollToItem(this.abilityInventory.Count - 1);
+        }
+
         private void ListView_onSelectionChange(IEnumerable<object> selectedItems)
         {
             //Get the first item in the selectedItems list. 
             //There will only ever be one because SelectionType is set to Single
             this.activeItem = (AbilityItem)selectedItems.First();
-            //highlight on folder
-            // EditorGUIUtility.PingObject(this.activeItem);
+
 
             var index = this.abilityInventory.FindIndex(x => x == this.activeItem);
             this.lastSelectionItem = index == -1 ? 0 : index;
@@ -272,6 +298,8 @@ namespace GASCore.Editor.AbilityTools.MainEditor
                     () => { Debug.LogError($"Push Complete"); });
             }
 
+            AssetDatabase.SaveAssets();
+            AssetDatabase.Refresh();
             this.pushToSheetBtn.SetEnabled(true);
         }
 

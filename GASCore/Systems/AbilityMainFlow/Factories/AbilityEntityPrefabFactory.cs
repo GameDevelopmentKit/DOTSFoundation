@@ -1,5 +1,9 @@
 namespace GASCore.Systems.AbilityMainFlow.Factories
 {
+    using System;
+    using System.Collections.Generic;
+    using System.Linq;
+    using System.Reflection;
     using DOTSCore.EntityFactory;
     using DOTSCore.Extension;
     using GASCore.Blueprints;
@@ -18,6 +22,7 @@ namespace GASCore.Systems.AbilityMainFlow.Factories
     {
         public AbilityRecord      AbilityRecord;
         public AbilityLevelRecord AbilityLevelRecord;
+        public bool               IsMaxLevel;
     }
 
     public class AbilityEntityPrefabFactory : BaseEntityPrefabFactory<AbilityFactoryModel>
@@ -45,24 +50,22 @@ namespace GASCore.Systems.AbilityMainFlow.Factories
             // ====== Ability general info ======
             ecbParallel.SetName(index, abilityEntity, $"{record.Id}_Lv{abilityFactoryModel.AbilityLevelRecord.LevelIndex + 1}");
             ecbParallel.AddComponent(index, abilityEntity, new ComponentTypeSet(typeof(LocalToWorld)));
-            ecbParallel.AddComponent(index, abilityEntity, new ComponentTypeSet(typeof(RequestActivate), typeof(GrantedActivation)));
-            ecbParallel.AddComponent(index, abilityEntity, new AbilityId() { Value = record.Id });
-            ecbParallel.AddComponent(index, abilityEntity, new Duration() { Value  = 0 });
+            ecbParallel.AddComponent(index, abilityEntity, new ComponentTypeSet(typeof(RequestActivate), typeof(GrantedActivation), typeof(ActivatedTag)));
+            ecbParallel.AddComponent(index, abilityEntity, new AbilityId() { Value    = record.Id });
+            ecbParallel.AddComponent(index, abilityEntity, new AbilityLevel() { Value = abilityFactoryModel.AbilityLevelRecord.LevelIndex + 1 });
+            ecbParallel.AddComponent(index, abilityEntity, new Duration() { Value     = 0 });
             ecbParallel.SetComponentEnabled<RequestActivate>(index, abilityEntity, false);
             ecbParallel.SetComponentEnabled<GrantedActivation>(index, abilityEntity, false);
+            ecbParallel.SetComponentEnabled<ActivatedTag>(index, abilityEntity, false);
+
+            if (abilityFactoryModel.IsMaxLevel)
+                ecbParallel.AddComponent<MaxLevelTag>(index, abilityEntity);
 
             //attach ability type tag
             if (record.Type == AbilityType.Active)
                 ecbParallel.AddComponent(index, abilityEntity, new ActiveAbilityTag());
             else if (record.Type == AbilityType.Passive)
                 ecbParallel.AddComponent(index, abilityEntity, new PassiveAbilityTag());
-
-            // add target type buffer
-            var targetTypeBuffer = ecbParallel.AddBuffer<TargetTypeElement>(index, abilityEntity);
-            foreach (var target in record.Target)
-            {
-                targetTypeBuffer.Add(new TargetTypeElement() { Value = target });
-            }
 
             // ===== Ability Level Info ======
             var levelRecord = abilityFactoryModel.AbilityLevelRecord;

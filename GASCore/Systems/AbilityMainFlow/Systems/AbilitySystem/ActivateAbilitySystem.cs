@@ -45,6 +45,7 @@
 
             //update status
             this.Ecb.SetComponentEnabled<GrantedActivation>(entityInQueryIndex, abilityEntity, false);
+            this.Ecb.SetComponentEnabled<ActivatedTag>(entityInQueryIndex, abilityEntity, true);
 
             //setup activatedStateEntity
             var activatedStateEntity = this.Ecb.CreateEntity(entityInQueryIndex);

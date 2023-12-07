@@ -1,19 +1,16 @@
-﻿using Unity.Physics.Systems;
-
-namespace GASCore.Groups
+﻿namespace GASCore.Groups
 {
-    using Unity.Collections;
-    using Unity.Collections.LowLevel.Unsafe;
     using Unity.Entities;
     using Unity.Transforms;
 
     #region GameAbilityInitializeSystemGroup
 
-    [UpdateInGroup(typeof(InitializationSystemGroup))]
+    [UpdateInGroup(typeof(InitializationSystemGroup), OrderFirst = true)]
+    [UpdateBefore(typeof(AbilityCleanupSystemGroup))]
     public partial class GameAbilityInitializeSystemGroup { }
 
-    [UpdateInGroup(typeof(GameAbilityInitializeSystemGroup))]
-    public partial class AbilityMainFlowGroup : ComponentSystemGroup { }
+    [UpdateInGroup(typeof(InitializationSystemGroup))]
+    public partial class AbilityMainFlowGroup  { }
 
     #endregion
 
@@ -23,7 +20,7 @@ namespace GASCore.Groups
     [UpdateBefore(typeof(TransformSystemGroup))]
     public partial class GameAbilityBeginSimulationSystemGroup { }
     
-    [UpdateInGroup(typeof(AfterPhysicsSystemGroup))]
+    [UpdateInGroup(typeof(FixedStepSimulationSystemGroup))]
     public partial class GameAbilityFixedUpdateSystemGroup { }
 
     [UpdateInGroup(typeof(LateSimulationSystemGroup))]
@@ -48,7 +45,8 @@ namespace GASCore.Groups
     [UpdateBefore(typeof(BeginPresentationEntityCommandBufferSystem))]
     public partial class AbilityVisualEffectGroup  { }
 
-    [UpdateInGroup(typeof(PresentationSystemGroup), OrderLast = true)]
+    [UpdateInGroup(typeof(InitializationSystemGroup), OrderFirst = true)]
+    [UpdateBefore(typeof(BeginInitializationEntityCommandBufferSystem))]
     public partial class AbilityCleanupSystemGroup { }
     
 

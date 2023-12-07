@@ -1,13 +1,17 @@
 ﻿namespace GASCore.Systems.TimelineSystems.Components
 {
+    using System.Collections.Generic;
     using GASCore.Interfaces;
+    using GASCore.Services;
     using GASCore.Systems.StatSystems.Components;
+    using Sirenix.OdinInspector;
     using Unity.Collections;
     using Unity.Entities;
 
     //Listener on stat changed
     public struct TriggerOnStatChanged : IComponentData
     {
+        public bool               AnyStat;
         public FixedString64Bytes StatName;
         public float              Value;
         public bool               Percent;
@@ -15,16 +19,23 @@
 
         public class _ : ITriggerConditionActionConverter, IAbilityActivateConditionConverter
         {
+            public bool AnyStat;
+
+            [ValueDropdown("GetFieldValues"), HideIf("AnyStat")]
             public string StatName;
-            public float  Value;
-            public bool   Percent;
-            public bool   Above;
+
+            public float Value;
+            public bool  Percent;
+            public bool  Above;
+
+            public List<string> GetFieldValues() => AbilityHelper.GetListStatName();
 
             public void Convert(EntityCommandBuffer.ParallelWriter ecb, int index, Entity entity)
             {
                 ecb.AddComponent(index, entity, new TriggerOnStatChanged()
                 {
-                    StatName = this.StatName,
+                    AnyStat  = this.AnyStat,
+                    StatName = string.IsNullOrEmpty(this.StatName) ? default : new FixedString64Bytes(this.StatName),
                     Value    = this.Value,
                     Percent  = this.Percent,
                     Above    = this.Above,

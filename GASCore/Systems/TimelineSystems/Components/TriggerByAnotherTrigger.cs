@@ -3,12 +3,13 @@
     using GASCore.Interfaces;
     using Unity.Entities;
 
+    //todo should be trigger another trigger
     public struct TriggerByAnotherTrigger : IComponentData
     {
         public int  TriggerIndex;
         public bool IsCloneTarget;
 
-        public class _ : ITriggerConditionActionConverter
+        public class _ : ITimelineActionComponentConverter
         {
             public int  TriggerIndex;
             public bool IsCloneTarget = true;

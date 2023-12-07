@@ -4,13 +4,11 @@
     using GASCore.Systems.AbilityMainFlow.Components;
     using GASCore.Systems.LogicEffectSystems.Components;
     using GASCore.Systems.StatSystems.Components;
-    using GASCore.Systems.TimelineSystems.Components;
     using Unity.Burst;
     using Unity.Collections;
     using Unity.Entities;
 
     [UpdateInGroup(typeof(AbilityLogicEffectGroup))]
-    [UpdateAfter(typeof(ApplyDurationEffectPolicySystem))]
     [RequireMatchingQueriesForUpdate]
     [BurstCompile]
     public partial struct ApplyInstantStatModifierSystem : ISystem
@@ -23,7 +21,7 @@
         [BurstCompile]
         public void OnCreate(ref SystemState state)
         {
-            this.statAspectLookup = new StatAspect.Lookup(ref state, false);
+            this.statAspectLookup = new StatAspect.Lookup(ref state);
             using var queryBuilder = new EntityQueryBuilder(Allocator.Temp).WithAll<InstantEffect, ModifierAggregatorData, AffectedTargetComponent>();
             this.instantEffectEntityQuery = state.GetEntityQuery(queryBuilder);
 
@@ -38,15 +36,15 @@
         {
             this.statAspectLookup.Update(ref state);
 
-            var applyInstantEffectJob = new ApplyInstantStatModifierJob()
+           new ApplyInstantStatModifierJob()
             {
                 StatAspectLookup = this.statAspectLookup
-            }.Schedule(this.instantEffectEntityQuery, state.Dependency);
+            }.Schedule(this.instantEffectEntityQuery);
 
-            state.Dependency = new ApplyInstantStatModifierJob()
+            new ApplyInstantStatModifierJob()
             {
                 StatAspectLookup = this.statAspectLookup
-            }.Schedule(this.periodEffectEntityQuery, applyInstantEffectJob);
+            }.Schedule(this.periodEffectEntityQuery);
         }
     }
 

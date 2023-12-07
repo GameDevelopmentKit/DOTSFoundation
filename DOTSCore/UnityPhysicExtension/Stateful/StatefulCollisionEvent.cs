@@ -1,3 +1,5 @@
+
+#if UNITY_PHYSICS_CUSTOM
 using Unity.Assertions;
 using Unity.Entities;
 using Unity.Mathematics;
@@ -80,3 +82,4 @@ namespace Unity.Physics.Stateful
         public int CompareTo(StatefulCollisionEvent other) => ISimulationEventUtilities.CompareEvents(this, other);
     }
 }
+#endif

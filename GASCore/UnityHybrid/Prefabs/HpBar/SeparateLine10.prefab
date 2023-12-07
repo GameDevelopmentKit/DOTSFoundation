@@ -113,6 +113,16 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 2516709902240510140, guid: 89fbab66acc3402abfaa927d18f41071,
+        type: 3}
+      propertyPath: m_Maskable
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2516709902240510140, guid: 89fbab66acc3402abfaa927d18f41071,
+        type: 3}
+      propertyPath: m_RaycastTarget
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 3607762691354996036, guid: 89fbab66acc3402abfaa927d18f41071,
         type: 3}
       propertyPath: divideNumber

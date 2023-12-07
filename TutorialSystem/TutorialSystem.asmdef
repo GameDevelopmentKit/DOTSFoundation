@@ -1,0 +1,31 @@
+{
+    "name": "TutorialSystem",
+    "rootNamespace": "",
+    "references": [
+        "Unity.Entities",
+        "Unity.Transforms",
+        "Unity.Collections",
+        "Unity.InputSystem",
+        "Unity.TextMeshPro",
+        "Unity.Addressables",
+        "Unity.ResourceManager",
+        "GameFoundation.Utilities",
+        "GameFoundation.UIModule",
+        "Zenject-Signals",
+        "Zenject-Source",
+        "UniTask",
+        "GameFoundation.Models",
+        "TaskModule",
+        "QuestSystem",
+        "DOTSCore"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

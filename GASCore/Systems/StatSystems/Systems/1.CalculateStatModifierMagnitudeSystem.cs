@@ -20,7 +20,7 @@
         private StatAspect.Lookup statAspectLookup;
 
         [BurstCompile]
-        public void OnCreate(ref SystemState state) { this.statAspectLookup = new StatAspect.Lookup(ref state, true); }
+        public void OnCreate(ref SystemState state) { this.statAspectLookup = new StatAspect.Lookup(ref state); }
 
         [BurstCompile]
         public void OnDestroy(ref SystemState state) { }
@@ -83,7 +83,19 @@
 
             statModifierData.ModifierMagnitude = statAspect.HasStat(attributeBased.SourceStat)
                 ? attributeBased.Coefficient * statAspect.GetCurrentValue(attributeBased.SourceStat)
-                : attributeBased.Coefficient;
+                : GetDefaultValue(statModifierData.ModifierOperator);
+        }
+
+        private float GetDefaultValue(in ModifierOperatorType modifierOperator)
+        {
+            return modifierOperator switch
+            {
+                ModifierOperatorType.Add => 0,
+                ModifierOperatorType.Multiply => 1,
+                ModifierOperatorType.Divide => 1,
+                ModifierOperatorType.Override => -1,
+                _ => 0
+            };
         }
     }
 }

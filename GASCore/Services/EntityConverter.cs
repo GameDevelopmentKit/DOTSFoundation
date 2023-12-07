@@ -9,7 +9,7 @@
     public static class EntityConverter
     {
         [Serializable]
-        public class EntityData<T> where T : IComponentConverter
+        public class EntityData<T> where T : IComponentConverter 
         {
             [SerializeReference] public List<T> components = new();
         }

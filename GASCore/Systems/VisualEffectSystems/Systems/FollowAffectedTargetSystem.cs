@@ -3,6 +3,7 @@ namespace GASCore.Systems.VisualEffectSystems.Systems
     using GASCore.Groups;
     using GASCore.Systems.AbilityMainFlow.Components;
     using GASCore.Systems.LogicEffectSystems.Components;
+    using GASCore.Systems.LogicEffectSystems.Systems;
     using GASCore.Systems.VisualEffectSystems.Components;
     using Unity.Burst;
     using Unity.Entities;
@@ -53,12 +54,7 @@ namespace GASCore.Systems.VisualEffectSystems.Systems
             {
                 RadiusSq = data.Radius * data.Radius
             });
-            
-            if(data.RotateSpeed <= 0) return;
-            this.Ecb.AddComponent(entityInQueryIndex, source, new RotationSpeed()
-            {
-                Value = data.RotateSpeed
-            });
+            this.Ecb.AddComponent<MoveTowardTarget>(entityInQueryIndex, source);
         }
     }
 }

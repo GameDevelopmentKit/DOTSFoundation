@@ -14,7 +14,7 @@
     {
         public override void Bake(StatData authoring)
         {
-            var statBuffer = this.AddBuffer<StatDataElement>();
+            var statBuffer = this.AddBuffer<StatDataElement>(this.GetEntity(TransformUsageFlags.Dynamic));
 
             foreach (var stat in authoring.Stats)
             {

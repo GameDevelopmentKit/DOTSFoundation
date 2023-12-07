@@ -11,6 +11,6 @@
 
     public class TeamOwnerBaker : Baker<TeamOwner>
     {
-        public override void Bake(TeamOwner authoring) { this.AddComponent(new TeamOwnerId() { Value = (int)authoring.Team }); }
+        public override void Bake(TeamOwner authoring) { this.AddComponent(this.GetEntity(TransformUsageFlags.Dynamic),new TeamOwnerId() { Value = (int)authoring.Team }); }
     }
 }

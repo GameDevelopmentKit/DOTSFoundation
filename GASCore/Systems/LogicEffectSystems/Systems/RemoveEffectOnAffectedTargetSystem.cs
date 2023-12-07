@@ -7,7 +7,7 @@
     using Unity.Burst;
     using Unity.Collections;
     using Unity.Entities;
-    
+
     [UpdateInGroup(typeof(AbilityLogicEffectGroup))]
     [RequireMatchingQueriesForUpdate]
     [BurstCompile]
@@ -29,6 +29,7 @@
                 AbilityEffectIdLookup     = SystemAPI.GetComponentLookup<AbilityEffectId>(true),
                 AffectedTargetLookup      = SystemAPI.GetComponentLookup<AffectedTargetComponent>(true),
                 CreateAbilityEffectLookup = SystemAPI.GetBufferLookup<CreateAbilityEffectElement>(true),
+                TriggerAfterSecondLookup  = SystemAPI.GetComponentLookup<TriggerAfterSecond>(true),
             };
             setEndTimeTriggerAfterSecondJob.ScheduleParallel();
         }
@@ -42,6 +43,7 @@
         [ReadOnly] public ComponentLookup<AbilityEffectId>         AbilityEffectIdLookup;
         [ReadOnly] public ComponentLookup<AffectedTargetComponent> AffectedTargetLookup;
         [ReadOnly] public BufferLookup<CreateAbilityEffectElement> CreateAbilityEffectLookup;
+        [ReadOnly] public ComponentLookup<TriggerAfterSecond>      TriggerAfterSecondLookup;
         void Execute([EntityIndexInQuery] int entityInQueryIndex, in ActivatedStateEntityOwner activatedStateEntityOwner, in AffectedTargetComponent affectedTarget,
             in RemoveEffectOnAffectedTarget removeEffectOnAffectedTarget)
         {
@@ -64,6 +66,7 @@
                 foreach (var createAbilityEffectElement in createAbilityEffectElements)
                 {
                     if (!createAbilityEffectElement.EffectId.Equals(removeEffectOnAffectedTarget.EffectId)) continue;
+                    if (!this.TriggerAfterSecondLookup.HasComponent(linkedEntity.Value)) continue;
                     this.Ecb.AppendToBuffer(entityInQueryIndex, linkedEntity.Value, new ExcludeAffectedTargetElement() { Value = affectedTarget.Value });
                 }
             }

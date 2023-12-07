@@ -11,6 +11,7 @@ namespace GASCore.Systems.TargetDetectionSystems.Components.Filters
             public void Convert(EntityCommandBuffer.ParallelWriter ecb, int index, Entity entity)
             {
                 ecb.AddComponent<FilterKillCounter>(index, entity);
+                ecb.AddBuffer<FilterIncludeStatName>(index, entity);
             }
         }
     }

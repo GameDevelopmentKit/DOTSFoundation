@@ -21,6 +21,8 @@ namespace GASCore.Systems.StatSystems.Components
         public static readonly FixedString64Bytes Armor              = "Armor";
         public static readonly FixedString64Bytes Health             = "Health";
         public static readonly FixedString64Bytes HealthRegeneration = "HealthRegeneration";
+        //todo implement clamp stat mechanic
+        public static readonly FixedString64Bytes MaxHealth          = "MaxHealth";
 
         #endregion
 
@@ -31,11 +33,9 @@ namespace GASCore.Systems.StatSystems.Components
         #region Other
 
         public static readonly FixedString64Bytes MovementSpeed = "MovementSpeed";
+        public static readonly FixedString64Bytes RotateSpeed   = "RotateSpeed";
         public static readonly FixedString64Bytes AttackRange   = "AttackRange";
 
-        public static readonly FixedString64Bytes Coin = "Coin";
-
         #endregion
-
     }
 }

@@ -5,18 +5,60 @@
     using System.Collections.Generic;
     using Unity.Entities;
     using UnityEngine;
+    using UnityEngine.Jobs;
 
     public class GameObjectHybridLink : ICleanupComponentData
     {
         public GameObject Value;
     }
 
+    /// <summary>
+    /// Similar to <see cref="TransformAccessArray"/> just for <see cref="GameObject"/>.
+    /// This structure has similar usage like <see cref="EntityQueryExtensionsForTransformAccessArray.GetTransformAccessArray"/> with caching functionality.
+    /// </summary>
+    public struct HybridTransformAccessArray : IDisposable
+    {
+        TransformAccessArray transformAccessArray;
+        int                  currentVersion;
+
+        public void Update(ref EntityQuery entityQuery)
+        {
+            int version = entityQuery.GetCombinedComponentOrderVersion();
+            if (version == this.currentVersion && this.transformAccessArray.isCreated)
+                return;
+
+            this.currentVersion = version;
+            var componentArray = entityQuery.ToComponentArray<GameObjectHybridLink>();
+            var transformArray = new Transform[componentArray.Length];
+
+            var componentArrayLength = componentArray.Length;
+            for (int i = 0; i < componentArrayLength; ++i)
+            {
+                transformArray[i] = componentArray[i].Value.transform;
+            }
+
+            if (this.transformAccessArray.isCreated)
+                this.transformAccessArray.SetTransforms(transformArray);
+            else
+                this.transformAccessArray = new TransformAccessArray(transformArray);
+        }
+
+        public static implicit operator TransformAccessArray(HybridTransformAccessArray v) => v.transformAccessArray;
+
+        public void Dispose()
+        {
+            if (this.transformAccessArray.isCreated)
+                this.transformAccessArray.Dispose();
+        }
+    }
+
+
     public class AnimatorHybridLink : IComponentData
     {
         public Animator Value;
-        
-        public static implicit operator Animator(AnimatorHybridLink link) => link.Value;
-        public static implicit operator AnimatorHybridLink(Animator animator)  => new() { Value = animator };
+
+        public static implicit operator Animator(AnimatorHybridLink link)     => link.Value;
+        public static implicit operator AnimatorHybridLink(Animator animator) => new() { Value = animator };
     }
 
     public struct IsLoadingGameObjectTag : IComponentData { }

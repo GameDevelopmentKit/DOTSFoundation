@@ -19,8 +19,6 @@ namespace GASCore.Editor.ScriptableObject
         public string            Description;
         public AbilityType       Type;
         public string            Icon;
-        public List<TargetType>  Target;
-        public AbilityEffectType EffectCategory;
 
         [ListDrawerSettings(ShowPaging = true, ListElementLabelName = "LevelTitle", OnBeginListElementGUI = "BeginListElement", NumberOfItemsPerPage = 5)]
         public List<AbilityLevelEditorData> AbilityLevelEditorRecords;
@@ -48,7 +46,8 @@ namespace GASCore.Editor.ScriptableObject
                 {
                     LevelIndex = levelEditorRecord.LevelIndex,
                     Cooldown   = levelEditorRecord.Cooldown,
-                    Cost       = levelEditorRecord.Cost,
+                    Cost       = levelEditorRecord.Cost.ToDictionary(cost => cost.Name, cost => cost.Value),
+                    Sell       = levelEditorRecord.Sell.ToDictionary(cost => cost.Name, cost => cost.Value),
                     CastRange  = levelEditorRecord.CastRange,
 
                     AbilityActivateCondition = levelEditorRecord.abilityActivateConditionComponents.ConvertComponentsDataToJson(),
@@ -64,8 +63,6 @@ namespace GASCore.Editor.ScriptableObject
                 Description    = this.Description,
                 Type           = this.Type,
                 Icon           = this.Icon,
-                Target         = this.Target,
-                EffectCategory = this.EffectCategory,
                 LevelRecords   = levelRecords
             };
         }
@@ -76,8 +73,6 @@ namespace GASCore.Editor.ScriptableObject
             this.Description               = abilityRecord.Description;
             this.Type                      = abilityRecord.Type;
             this.Icon                      = abilityRecord.Icon;
-            this.Target                    = abilityRecord.Target;
-            this.EffectCategory            = abilityRecord.EffectCategory;
             this.AbilityLevelEditorRecords = new List<AbilityLevelEditorData>();
             foreach (var levelRecord in abilityRecord.LevelRecords)
             {
@@ -89,7 +84,8 @@ namespace GASCore.Editor.ScriptableObject
                 {
                     LevelIndex                         = levelRecord.LevelIndex,
                     Cooldown                           = levelRecord.Cooldown,
-                    Cost                               = levelRecord.Cost,
+                    Cost                               = levelRecord.Cost.Select(pair => new AbilityCost() { Name = pair.Key, Value = pair.Value }).ToList(),
+                    Sell                               = levelRecord.Sell.Select(pair => new AbilityCost() { Name = pair.Key, Value = pair.Value }).ToList(),
                     CastRange                          = levelRecord.CastRange,
                     abilityActivateConditionComponents = levelRecord.AbilityActivateCondition.ConvertJsonToComponentsData<IAbilityActivateConditionConverter>(),
                     timelineComponents                 = levelRecord.AbilityTimeline.ConvertJsonToEntitiesData<ITimelineActionComponentConverter>(),
@@ -103,20 +99,27 @@ namespace GASCore.Editor.ScriptableObject
         }
     }
 
+    [Serializable]
+    public class AbilityCost
+    {
+        public string Name;
+        public float  Value;
+    }
 
     [Serializable]
     public class AbilityLevelEditorData
     {
-        internal                                   string                    LevelTitle = " Level Data";
-        [Header("General Data")] [ReadOnly] public int                       LevelIndex;
-        public                                     float                     Cooldown;
-        public                                     Dictionary<string, float> Cost;
-        public                                     float                     CastRange;
+        internal                                   string            LevelTitle = " Level Data";
+        [Header("General Data")] [ReadOnly] public int               LevelIndex;
+        public                                     float             Cooldown;
+        public                                     List<AbilityCost> Cost = new();
+        public                                     List<AbilityCost> Sell = new();
+        public                                     float             CastRange;
 
         [SerializeReference] public List<IAbilityActivateConditionConverter> abilityActivateConditionComponents = new();
 
 
-        [HorizontalGroup(GroupID = "ActivateComponentGroup", Title = "Activated Components Group", Width = 0.3f)] [ListDrawerSettings(ShowIndexLabels = true)]
+        [HorizontalGroup(GroupID = "ActivateComponentGroup", Title = "Activated Components Group", Width = 0.4f)] [ListDrawerSettings(ShowIndexLabels = true)]
         public List<EntityConverter.EntityData<ITimelineActionComponentConverter>> timelineComponents = new();
 
         [HorizontalGroup(GroupID = "ActivateComponentGroup")]
