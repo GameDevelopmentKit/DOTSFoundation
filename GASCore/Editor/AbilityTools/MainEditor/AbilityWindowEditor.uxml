@@ -1,0 +1,26 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" xsi="http://www.w3.org/2001/XMLSchema-instance" engine="UnityEngine.UIElements" editor="UnityEditor.UIElements" noNamespaceSchemaLocation="../../../UIElementsSchema/UIElements.xsd" editor-extension-mode="True">
+    <ui:Template name="AbilityItemsTab" src="project://database/Assets/DOTSFoundation/GASCore/Editor/AbilityTools/ItemRowEditor/AbilityItemsTab.uxml?fileID=9197481963319205126&amp;guid=ee0a96042bb9474f874bb5ccd859d14c&amp;type=3#AbilityItemsTab" />
+    <Style src="project://database/Assets/DOTSFoundation/GASCore/Editor/AbilityTools/MainEditor/AbilityWindowEditor.uss?fileID=7433441132597879392&amp;guid=e0727492fbef4ebbb9fa1bfa17c7802c&amp;type=3#AbilityWindowEditor" />
+    <ui:VisualElement name="Content" style="flex-direction: row; margin-left: 5px; margin-right: 5px; margin-top: 5px; margin-bottom: 5px; justify-content: flex-start; flex-grow: 1; height: auto;">
+        <ui:Instance template="AbilityItemsTab" name="ItemsTab" tabindex="1" style="flex-grow: 1; width: 25%;">
+            <AttributeOverrides element-name="Items" text="Items" />
+            <ui:VisualElement name="ConfigBtnGroup" style="flex-direction: row; justify-content: center; align-items: stretch; width: auto; height: 40px; flex-grow: 0; flex-shrink: 0; position: relative; margin-top: 10px;">
+                <ui:Button text="Api Config" display-tooltip-when-elided="true" name="btnApiConfig" style="position: relative; height: auto; width: auto; flex-grow: 1; flex-shrink: 1;" />
+                <ui:Button text="Sheet Config" display-tooltip-when-elided="true" name="btnSheetConfig" style="flex-grow: 1; flex-shrink: 1;" />
+            </ui:VisualElement>
+            <ui:VisualElement name="BtnSyncGroup" style="flex-direction: row; justify-content: center; align-items: stretch; width: auto; height: 40px; flex-grow: 0; flex-shrink: 0; position: relative; margin-top: 10px;">
+                <ui:Button text="Pull All" display-tooltip-when-elided="true" name="btnPullFromSpreadSheet" style="position: relative; height: auto; width: auto; flex-grow: 1; flex-shrink: 1;" />
+                <ui:Button text="Push All" display-tooltip-when-elided="true" name="btnPushToSpreadSheet" style="flex-grow: 1; flex-shrink: 1;" />
+            </ui:VisualElement>
+        </ui:Instance>
+        <ui:VisualElement name="line" style="width: 1.5px; margin-left: 5px; margin-right: 5px; background-color: rgb(255, 255, 255); height: auto; margin-top: 5px; margin-bottom: 5px; -unity-background-scale-mode: scale-to-fit; flex-grow: 0;" />
+        <ui:VisualElement name="ItemDetail" tabindex="2" style="display: flex; flex-grow: 1; width: 75%;">
+            <ui:VisualElement name="Header" style="flex-direction: row; align-items: center; width: auto; justify-content: flex-start; min-height: 30px; margin-left: 5px; margin-right: 5px;">
+                <ui:Label text="Details" display-tooltip-when-elided="true" name="Details" style="width: auto; flex-grow: 1; flex-shrink: 0; align-items: stretch; justify-content: flex-start; font-size: 20px;" />
+                <ui:Button text="Ping" display-tooltip-when-elided="true" name="btnPing" style="padding-left: 5px; padding-right: 5px; padding-top: 5px; padding-bottom: 5px; margin-top: 0; margin-bottom: 0; margin-left: 0; margin-right: 0; flex-direction: column; justify-content: flex-start; align-items: center; width: 80px; overflow: hidden; height: auto; font-size: 15px;" />
+                <ui:Button text="Duplicate" display-tooltip-when-elided="true" name="btnDuplicate" style="padding-left: 5px; padding-right: 5px; padding-top: 5px; padding-bottom: 5px; margin-top: 0; margin-bottom: 0; margin-left: 0; margin-right: 0; flex-direction: column; justify-content: flex-start; align-items: center; width: 80px; overflow: hidden; height: auto; font-size: 15px;" />
+                <ui:Button text="Delete" display-tooltip-when-elided="true" name="btnDelete" style="padding-left: 5px; padding-right: 5px; padding-top: 5px; padding-bottom: 5px; margin-top: 0; margin-bottom: 0; margin-left: 0; margin-right: 0; flex-direction: column; justify-content: flex-start; align-items: center; width: 80px; overflow: hidden; height: auto; font-size: 15px;" />
+            </ui:VisualElement>
+        </ui:VisualElement>
+    </ui:VisualElement>
+</ui:UXML>

@@ -1,0 +1,44 @@
+{
+    "name": "GASCore",
+    "rootNamespace": "",
+    "references": [
+        "GameFoundation.BlueprintFlow",
+        "DOTSCore",
+        "Unity.Entities",
+        "Unity.Entities.Hybrid",
+        "Unity.Collections",
+        "Unity.Burst",
+        "Unity.Mathematics",
+        "Unity.Transforms",
+        "Unity.Physics",
+        "Unity.Physics.Hybrid",
+        "GameFoundation.Utilities",
+        "Zenject-Source",
+        "Unity.TextMeshPro",
+        "UniTask",
+        "DOTween.Modules",
+        "Unity.Physics.Custom",
+        "ProjectDawn.Navigation",
+        "Unity.Scenes"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": true,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [
+        {
+            "name": "com.projectdawn.navigation",
+            "expression": "",
+            "define": "USING_AGENT_NAVIGATION"
+        },
+        {
+            "name": "com.unity.physics",
+            "expression": "",
+            "define": "UNITY_PHYSICS_CUSTOM"
+        }
+    ],
+    "noEngineReferences": false
+}

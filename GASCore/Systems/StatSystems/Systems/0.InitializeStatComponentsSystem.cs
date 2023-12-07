@@ -1,0 +1,52 @@
+﻿namespace GASCore.Systems.StatSystems.Systems
+{
+    using GASCore.Groups;
+    using GASCore.Systems.StatSystems.Components;
+    using GASCore.Systems.TimelineSystems.Components;
+    using Unity.Burst;
+    using Unity.Collections;
+    using Unity.Entities;
+
+    [UpdateInGroup(typeof(AbilityLogicEffectGroup))]
+    [RequireMatchingQueriesForUpdate]
+    [BurstCompile]
+    public partial struct InitializeStatComponentsSystem : ISystem
+    {
+        [BurstCompile]
+        public void OnCreate(ref SystemState state) { state.RequireForUpdate(SystemAPI.QueryBuilder().WithAll<StatDataElement>().WithNone<StatNameToIndex>().Build()); }
+
+        [BurstCompile]
+        public void OnUpdate(ref SystemState state)
+        {
+            var ecbSingleton = SystemAPI.GetSingleton<EndSimulationEntityCommandBufferSystem.Singleton>();
+            var ecb          = ecbSingleton.CreateCommandBuffer(state.WorldUnmanaged).AsParallelWriter();
+            new InitializeStatComponentsJob() { Ecb = ecb }.ScheduleParallel();
+        }
+    }
+
+    [BurstCompile]
+    [WithNone(typeof(StatNameToIndex))]
+    public partial struct InitializeStatComponentsJob : IJobEntity
+    {
+        public EntityCommandBuffer.ParallelWriter Ecb;
+
+        void Execute(Entity entity, [EntityIndexInQuery] int entityInQueryIndex, in DynamicBuffer<StatDataElement> statDataElements)
+        {
+            var statToIndex = new NativeHashMap<FixedString64Bytes, int>(statDataElements.Length, Allocator.Persistent);
+
+            for (var i = 0; i < statDataElements.Length; i++)
+            {
+                statToIndex.Add(statDataElements[i].StatName, i);
+            }
+
+            this.Ecb.AddComponent(entityInQueryIndex, entity, new StatNameToIndex() { Value = statToIndex });
+
+            this.Ecb.AddBuffer<StatChangeElement>(entityInQueryIndex, entity);
+            this.Ecb.AddComponent<OnStatChangeTag>(entityInQueryIndex, entity);
+            this.Ecb.SetComponentEnabled<OnStatChangeTag>(entityInQueryIndex, entity, false);
+            
+            this.Ecb.AddComponent<OnUpdateTempStatModifierTag>(entityInQueryIndex, entity);
+            this.Ecb.SetComponentEnabled<OnUpdateTempStatModifierTag>(entityInQueryIndex, entity, false);
+        }
+    }
+}

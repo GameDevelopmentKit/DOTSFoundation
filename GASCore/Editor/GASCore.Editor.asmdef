@@ -1,0 +1,28 @@
+{
+    "name": "GASCore.Editor",
+    "rootNamespace": "",
+    "references": [
+        "GASCore",
+        "GoogleSheetToUnity",
+        "UniTask",
+        "Unity.Addressables",
+        "GameFoundation.BlueprintFlow",
+        "UniTask.Addressables",
+        "Unity.ResourceManager",
+        "Unity.Entities",
+        "GameFoundation.Editor",
+        "Unity.Collections",
+        "Unity.Entities.Editor"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
