@@ -38,7 +38,11 @@
             // remove dialogue on completed
             foreach (var dialogue in SystemAPI.Query<Dialogue>().WithAll<TaskIndex, CompletedTag>().WithChangeFilter<CompletedTag>())
             {
-                if (dialogue.LoadedUIObject != null) dialogue.LoadedUIObject.Recycle();
+                if (dialogue.LoadedUIObject != null)
+                {
+                    dialogue.LoadedUIObject.Recycle();
+                    dialogue.LoadedUIObject = null;
+                }
             }
         }
 

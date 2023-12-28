@@ -5,7 +5,9 @@
 
     public struct TapAnyWhereToComplete : IComponentData, ITaskGoalComponentConverter
     {
-        public void Convert(EntityManager entityManager, Entity taskEntity) { entityManager.AddComponentData(taskEntity, this); }
+        public   float DelayTime;
+        internal double NextEndTimeValue;
+        public   void  Convert(EntityManager entityManager, Entity taskEntity) { entityManager.AddComponentData(taskEntity, this); }
     }
     
     public class TapToGameObjectComplete : IComponentData, ITaskGoalComponentConverter

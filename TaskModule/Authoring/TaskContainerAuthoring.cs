@@ -4,15 +4,16 @@
     using DOTSCore.Extension;
     using TaskModule.TaskBase;
     using Unity.Entities;
+    using UnityEngine;
 
-    public class TaskContainerAuthoring : ITaskComponentConverter
+    public class TaskContainerAuthoring : TaskBaseInfoAuthoring
     {
-        public string               Description;
-        public int                  RequireOptionalAmount;
-        public List<TaskEntityData> SubTasks = new();
+        [Space] public int                  RequireOptionalAmount;
+        public         List<TaskEntityData> SubTasks = new();
 
-        public void Convert(EntityManager entityManager, Entity taskContainerEntity)
+        public override void Convert(EntityManager entityManager, Entity taskContainerEntity)
         {
+            base.Convert(entityManager, taskContainerEntity);
             entityManager.AddComponentData(taskContainerEntity, new TaskContainerSetting() { RequireOptionalAmount = this.RequireOptionalAmount });
             entityManager.AddEnableableComponentTag<OnSubTaskElementCompleted>(taskContainerEntity);
             entityManager.AddBuffer<SubTaskEntity>(taskContainerEntity);

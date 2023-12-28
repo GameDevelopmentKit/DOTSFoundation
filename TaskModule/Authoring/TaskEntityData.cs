@@ -8,8 +8,8 @@ namespace TaskModule.Authoring
     [Serializable]
     public class TaskEntityData
     {
-        internal                    string                        TaskTitle  = "Task Order";
-        [SerializeReference] public List<ITaskComponentConverter> TaskEntity = new();
+        internal                    string                   TaskTitle  = "Task Order";
+        [SerializeReference] public List<ITaskInfoConverter> TaskEntity = new();
     }
 
     public interface ITaskComponentConverter
@@ -20,4 +20,6 @@ namespace TaskModule.Authoring
     public interface ITaskActionComponentConverter : ITaskComponentConverter { }
 
     public interface ITaskGoalComponentConverter : ITaskComponentConverter { }
+
+    public interface ITaskInfoConverter : ITaskComponentConverter { }
 }

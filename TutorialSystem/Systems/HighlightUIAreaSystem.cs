@@ -29,10 +29,36 @@
 
         protected override void OnUpdate()
         {
+            //remove highlight effects on completed
+            foreach (var highlightUIAreaData in SystemAPI.Query<HighlightUIArea>().WithAll<TaskIndex, CompletedTag>().WithChangeFilter<CompletedTag>())
+            {
+                Debug.Log($"Remove highlight effects {highlightUIAreaData.GameObjectPath}");
+                if (highlightUIAreaData.IsForce)
+                {
+                    if (this.TutorialDarkMask != null) this.TutorialDarkMask.SetActive(false);
+                    if (highlightUIAreaData.ForcedObject != null)
+                    {
+                        highlightUIAreaData.ForcedObject.SetOriginParent();
+                        highlightUIAreaData.ForcedObject = null;
+                    }
+                }
+
+                //setup highlight effects
+                foreach (var effectInfo in highlightUIAreaData.Effects)
+                {
+                    //todo check exception here
+                    if (effectInfo.LoadedEffectObject != null)
+                    {
+                        Debug.Log($"Recycle effect {effectInfo.LoadedEffectObject.name} ");
+                        effectInfo.LoadedEffectObject.Recycle();
+                        effectInfo.LoadedEffectObject = null;
+                    }
+                }
+            }
+
             foreach (var highlightUIAreaData in SystemAPI.Query<HighlightUIArea>().WithAll<TaskIndex, ActivatedTag>().WithNone<CompletedTag>().WithChangeFilter<ActivatedTag>())
             {
                 if (!TutorialObjectCollection.GetObjectInstanceByPath(highlightUIAreaData.GameObjectPath, out var targetObject)) continue;
-
                 // setup force to target object
                 if (highlightUIAreaData.IsForce)
                 {
@@ -53,24 +79,6 @@
                 foreach (var effectInfo in highlightUIAreaData.Effects)
                 {
                     this.SetupEffect(effectInfo, targetObject);
-                }
-            }
-
-            //remove highlight effects on completed
-            foreach (var highlightUIAreaData in SystemAPI.Query<HighlightUIArea>().WithAll<TaskIndex, CompletedTag>().WithChangeFilter<CompletedTag>())
-            {
-                if (highlightUIAreaData.IsForce)
-                {
-                    if (this.TutorialDarkMask != null) this.TutorialDarkMask.SetActive(false);
-                    highlightUIAreaData.ForcedObject?.SetOriginParent();
-                }
-
-
-                //setup highlight effects
-                foreach (var effectInfo in highlightUIAreaData.Effects)
-                {
-                    //todo check exception here
-                    if (effectInfo.LoadedEffectObject != null) effectInfo.LoadedEffectObject.Recycle();
                 }
             }
         }

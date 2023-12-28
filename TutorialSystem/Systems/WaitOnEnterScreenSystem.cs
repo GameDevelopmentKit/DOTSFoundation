@@ -24,20 +24,13 @@
         private void OnEnterScreen(ScreenShowSignal signal)
         {
             this.currentScreenId = signal.ScreenPresenter.ScreenId;
-            // foreach (var (waitOnEnterScreen, entity) in SystemAPI.Query<WaitOnEnterScreen>().WithAll<TaskIndex, ActivatedTag>().WithDisabled<CompletedTag>().WithEntityAccess())
-            // {
-            //     if (this.currentScreenId.EndsWith(waitOnEnterScreen.ScreenId))
-            //     {
-            //         SystemAPI.SetComponentEnabled<CompletedTag>(entity, true);
-            //     }
-            // }
         }
         
         protected override void OnUpdate()
         {
             foreach (var (waitOnEnterScreen, entity) in SystemAPI.Query<WaitOnEnterScreen>().WithAll<TaskIndex, ActivatedTag>().WithDisabled<CompletedTag>().WithEntityAccess())
             {
-                if (this.currentScreenId.EndsWith(waitOnEnterScreen.ScreenId))
+                if (this.currentScreenId.EndsWith(waitOnEnterScreen.ScreenId, System.StringComparison.Ordinal))
                 {
                     SystemAPI.SetComponentEnabled<CompletedTag>(entity, true);
                 }

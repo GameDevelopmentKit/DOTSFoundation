@@ -2,6 +2,7 @@
 {
     using System.Linq;
     using DOTSCore.Extension;
+    using DOTSCore.World;
     using GameFoundation.Scripts.Utilities.Extension;
     using QuestSystem.QuestBase;
     using TaskModule;
