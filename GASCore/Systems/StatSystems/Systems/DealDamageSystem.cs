@@ -49,7 +49,7 @@
 
                 var damage = 0f;
                 // If caster has stat data
-                if (this.TryGetAspect(this.StatAspectLookup, caster, out var casterStatAspect))
+                if (this.StatAspectLookup.TryGetAspect(caster, out var casterStatAspect))
                 {
                     // Calculate base damage from aggregator
                     damage = casterStatAspect.CalculateStatValue(aggregatorData);
@@ -77,30 +77,6 @@
                 modifierAggregatorBuffer.RemoveAtSwapBack(index);
                 break;
             }
-        }
-
-        public bool TryGetAspect(StatAspect.Lookup statAspectLookup, Entity entity, out StatAspect statAspect)
-        {
-            if (!Has(statAspectLookup, entity))
-            {
-                statAspect = default;
-                return false;
-            }
-        
-            statAspect = statAspectLookup[entity];
-            return true;
-        }
-        
-        public bool Has(StatAspect.Lookup statAspectLookup, Entity entity)
-        {
-            ref var sa = ref UnsafeUtility.As<StatAspect.Lookup, StatAspectAsLookup>(ref statAspectLookup);
-            return sa.StatDataBufferLookup.HasBuffer(entity) && sa.StatNameToIndexLookup.HasComponent(entity);
-        }
-        
-        private struct StatAspectAsLookup
-        {
-            public BufferLookup<StatDataElement>    StatDataBufferLookup;
-            public ComponentLookup<StatNameToIndex> StatNameToIndexLookup;
         }
     }
 }

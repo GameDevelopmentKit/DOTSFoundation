@@ -28,7 +28,7 @@
         }
     }
 
-    [UpdateInGroup(typeof(AbilityLogicEffectGroup))]
+    [UpdateInGroup(typeof(AbilityVisualEffectGroup))]
     [RequireMatchingQueriesForUpdate]
     [BurstCompile]
     public partial struct MovementBackSystem : ISystem

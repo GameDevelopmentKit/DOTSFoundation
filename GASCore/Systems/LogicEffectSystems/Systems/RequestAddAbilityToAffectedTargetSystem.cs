@@ -1,6 +1,7 @@
 ﻿namespace GASCore.Systems.LogicEffectSystems.Systems
 {
     using GASCore.Groups;
+    using GASCore.Systems.AbilityMainFlow.Components;
     using GASCore.Systems.CasterSystems.Components;
     using GASCore.Systems.LogicEffectSystems.Components;
     using Unity.Burst;
@@ -14,7 +15,7 @@
         [BurstCompile]
         public void OnCreate(ref SystemState state)
         {
-            state.RequireForUpdate(SystemAPI.QueryBuilder().WithAll<AddAbilityElement>().WithNone<RequestAddOrUpgradeAbility>().Build());
+            state.RequireForUpdate<AddAbilityToAffectedTargetElement>();
         }
 
         [BurstCompile]
@@ -35,7 +36,7 @@
     {
         public EntityCommandBuffer.ParallelWriter Ecb;
 
-        void Execute(SourceComponent entity,[EntityIndexInQuery] int entityInQueryIndex, in DynamicBuffer<AddAbilityElement> addAbilityElements)
+        void Execute(AffectedTargetComponent entity,[EntityIndexInQuery] int entityInQueryIndex, in DynamicBuffer<AddAbilityToAffectedTargetElement> addAbilityElements)
         {
             var requestAddAbilities = this.Ecb.AddBuffer<RequestAddOrUpgradeAbility>(entityInQueryIndex, entity);
 

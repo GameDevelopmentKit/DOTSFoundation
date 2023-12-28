@@ -6,7 +6,7 @@
     using Unity.Collections;
     using Unity.Entities;
 
-    public struct AddAbilityElement : IBufferElementData
+    public struct AddAbilityToAffectedTargetElement : IBufferElementData
     {
         public FixedString64Bytes AbilityId;
         public int                Level;
@@ -25,11 +25,11 @@
 
         public void Convert(EntityCommandBuffer.ParallelWriter ecb, int index, Entity entity)
         {
-            var bufferElement = ecb.AddBuffer<AddAbilityElement>(index, entity);
+            var bufferElement = ecb.AddBuffer<AddAbilityToAffectedTargetElement>(index, entity);
 
             foreach (var abilityInfo in this.AbilityInfos)
             {
-                bufferElement.Add(new AddAbilityElement()
+                bufferElement.Add(new AddAbilityToAffectedTargetElement()
                 {
                     AbilityId = abilityInfo.AbilityId,
                     Level     = abilityInfo.Level

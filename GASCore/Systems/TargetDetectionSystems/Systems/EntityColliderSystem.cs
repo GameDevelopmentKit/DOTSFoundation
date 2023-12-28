@@ -88,9 +88,9 @@ namespace GASCore.Systems.TargetDetectionSystems.Systems
             public LocalToWorld                        Transform;
             public DynamicBuffer<StatefulTriggerEvent> StatefulTriggerEvents;
 
-            public void Execute(Entity otherEntity, AgentBody otherBody, AgentShape otherShape, LocalToWorld otherTransform)
+            public void Execute(Entity otherEntity, AgentBody otherBody, AgentShape otherShape, LocalTransform otherTransform)
             {
-                float2 towards = this.Transform.Position.xz - otherTransform.Position.xz;
+                var towards = this.Transform.Position - otherTransform.Position;
 
                 float distancesq = math.lengthsq(towards);
                 float radiusSum  = this.EntityColliderData.Radius + otherShape.Radius;
@@ -132,7 +132,7 @@ namespace GASCore.Systems.TargetDetectionSystems.Systems
             public float          Weight;
             public float          ResolveFactor;
 
-            public void Execute(Entity otherEntity, AgentBody otherBody, AgentShape otherShape, LocalToWorld otherTransform)
+            public void Execute(Entity otherEntity, AgentBody otherBody, AgentShape otherShape, LocalTransform otherTransform)
             {
                 if (otherShape.Type != ShapeType.Cylinder)
                     return;

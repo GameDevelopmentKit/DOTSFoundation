@@ -9,6 +9,7 @@ namespace GASCore.Systems.StatSystems.Components
 {
     using GASCore.Services;
     using Sirenix.OdinInspector;
+    using Unity.Collections.LowLevel.Unsafe;
 
     public struct StatDataElement : IBufferElementData
     {
@@ -161,6 +162,33 @@ namespace GASCore.Systems.StatSystems.Components
             return aggregator.Override >= 0
                 ? aggregator.Override
                 : (GetBaseValue(aggregator.TargetStat) + aggregator.Add) * aggregator.Multiply / aggregator.Divide;
+        }
+    }
+    
+    public static class StatAspectExtension
+    {
+        public static bool TryGetAspect(this StatAspect.Lookup statAspectLookup, Entity entity, out StatAspect statAspect)
+        {
+            if (!Has(statAspectLookup, entity))
+            {
+                statAspect = default;
+                return false;
+            }
+        
+            statAspect = statAspectLookup[entity];
+            return true;
+        }
+        
+        public static bool Has(StatAspect.Lookup statAspectLookup, Entity entity)
+        {
+            ref var sa = ref UnsafeUtility.As<StatAspect.Lookup, StatAspectAsLookup>(ref statAspectLookup);
+            return sa.StatDataBufferLookup.HasBuffer(entity) && sa.StatNameToIndexLookup.HasComponent(entity);
+        }
+        
+        private struct StatAspectAsLookup
+        {
+            public BufferLookup<StatDataElement>    StatDataBufferLookup;
+            public ComponentLookup<StatNameToIndex> StatNameToIndexLookup;
         }
     }
 }
