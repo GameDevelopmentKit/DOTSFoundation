@@ -7,32 +7,9 @@
     using Unity.Physics.Stateful;
 
 #if UNITY_PHYSICS_CUSTOM
-    using System;
     using DOTSCore.UnityPhysicExtension.Utils;
     using Unity.Physics;
-    using Unity.Physics.Authoring;
-    using Newtonsoft.Json;
-
-    public class PhysicsCategoryTagsConverter : JsonConverter
-    {
-        public override void WriteJson(JsonWriter writer, object value, JsonSerializer serializer)
-        {
-            if (value == null)
-            {
-                writer.WriteNull();
-            }
-            else
-            {
-                writer.WriteValue(((PhysicsCategoryTags)value).Value);
-            }
-        }
-        public override object ReadJson(JsonReader reader, Type objectType, object existingValue, JsonSerializer serializer)
-        {
-            return new PhysicsCategoryTags() { Value = uint.TryParse(reader.Value?.ToString(), out var tagsValue) ? tagsValue : 0 };
-        }
-    
-        public override bool CanConvert(Type objectType) { return objectType == typeof(PhysicsCategoryTags); }
-    }
+    using UnityEngine;
 #endif
 
     public struct EntityColliderData : IComponentData
@@ -61,11 +38,9 @@
 #if UNITY_PHYSICS_CUSTOM
         public CollisionResponsePolicy CollisionResponse = CollisionResponsePolicy.RaiseTriggerEvents;
         
-        [JsonConverter(typeof(PhysicsCategoryTagsConverter))]
-        public PhysicsCategoryTags ColliderBelongsTo;
+        public LayerMask ColliderBelongsTo;
         
-        [JsonConverter(typeof(PhysicsCategoryTagsConverter))]
-        public PhysicsCategoryTags ColliderCollidesWith;
+        public LayerMask ColliderCollidesWith;
 #endif
 
         public bool IsDestroyOnHit;
@@ -73,7 +48,7 @@
         public void Convert(EntityCommandBuffer.ParallelWriter ecb, int index, Entity entity)
         {
 #if UNITY_PHYSICS_CUSTOM
-            ecb.AddBoxPhysicsCollider(index, entity, this.Size, this.Center, this.CollisionResponse, this.ColliderBelongsTo, this.ColliderCollidesWith);
+            ecb.AddBoxPhysicsCollider(index, entity, this.Size, this.Center, this.CollisionResponse, this.ColliderBelongsTo.value, this.ColliderCollidesWith.value);
 #else
             ecb.AddComponent(index, entity, new EntityColliderData() { Size = this.Size, Radius = this.Size.x, ShapeType = ShapeType.Sphere });
             ecb.AddComponent<OnCollisionTag>(index, entity);
@@ -97,11 +72,9 @@
 #if UNITY_PHYSICS_CUSTOM
         public CollisionResponsePolicy CollisionResponse = CollisionResponsePolicy.RaiseTriggerEvents;
         
-        [JsonConverter(typeof(PhysicsCategoryTagsConverter))]
-        public PhysicsCategoryTags ColliderBelongsTo;
+        public LayerMask ColliderBelongsTo;
         
-        [JsonConverter(typeof(PhysicsCategoryTagsConverter))]
-        public PhysicsCategoryTags ColliderCollidesWith;
+        public LayerMask ColliderCollidesWith;
 #endif
 
         public bool IsDestroyOnHit;
@@ -109,7 +82,7 @@
         public void Convert(EntityCommandBuffer.ParallelWriter ecb, int index, Entity entity)
         {
 #if UNITY_PHYSICS_CUSTOM
-            ecb.AddSpherePhysicsCollider(index, entity, this.Radius, this.Center, this.CollisionResponse, this.ColliderBelongsTo, this.ColliderCollidesWith);
+            ecb.AddSpherePhysicsCollider(index, entity, this.Radius, this.Center, this.CollisionResponse, this.ColliderBelongsTo.value, this.ColliderCollidesWith.value);
 #else
             ecb.AddComponent(index, entity, new EntityColliderData() { Radius = this.Radius, ShapeType = ShapeType.Sphere });
             ecb.AddComponent<OnCollisionTag>(index, entity);

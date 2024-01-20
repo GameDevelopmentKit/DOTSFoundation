@@ -10,11 +10,11 @@ namespace DOTSCore.UnityPhysicExtension.Utils
     public static class PhysicExtension
     {
         public static void AddBoxPhysicsCollider(this EntityCommandBuffer.ParallelWriter ecb, int index, Entity entity, float3 size, float3 center, CollisionResponsePolicy collisionResponse,
-            PhysicsCategoryTags colliderBelongsTo, PhysicsCategoryTags colliderCollidesWith)
+            int colliderBelongsTo, int colliderCollidesWith)
         {
             var colliderFilter = CollisionFilter.Default;
-            colliderFilter.BelongsTo = colliderBelongsTo.Value;
-            colliderFilter.CollidesWith = colliderCollidesWith.Value;
+            colliderFilter.BelongsTo    = (uint)colliderBelongsTo;
+            colliderFilter.CollidesWith = (uint)colliderCollidesWith;
 
             var colliderMaterial = Material.Default;
             colliderMaterial.CollisionResponse = collisionResponse;
@@ -32,11 +32,11 @@ namespace DOTSCore.UnityPhysicExtension.Utils
         }
         
         public static void AddSpherePhysicsCollider(this EntityCommandBuffer.ParallelWriter ecb, int index, Entity entity, float radius, float3 center, CollisionResponsePolicy collisionResponse,
-            PhysicsCategoryTags colliderBelongsTo, PhysicsCategoryTags colliderCollidesWith)
+            int colliderBelongsTo, int colliderCollidesWith)
         {
             var colliderFilter = CollisionFilter.Default;
-            colliderFilter.BelongsTo = colliderBelongsTo.Value;
-            colliderFilter.CollidesWith = colliderCollidesWith.Value;
+            colliderFilter.BelongsTo    = (uint)colliderBelongsTo;
+            colliderFilter.CollidesWith = (uint)colliderCollidesWith;
 
             var colliderMaterial = Material.Default;
             colliderMaterial.CollisionResponse = collisionResponse;
