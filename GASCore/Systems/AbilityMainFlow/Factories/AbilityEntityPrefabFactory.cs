@@ -1,9 +1,5 @@
 namespace GASCore.Systems.AbilityMainFlow.Factories
 {
-    using System;
-    using System.Collections.Generic;
-    using System.Linq;
-    using System.Reflection;
     using DOTSCore.EntityFactory;
     using DOTSCore.Extension;
     using GASCore.Blueprints;
@@ -57,6 +53,7 @@ namespace GASCore.Systems.AbilityMainFlow.Factories
             ecbParallel.SetComponentEnabled<RequestActivate>(index, abilityEntity, false);
             ecbParallel.SetComponentEnabled<GrantedActivation>(index, abilityEntity, false);
             ecbParallel.SetComponentEnabled<ActivatedTag>(index, abilityEntity, false);
+            ecbParallel.AddEnableableComponentTag<RequestCancel>(index, abilityEntity);
 
             if (abilityFactoryModel.IsMaxLevel)
                 ecbParallel.AddComponent<MaxLevelTag>(index, abilityEntity);

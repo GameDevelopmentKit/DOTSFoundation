@@ -82,18 +82,32 @@ namespace DOTSCore.Extension
             ecb.AddComponent<T>(index, entity);
             ecb.SetComponentEnabled<T>(index, entity, activeValue);
         }
-        
+
         public static void AddEnableableComponent<T>(this EntityCommandBuffer.ParallelWriter ecb, int index, Entity entity, T componentData, bool activeValue = false)
             where T : unmanaged, IComponentData, IEnableableComponent
         {
             ecb.AddComponent(index, entity, componentData);
             ecb.SetComponentEnabled<T>(index, entity, activeValue);
         }
-        
+
+        public static void AddEnableableComponent<T>(this IBaker entityManager, Entity entity, T componentData, bool activeValue = false)
+            where T : unmanaged, IComponentData, IEnableableComponent
+        {
+            entityManager.AddComponent(entity, componentData);
+            entityManager.SetComponentEnabled<T>(entity, activeValue);
+        }
+
+        public static void AddEnableableComponentTag<T>(this IBaker entityManager, Entity entity, bool activeValue = false)
+            where T : unmanaged, IComponentData, IEnableableComponent
+        {
+            entityManager.AddComponent<T>(entity);
+            entityManager.SetComponentEnabled<T>(entity, activeValue);
+        }
+
         /// <summary>Gets the singleton data of the specified component type.</summary>
         public static T GetSingleton<T>(this EntityManager entityManager) where T : unmanaged, IComponentData
             => entityManager.CreateEntityQuery(typeof(T)).GetSingleton<T>();
-        
+
         public static Entity GetSingletonEntity<T>(this EntityManager entityManager) where T : unmanaged, IComponentData
             => entityManager.CreateEntityQuery(typeof(T)).GetSingletonEntity();
     }

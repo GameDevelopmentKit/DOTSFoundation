@@ -9,15 +9,13 @@
     #region Ability status
 
     public struct RequestActivate : IComponentData, IEnableableComponent { }
-
-    public struct RequestEnd : IComponentData, IEnableableComponent { }
+    
+    public struct RequestCancel : IComponentData, IEnableableComponent { }
 
     public struct GrantedActivation : IComponentData, IEnableableComponent { }
 
 
     public struct ActivatedTag : IComponentData, IEnableableComponent { }
-
-    public struct FinishedComponent : IComponentData, IEnableableComponent { }
 
     public struct ActiveOneTimeTag : IComponentData, IAbilityActivateConditionConverter
     {
