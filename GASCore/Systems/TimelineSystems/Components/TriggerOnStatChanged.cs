@@ -21,7 +21,7 @@
         {
             public bool AnyStat;
 
-            [ValueDropdown("GetFieldValues"), HideIf("AnyStat")]
+            [ValueDropdown("GetFieldValues", AppendNextDrawer = true), HideIf("AnyStat")]
             public string StatName;
 
             public float Value;

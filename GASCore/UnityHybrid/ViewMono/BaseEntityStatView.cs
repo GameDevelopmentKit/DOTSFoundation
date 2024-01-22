@@ -10,7 +10,7 @@
     using Unity.Entities;
     using UnityEngine;
 
-    public abstract class BaseEntityStatView : MonoBehaviour, IEntityViewMono, IViewMonoListener
+    public class BaseEntityStatView : MonoBehaviour, IEntityViewMono, IViewMonoListener
     {
         protected          EntityManager                                   entityManager;
         protected          Entity                                          entity;
@@ -33,6 +33,7 @@
             this.initStatViewActions.Clear();
             this.updateStatViewActions.Clear();
 
+            if(!this.entityManager.HasBuffer<StatDataElement>(this.entity)) return;
             var statDataBuffer = this.entityManager.GetBuffer<StatDataElement>(this.entity);
 
             foreach (var statData in statDataBuffer)

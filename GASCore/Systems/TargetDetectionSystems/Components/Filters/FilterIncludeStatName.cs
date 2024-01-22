@@ -1,6 +1,8 @@
 namespace GASCore.Systems.TargetDetectionSystems.Components.Filters
 {
     using System.Collections.Generic;
+    using GASCore.Services;
+    using Sirenix.OdinInspector;
     using Unity.Collections;
     using Unity.Entities;
 
@@ -25,8 +27,9 @@ namespace GASCore.Systems.TargetDetectionSystems.Components.Filters
 
         public class Option : FindTargetAuthoring.IOptionConverter
         {
+            [ValueDropdown("GetFieldValues", AppendNextDrawer = true)]
             public List<string> StatNames;
-
+            public List<string> GetFieldValues() => AbilityHelper.GetListStatName();
             public void Convert(EntityCommandBuffer.ParallelWriter ecb, int index, Entity entity)
             {
                 var statsNamesToInclude = ecb.AddBuffer<FilterIncludeStatName>(index, entity);

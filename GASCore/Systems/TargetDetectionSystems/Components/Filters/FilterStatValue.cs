@@ -15,7 +15,7 @@
         
         public class Option : FindTargetAuthoring.IOptionConverter
         {
-            [ValueDropdown("GetFieldValues")]
+            [ValueDropdown("GetFieldValues", AppendNextDrawer = true)]
             public string StatName;
 
             public float Value;

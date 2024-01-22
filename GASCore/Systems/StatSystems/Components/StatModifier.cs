@@ -27,30 +27,30 @@
 
         public ModifierAggregatorData(FixedString64Bytes targetStat)
         {
-            this.TargetStat        = targetStat;
-            this.Add               = 0;
-            this.Multiply          = 1;
-            this.Divide            = 1;
-            this.Override          = -1;
+            this.TargetStat = targetStat;
+            this.Add        = 0;
+            this.Multiply   = 1;
+            this.Divide     = 1;
+            this.Override   = -1;
         }
 
         public ModifierAggregatorData(FixedString64Bytes targetStat, float addValue)
         {
-            this.TargetStat        = targetStat;
-            this.Add               = addValue;
-            this.Multiply          = 1;
-            this.Divide            = 1;
-            this.Override          = -1;
+            this.TargetStat = targetStat;
+            this.Add        = addValue;
+            this.Multiply   = 1;
+            this.Divide     = 1;
+            this.Override   = -1;
         }
 
         public static ModifierAggregatorData GetDefault()
         {
             return new ModifierAggregatorData()
             {
-                Add               = 0,
-                Multiply          = 1,
-                Divide            = 1,
-                Override          = -1,
+                Add      = 0,
+                Multiply = 1,
+                Divide   = 1,
+                Override = -1,
             };
         }
     }
@@ -103,8 +103,10 @@
 
         public class _ : IStatModifierComponentConverter
         {
-            [ValueDropdown("GetFieldValues")] public string               Stat;
-            public                                   ModifierOperatorType ModifierOperator;
+            [ValueDropdown("GetFieldValues", AppendNextDrawer = true)]
+            public string Stat;
+
+            public ModifierOperatorType ModifierOperator;
 
             public List<string> GetFieldValues() => AbilityHelper.GetListStatName();
 
@@ -162,9 +164,12 @@
 
         public class _ : IStatModifierComponentConverter
         {
-            public                                   float      Coefficient = 1.0f;
-            [ValueDropdown("GetFieldValues")] public string     SourceStat;
-            public                                   SourceType SourceType;
+            public float Coefficient = 1.0f;
+
+            [ValueDropdown("GetFieldValues", AppendNextDrawer = true)]
+            public string SourceStat;
+
+            public SourceType SourceType;
 
             public List<string> GetFieldValues() => AbilityHelper.GetListStatName();
             public void Convert(EntityCommandBuffer.ParallelWriter ecb, int index, Entity entity)

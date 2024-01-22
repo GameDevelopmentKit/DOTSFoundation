@@ -36,17 +36,10 @@ namespace GASCore.Systems.StatSystems.Components
         [Serializable]
         public class StatElement
         {
-            public bool IsCustomStatName;
-
-            [ValueDropdown("GetFieldValues"), HideIf("IsCustomStatName")]
+            [ValueDropdown("GetFieldValues", AppendNextDrawer = true)]
             public string StatName;
 
             public List<string> GetFieldValues() => AbilityHelper.GetListStatName();
-
-            [OnValueChanged("OnCustomStatNameChanged"), ShowIf("IsCustomStatName")]
-            public string customStatName;
-
-            private void OnCustomStatNameChanged() { this.StatName = this.customStatName; }
 
             public float BaseValue;
         }
