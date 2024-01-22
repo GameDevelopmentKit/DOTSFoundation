@@ -71,7 +71,7 @@ namespace GASCore.Systems.LogicEffectSystems.Systems
     public partial struct AddMoveDirComponentSystem : ISystem
     {
         [BurstCompile]
-        public void OnCreate(ref SystemState state) { state.RequireForUpdate(SystemAPI.QueryBuilder().WithAll<TargetPosition>().WithNone<MovementDirection>().Build()); }
+        public void OnCreate(ref SystemState state) { state.RequireForUpdate(SystemAPI.QueryBuilder().WithAll<TargetPosition, MoveTowardTarget>().WithNone<MovementDirection>().Build()); }
         [BurstCompile]
         public void OnUpdate(ref SystemState state)
         {

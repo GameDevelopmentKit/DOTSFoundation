@@ -37,17 +37,14 @@
             this.onDestroyAbilityActionElementLookup.Update(ref state);
             var ecbSingleton       = SystemAPI.GetSingleton<BeginInitializationEntityCommandBufferSystem.Singleton>();
             var ecb                = ecbSingleton.CreateCommandBuffer(state.WorldUnmanaged).AsParallelWriter();
-            var totalEntityDestroy = normalCleanupEntityQuery.CalculateEntityCount() + forceCleanupEntityQuery.CalculateEntityCount();
             new CleanupAbilityActionEntitiesJob()
             {
                 Ecb = ecb, OnDestroyAbilityActionElementLookup = this.onDestroyAbilityActionElementLookup,
-                TotalEnemyDestroy = totalEntityDestroy
             }.ScheduleParallel(normalCleanupEntityQuery);
 
             new CleanupAbilityActionEntitiesJob()
             {
                 Ecb               = ecb, OnDestroyAbilityActionElementLookup = this.onDestroyAbilityActionElementLookup,
-                TotalEnemyDestroy = totalEntityDestroy
             }.ScheduleParallel(forceCleanupEntityQuery);
 
             new CleanupActivatedStateAbilityEntitiesJob() { Ecb = ecb }.ScheduleParallel();
@@ -57,17 +54,16 @@
     [BurstCompile]
     public partial struct CleanupAbilityActionEntitiesJob : IJobEntity
     {
-        public            int                                         TotalEnemyDestroy;
         public            EntityCommandBuffer.ParallelWriter          Ecb;
         [ReadOnly] public BufferLookup<OnDestroyAbilityActionElement> OnDestroyAbilityActionElementLookup;
         [BurstCompile]
         void Execute(Entity abilityActionEntity, [EntityIndexInQuery] int entityInQueryIndex, in ActivatedStateEntityOwner activatedStateEntityOwner)
         {
             if (this.OnDestroyAbilityActionElementLookup.HasBuffer(activatedStateEntityOwner.Value))
-                this.Ecb.AppendToBuffer(entityInQueryIndex, activatedStateEntityOwner.Value, new OnDestroyAbilityActionElement() { AbilityActionEntity = abilityActionEntity });
+                this.Ecb.AppendToBuffer(0, activatedStateEntityOwner.Value, new OnDestroyAbilityActionElement() { AbilityActionEntity = abilityActionEntity });
 
             this.Ecb.RemoveComponent<ActivatedStateEntityOwner>(entityInQueryIndex, abilityActionEntity);
-            this.Ecb.DestroyEntity(TotalEnemyDestroy + entityInQueryIndex, abilityActionEntity);
+            this.Ecb.DestroyEntity(entityInQueryIndex, abilityActionEntity);
         }
     }
 
