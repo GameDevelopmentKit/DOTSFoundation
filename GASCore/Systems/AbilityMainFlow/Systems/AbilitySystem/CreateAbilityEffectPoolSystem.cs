@@ -8,7 +8,7 @@
     using Unity.Collections;
     using Unity.Entities;
 
-    [UpdateInGroup(typeof(AbilityMainFlowGroup))]
+    [UpdateInGroup(typeof(GameAbilityInitializeSystemGroup))]
     [RequireMatchingQueriesForUpdate]
     [BurstCompile]
     public partial struct CreateAbilityEffectPoolSystem : ISystem
@@ -16,7 +16,7 @@
         [BurstCompile]
         public void OnCreate(ref SystemState state)
         {
-            using var entityQuery = new EntityQueryBuilder(Allocator.Temp).WithAll<AbilityId, AbilityEffectElement>().WithNone<AbilityEffectPoolComponent>();
+            using var entityQuery = new EntityQueryBuilder(Allocator.Temp).WithAll<AbilityId, AbilityEffectElement>().WithNone<AbilityEffectPoolComponent>().WithOptions(EntityQueryOptions.IncludePrefab);
             state.RequireForUpdate(state.GetEntityQuery(entityQuery));
         }
         
@@ -37,6 +37,7 @@
     [BurstCompile]
     [WithAll(typeof(AbilityId))]
     [WithNone(typeof(AbilityEffectPoolComponent))]
+    [WithOptions(EntityQueryOptions.IncludePrefab)]
     public partial struct CreateAbilityEffectPoolJob : IJobEntity
     {
         public            EntityCommandBuffer.ParallelWriter Ecb;

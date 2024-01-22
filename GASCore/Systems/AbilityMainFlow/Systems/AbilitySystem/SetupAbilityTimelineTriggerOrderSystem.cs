@@ -8,7 +8,7 @@
     using Unity.Entities;
     using Unity.Transforms;
 
-    [UpdateInGroup(typeof(AbilityMainFlowGroup))]
+    [UpdateInGroup(typeof(GameAbilityInitializeSystemGroup))]
     [RequireMatchingQueriesForUpdate]
     [BurstCompile]
     public partial struct SetupAbilityTimelineTriggerOrderSystem : ISystem
@@ -16,10 +16,11 @@
         [BurstCompile]
         public void OnCreate(ref SystemState state)
         {
-            using var entityQuery = new EntityQueryBuilder(Allocator.Temp).WithAll<AbilityId, AbilityTimelinePrefabComponent>().WithNone<AbilityTimelineInitialElement>();
+            using var entityQuery = new EntityQueryBuilder(Allocator.Temp).WithAll<AbilityId, AbilityTimelinePrefabComponent>().WithNone<AbilityTimelineInitialElement>()
+                .WithOptions(EntityQueryOptions.IncludePrefab);
             state.RequireForUpdate(state.GetEntityQuery(entityQuery));
         }
-        
+
         [BurstCompile]
         public void OnUpdate(ref SystemState state)
         {
@@ -38,6 +39,7 @@
     [BurstCompile]
     [WithAll(typeof(AbilityId))]
     [WithNone(typeof(AbilityTimelineInitialElement))]
+    [WithOptions(EntityQueryOptions.IncludePrefab)]
     public partial struct SetupTriggerOrderJob : IJobEntity
     {
         public            EntityCommandBuffer.ParallelWriter       Ecb;
@@ -70,9 +72,11 @@
                 for (var index = 0; index < children.Length; index++)
                 {
                     var childPrefab = children[index].Value;
+                    this.Ecb.AddComponent(entityInQueryIndex + index, childPrefab, new TriggerIndex() { Value = index });
+
                     if (triggerIndexToAttachedTrigger.TryGetValue(index, out var attachedTriggers))
                     {
-                        var waitToTriggerBuffer = this.Ecb.AddBuffer<WaitToTrigger>(entityInQueryIndex, childPrefab);
+                        var waitToTriggerBuffer = this.Ecb.AddBuffer<WaitToTrigger>(entityInQueryIndex + index, childPrefab);
                         foreach (var attachedTrigger in attachedTriggers)
                         {
                             waitToTriggerBuffer.Add(new WaitToTrigger() { TriggerEntity = attachedTrigger });

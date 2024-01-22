@@ -48,23 +48,23 @@
             this.Ecb.SetComponentEnabled<ActivatedTag>(entityInQueryIndex, abilityEntity, true);
 
             //setup activatedStateEntity
-            var activatedStateEntity = this.Ecb.CreateEntity(entityInQueryIndex);
-            this.Ecb.AppendToBuffer(entityInQueryIndex, abilityEntity, new LinkedEntityGroup() { Value = activatedStateEntity });
-            this.Ecb.SetName(entityInQueryIndex, activatedStateEntity, $"ActivatedState_{abilityId.Value}");
-            this.Ecb.AddComponent(entityInQueryIndex, activatedStateEntity, caster);
-            this.Ecb.AddComponent(entityInQueryIndex, activatedStateEntity, castRangeComponent);
-            this.Ecb.AddComponent(entityInQueryIndex, activatedStateEntity, new AbilityOwner() { Value = abilityEntity });
-            this.Ecb.AddBuffer<OnDestroyAbilityActionElement>(entityInQueryIndex, activatedStateEntity);
-            this.Ecb.AddComponent(entityInQueryIndex, activatedStateEntity, effectPool);
+            var activatedInstanceEntity = this.Ecb.CreateEntity(entityInQueryIndex);
+            this.Ecb.AppendToBuffer(entityInQueryIndex, abilityEntity, new LinkedEntityGroup() { Value = activatedInstanceEntity });
+            this.Ecb.SetName(entityInQueryIndex, activatedInstanceEntity, $"ActivatedState_{abilityId.Value}");
+            this.Ecb.AddComponent(entityInQueryIndex, activatedInstanceEntity, caster);
+            this.Ecb.AddComponent(entityInQueryIndex, activatedInstanceEntity, castRangeComponent);
+            this.Ecb.AddComponent(entityInQueryIndex, activatedInstanceEntity, new AbilityOwner() { Value = abilityEntity });
+            this.Ecb.AddBuffer<OnDestroyAbilityActionElement>(entityInQueryIndex, activatedInstanceEntity);
+            this.Ecb.AddComponent(entityInQueryIndex, activatedInstanceEntity, effectPool);
 
-            var linkedEntityGroups = this.Ecb.AddBuffer<LinkedEntityGroup>(entityInQueryIndex, activatedStateEntity);
-            linkedEntityGroups.Add(new LinkedEntityGroup() { Value = activatedStateEntity });
+            var linkedEntityGroups = this.Ecb.AddBuffer<LinkedEntityGroup>(entityInQueryIndex, activatedInstanceEntity);
+            linkedEntityGroups.Add(new LinkedEntityGroup() { Value = activatedInstanceEntity });
 
             //Instantiate timeline entities in sequence
             foreach (var initialElement in timelineInitialElements)
             {
                 var abilityTimelineAction = this.Ecb.Instantiate(entityInQueryIndex, initialElement.Prefab);
-                this.Ecb.AddComponent(entityInQueryIndex, abilityTimelineAction, new ActivatedStateEntityOwner() { Value = activatedStateEntity });
+                this.Ecb.AddComponent(entityInQueryIndex, abilityTimelineAction, new ActivatedStateEntityOwner() { Value = activatedInstanceEntity });
                 this.Ecb.AddComponent(entityInQueryIndex, abilityTimelineAction, caster);
                 this.Ecb.AddBuffer<TargetableElement>(entityInQueryIndex, abilityTimelineAction);
                 this.Ecb.AddBuffer<ExcludeAffectedTargetElement>(entityInQueryIndex, abilityTimelineAction);
