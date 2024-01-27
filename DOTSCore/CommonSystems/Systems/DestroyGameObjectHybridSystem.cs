@@ -24,6 +24,21 @@
 
                 EntityManager.RemoveComponent<GameObjectHybridLink>(entity);
             }).Run();
+
+            this.Entities.WithoutBurst().WithStructuralChanges().WithChangeFilter<AddressablePathComponent>().ForEach((Entity entity, in GameObjectHybridLink hybridLink) =>
+            {
+                var destroyListener = hybridLink.Value.GetComponent<IDestroyListener>();
+                if (destroyListener == null)
+                {
+                    hybridLink.Value.Recycle();
+                }
+                else
+                {
+                    destroyListener.DestroyGameObject();
+                }
+
+                EntityManager.RemoveComponent<GameObjectHybridLink>(entity);
+            }).Run();
         }
     }
 }
