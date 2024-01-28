@@ -2,8 +2,8 @@
 {
     using System.Linq;
     using DOTSCore.Extension;
-    using DOTSCore.World;
     using GameFoundation.Scripts.Utilities.Extension;
+    using GameFoundation.Scripts.Utilities.UserData;
     using QuestSystem.QuestBase;
     using TaskModule;
     using TaskModule.Actions;
@@ -20,13 +20,16 @@
     [RequireMatchingQueriesForUpdate]
     public partial class InitializeTutorialSystem : SystemBase
     {
-        [Inject] private TutorialLocalData  localData;
+        [Inject] IHandleUserDataServices handleUserDataServices;
+
+        private          TutorialLocalData  localData;
         private          TutorialBlueprint  tutorialBlueprint;
         private readonly FixedString64Bytes tutorialQuestSource = "Tutorial";
-        protected override void OnCreate()
+        protected override async void OnCreate()
         {
             this.GetCurrentContainer().Inject(this);
             this.tutorialBlueprint = TutorialBlueprint.Current;
+            this.localData         = await this.handleUserDataServices.Load<TutorialLocalData>();
 
             if (!this.tutorialBlueprint.EnableFTUE) return;
 
