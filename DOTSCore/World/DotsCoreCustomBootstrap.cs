@@ -2,6 +2,7 @@
 {
     using System;
     using System.Collections.Generic;
+    using System.Linq;
     using System.Reflection;
     using Unity.Entities;
 
@@ -32,7 +33,7 @@
 
     public class GameWorldController
     {
-        public           World                  WorldInstance { get; set; }
+        public World WorldInstance { get; set; }
 
         public virtual void Initialize(string worldName, bool isDefault = true, bool customFilterSystems = true)
         {
@@ -43,7 +44,7 @@
                 World.DefaultGameObjectInjectionWorld = this.WorldInstance;
             }
 
-            var allSystems = customFilterSystems? this.GetAllSystems() : DefaultWorldInitialization.GetAllSystems(WorldSystemFilterFlags.Default);
+            var allSystems = customFilterSystems ? this.GetAllSystems() : DefaultWorldInitialization.GetAllSystems(WorldSystemFilterFlags.Default);
             DefaultWorldInitialization.AddSystemsToRootLevelSystemGroups(this.WorldInstance, allSystems);
             ScriptBehaviourUpdateOrder.AppendWorldToCurrentPlayerLoop(this.WorldInstance);
         }
@@ -51,24 +52,18 @@
         protected virtual IReadOnlyList<Type> GetAllSystems()
         {
             var allDefaultSystem = DefaultWorldInitialization.GetAllSystems(WorldSystemFilterFlags.Default);
-            var result           = new List<Type>();
             var worldName        = this.WorldInstance.Name;
-            foreach (var systemType in allDefaultSystem)
-            {
-                if (Attribute.IsDefined(systemType, typeof(CreateSystemInWorldAttribute), true))
-                {
-                    if (worldName == systemType.GetCustomAttribute<CreateSystemInWorldAttribute>(true).WorldName)
-                    {
-                        result.Add(systemType);
-                    }
-                }
-                else
-                {
-                    result.Add(systemType);
-                }
-            }
 
-            return result;
+
+            // filter system can create in world
+            return allDefaultSystem.Where(type =>
+                CanCreateInWorld(Attribute.IsDefined(type, typeof(UpdateInGroupAttribute), true) ? type.GetCustomAttribute<UpdateInGroupAttribute>(true).GroupType : type)).ToList();
+
+            bool CanCreateInWorld(MemberInfo systemType)
+            {
+                if (!Attribute.IsDefined(systemType, typeof(CreateSystemInWorldAttribute), true)) return true;
+                return worldName == systemType.GetCustomAttribute<CreateSystemInWorldAttribute>(true).WorldName;
+            }
         }
 
         public void Cleanup()
