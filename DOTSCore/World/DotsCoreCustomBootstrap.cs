@@ -54,15 +54,23 @@
             var allDefaultSystem = DefaultWorldInitialization.GetAllSystems(WorldSystemFilterFlags.Default);
             var worldName        = this.WorldInstance.Name;
 
-
             // filter system can create in world
-            return allDefaultSystem.Where(type =>
-                CanCreateInWorld(Attribute.IsDefined(type, typeof(UpdateInGroupAttribute), true) ? type.GetCustomAttribute<UpdateInGroupAttribute>(true).GroupType : type)).ToList();
+            List<Type> list = new List<Type>();
+            foreach (var type in allDefaultSystem)
+            {
+                if ((!Attribute.IsDefined(type, typeof(UpdateInGroupAttribute), true) ||
+                     type.GetCustomAttributes<UpdateInGroupAttribute>(true).Any(systemType => CanCreateInWorld(systemType.GroupType))) && CanCreateInWorld(type))
+                {
+                    list.Add(type);
+                }
+            }
+
+            return list;
 
             bool CanCreateInWorld(MemberInfo systemType)
             {
-                if (!Attribute.IsDefined(systemType, typeof(CreateSystemInWorldAttribute), true)) return true;
-                return worldName == systemType.GetCustomAttribute<CreateSystemInWorldAttribute>(true).WorldName;
+                return !Attribute.IsDefined(systemType, typeof(CreateSystemInWorldAttribute), true) ||
+                       systemType.GetCustomAttributes<CreateSystemInWorldAttribute>(true).Any(createSystemInWorld => worldName == createSystemInWorld.WorldName);
             }
         }
 
@@ -78,7 +86,7 @@
     }
 
 
-    [AttributeUsage(AttributeTargets.Struct | AttributeTargets.Class)]
+    [AttributeUsage(AttributeTargets.Struct | AttributeTargets.Class, AllowMultiple = true)]
     public sealed class CreateSystemInWorldAttribute : Attribute
     {
         /// <summary>
