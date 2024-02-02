@@ -43,7 +43,7 @@
         }
     }
 
-    [WithAll(typeof(FindTargetComponent))]
+    [WithAll(typeof(FindTargetTagComponent))]
     [BurstCompile]
     public partial struct FilterOnHitJob : IJobEntity
     {

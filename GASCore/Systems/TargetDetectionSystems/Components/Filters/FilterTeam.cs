@@ -3,7 +3,7 @@ namespace GASCore.Systems.TargetDetectionSystems.Components.Filters
     using GASCore.Blueprints;
     using Unity.Entities;
 
-    public struct FilterTeam : IComponentData, FindTargetAuthoring.IOptionConverter
+    public struct FilterTeam : IComponentData, IFilterTargetConverter
     {
         public TargetType Value;
 

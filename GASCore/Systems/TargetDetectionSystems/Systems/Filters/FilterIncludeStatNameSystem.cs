@@ -15,7 +15,7 @@ namespace GASCore.Systems.TargetDetectionSystems.Systems.Filters
     public partial struct FilterIncludeStatNameSystem : ISystem
     {
         [BurstCompile]
-        public void OnCreate(ref SystemState state) { state.RequireForUpdate<FindTargetComponent>(); }
+        public void OnCreate(ref SystemState state) { state.RequireForUpdate<FindTargetTagComponent>(); }
 
         [BurstCompile]
         public void OnUpdate(ref SystemState state)
@@ -29,7 +29,7 @@ namespace GASCore.Systems.TargetDetectionSystems.Systems.Filters
     }
 
 
-    [WithAll(typeof(FindTargetComponent))]
+    [WithAll(typeof(FindTargetTagComponent))]
     [WithAll(typeof(FilterIncludeStatName))]
     [BurstCompile]
     public partial struct FilterIncludeStatNameJob : IJobEntity

@@ -16,7 +16,7 @@ namespace GASCore.Systems.TargetDetectionSystems.Systems.Filters
         [BurstCompile]
         public void OnCreate(ref SystemState state)
         {
-            state.RequireForUpdate<FindTargetComponent>();
+            state.RequireForUpdate<FindTargetTagComponent>();
             this.statAspectLookup = new StatAspect.Lookup(ref state);
         }
 
@@ -29,7 +29,7 @@ namespace GASCore.Systems.TargetDetectionSystems.Systems.Filters
     }
 
 
-    [WithAll(typeof(FindTargetComponent))]
+    [WithAll(typeof(FindTargetTagComponent))]
     [WithAll(typeof(FilterStatValue))]
     [BurstCompile]
     public partial struct FilterStatValueJob : IJobEntity

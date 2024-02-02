@@ -10,7 +10,7 @@ namespace GASCore.Systems.TargetDetectionSystems.Components.Filters
         public static implicit operator FixedString64Bytes(FilterExcludeTagName tagName) => tagName.Value;
         public static implicit operator FilterExcludeTagName(string tagName)             => new() { Value = tagName };
 
-        public class Option : FindTargetAuthoring.IOptionConverter
+        public class Option : IFilterTargetConverter
         {
             public List<string> TagNames;
 

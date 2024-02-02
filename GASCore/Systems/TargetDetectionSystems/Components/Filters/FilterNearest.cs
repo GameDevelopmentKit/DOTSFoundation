@@ -7,7 +7,7 @@ namespace GASCore.Systems.TargetDetectionSystems.Components.Filters
         public int  Amount;
         public bool Strict;
 
-        public class Option : FindTargetAuthoring.IOptionConverter
+        public class Option : IFilterTargetConverter
         {
             public int  Amount = 1;
             public bool Strict = false;

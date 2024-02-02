@@ -18,13 +18,13 @@ namespace GASCore.Systems.TargetDetectionSystems.Systems.Filters
     public partial struct FilterTeamSystem : ISystem
     {
         [BurstCompile]
-        public void OnCreate(ref SystemState state) { state.RequireForUpdate<FindTargetComponent>(); }
+        public void OnCreate(ref SystemState state) { state.RequireForUpdate<FindTargetTagComponent>(); }
 
         [BurstCompile]
         public void OnUpdate(ref SystemState state) { new FilterTeamJob { TeamLookup = SystemAPI.GetComponentLookup<TeamOwnerId>(true), }.ScheduleParallel(); }
     }
 
-    [WithAll(typeof(FindTargetComponent))]
+    [WithAll(typeof(FindTargetTagComponent))]
     [WithAll(typeof(FilterTeam))]
     [BurstCompile]
     public partial struct FilterTeamJob : IJobEntity

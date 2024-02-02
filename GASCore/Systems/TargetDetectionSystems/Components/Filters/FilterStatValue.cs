@@ -13,7 +13,7 @@
         public bool               Percent;
         public bool               Above;
         
-        public class Option : FindTargetAuthoring.IOptionConverter
+        public class Option : IFilterTargetConverter
         {
             [ValueDropdown("GetFieldValues", AppendNextDrawer = true)]
             public string StatName;

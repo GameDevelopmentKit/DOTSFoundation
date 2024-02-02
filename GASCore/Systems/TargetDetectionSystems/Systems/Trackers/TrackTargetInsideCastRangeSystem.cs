@@ -39,7 +39,7 @@ namespace GASCore.Systems.TargetDetectionSystems.Systems.Trackers
         }
     }
 
-    [WithAll(typeof(FindTargetComponent))]
+    [WithAll(typeof(FindTargetTagComponent))]
     [WithAll(typeof(FilterInsideCastRange))]
     [BurstCompile]
     public partial struct TrackTargetInsideCastRangeJob : IJobEntity
@@ -68,7 +68,7 @@ namespace GASCore.Systems.TargetDetectionSystems.Systems.Trackers
         }
     }
 
-    [WithAll(typeof(FindTargetComponent))]
+    [WithAll(typeof(FindTargetTagComponent))]
     [WithAll(typeof(FilterOutsideCastRange))]
     [BurstCompile]
     public partial struct UntrackTargetOutsideCastRangeJob : IJobEntity

@@ -17,7 +17,7 @@ namespace GASCore.Systems.TargetDetectionSystems.Systems.Filters
         [BurstCompile]
         public void OnCreate(ref SystemState state)
         {
-            state.RequireForUpdate<FindTargetComponent>();
+            state.RequireForUpdate<FindTargetTagComponent>();
             state.RequireForUpdate<FilterNearest>();
         }
 
@@ -31,7 +31,7 @@ namespace GASCore.Systems.TargetDetectionSystems.Systems.Filters
         }
     }
 
-    [WithAll(typeof(FindTargetComponent))]
+    [WithAll(typeof(FindTargetTagComponent))]
     [WithAll(typeof(FilterNearest))]
     [BurstCompile]
     public partial struct FilterNearestJob : IJobEntity
@@ -48,6 +48,15 @@ namespace GASCore.Systems.TargetDetectionSystems.Systems.Filters
             {
                 targetables.Clear();
                 return;
+            }
+
+            // Remove caster from targetables
+            for (var index = 0; index < targetables.Length; index++)
+            {
+                var targetElement = targetables[index];
+                if (caster.Value != targetElement) continue;
+                targetables.RemoveAtSwapBack(index);
+                break;
             }
 
             var maxTarget      = math.min(param.Amount, targetables.Length);

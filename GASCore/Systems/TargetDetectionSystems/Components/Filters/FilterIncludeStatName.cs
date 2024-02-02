@@ -8,7 +8,7 @@ namespace GASCore.Systems.TargetDetectionSystems.Components.Filters
 
     public struct FilterKillCounter : IComponentData
     {
-        public class Option : FindTargetAuthoring.IOptionConverter
+        public class Option : IFilterTargetConverter
         {
             public void Convert(EntityCommandBuffer.ParallelWriter ecb, int index, Entity entity)
             {
@@ -25,7 +25,7 @@ namespace GASCore.Systems.TargetDetectionSystems.Components.Filters
         public static implicit operator FilterIncludeStatName(string statName)             => new() { Value = statName };
         public static implicit operator FilterIncludeStatName(FixedString64Bytes statName) => new() { Value = statName };
 
-        public class Option : FindTargetAuthoring.IOptionConverter
+        public class Option : IFilterTargetConverter
         {
             [ValueDropdown("GetFieldValues", AppendNextDrawer = true)]
             public List<string> StatNames;

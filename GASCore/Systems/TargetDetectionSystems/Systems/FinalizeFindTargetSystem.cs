@@ -14,19 +14,19 @@ namespace GASCore.Systems.TargetDetectionSystems.Systems
         public void OnUpdate(ref SystemState state) { new FinalizeFindTargetJob().ScheduleParallel(); }
     }
 
-    [WithAll(typeof(FindTargetComponent))]
+    [WithAll(typeof(FindTargetTagComponent))]
     [BurstCompile]
     public partial struct FinalizeFindTargetJob : IJobEntity
     {
         private void Execute(
             in DynamicBuffer<TargetableElement> targetables,
             ref DynamicBuffer<CompletedTriggerElement> completedTriggers,
-            EnabledRefRW<FindTargetComponent> findTargetEnableState
+            EnabledRefRW<FindTargetTagComponent> findTargetEnableState
         )
         {
             if (targetables.IsEmpty) return;
             findTargetEnableState.ValueRW = false;
-            completedTriggers.Add(new CompletedTriggerElement { Index = TypeManager.GetTypeIndex<FindTargetComponent>() });
+            completedTriggers.Add(new CompletedTriggerElement { Index = TypeManager.GetTypeIndex<FindTargetTagComponent>() });
         }
     }
 }

@@ -58,7 +58,7 @@
                                 continue;
                             }
 
-                            if (team[caster].Value == team[targetElement.Value].Value)
+                            if (caster != targetElement.Value && team[caster].Value == team[targetElement.Value].Value)
                                 result.Add(targetElement.Value);
                         }
 

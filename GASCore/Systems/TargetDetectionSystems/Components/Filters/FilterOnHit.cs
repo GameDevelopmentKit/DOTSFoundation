@@ -11,7 +11,7 @@
         public FixedString64Bytes FromAbilityEffectId;
         public StatefulEventState StateType;
 
-        public class Option : FindTargetAuthoring.IOptionConverter
+        public class Option : IFilterTargetConverter
         {
             public                     bool               IsLocal             = true;
             [ShowIf("IsLocal")] public string             FromAbilityEffectId = string.Empty;
@@ -24,7 +24,7 @@
                     FromAbilityEffectId = this.FromAbilityEffectId,
                     StateType           = this.StateType
                 });
-                ecb.AddComponent<OverrideFindTargetTag>(index, entity);
+                ecb.AddComponent<OverrideFindAllTargetTag>(index, entity);
                 ecb.AddBuffer<CacheTriggerEventElement>(index, entity);
             }
         }

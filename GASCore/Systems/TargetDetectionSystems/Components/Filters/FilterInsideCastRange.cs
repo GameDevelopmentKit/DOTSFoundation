@@ -6,7 +6,7 @@ namespace GASCore.Systems.TargetDetectionSystems.Components.Filters
     {
         public bool Track;
 
-        public class Option : FindTargetAuthoring.IOptionConverter
+        public class Option : IFilterTargetConverter
         {
             public bool Track = false;
 

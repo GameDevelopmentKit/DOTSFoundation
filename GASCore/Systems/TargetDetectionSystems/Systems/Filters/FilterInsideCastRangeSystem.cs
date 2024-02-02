@@ -18,7 +18,7 @@ namespace GASCore.Systems.TargetDetectionSystems.Systems.Filters
         [BurstCompile]
         public void OnCreate(ref SystemState state)
         {
-            state.RequireForUpdate<FindTargetComponent>();
+            state.RequireForUpdate<FindTargetTagComponent>();
             state.RequireForUpdate<FilterInsideCastRange>();
         }
 
@@ -34,7 +34,7 @@ namespace GASCore.Systems.TargetDetectionSystems.Systems.Filters
         }
     }
 
-    [WithAll(typeof(FindTargetComponent), typeof(FilterInsideCastRange))]
+    [WithAll(typeof(FindTargetTagComponent), typeof(FilterInsideCastRange))]
     [BurstCompile]
     public partial struct FilterInsideCastRangeJob : IJobEntity
     {
@@ -53,6 +53,12 @@ namespace GASCore.Systems.TargetDetectionSystems.Systems.Filters
             var casterPosition = this.WorldTransformLookup[caster].Position;
             for (var i = 0; i < targetables.Length;)
             {
+                if (caster.Value == targetables[i])
+                {
+                    targetables.RemoveAtSwapBack(i);
+                    continue;
+                }
+
                 if (param.Track && this.TrackLookup.TryGetBuffer(targetables[i], out var tracks))
                 {
                     var isValid = true;

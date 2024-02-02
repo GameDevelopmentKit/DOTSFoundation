@@ -4,7 +4,7 @@ namespace GASCore.Systems.TargetDetectionSystems.Components.Filters
 
     public struct FilterOutsideCastRange : IComponentData
     {
-        public class Option : FindTargetAuthoring.IOptionConverter
+        public class Option : IFilterTargetConverter
         {
             public void Convert(EntityCommandBuffer.ParallelWriter ecb, int index, Entity entity)
             {

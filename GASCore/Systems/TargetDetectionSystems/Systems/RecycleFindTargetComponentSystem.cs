@@ -16,22 +16,23 @@ namespace GASCore.Systems.TargetDetectionSystems.Systems
         {
             new RecycleFindTargetComponentJob()
             {
-                FindTargetLookup = SystemAPI.GetComponentLookup<FindTargetComponent>()
+                FindTargetLookup = SystemAPI.GetComponentLookup<FindTargetTagComponent>()
             }.ScheduleParallel();
         }
     }
 
-    [WithDisabled(typeof(FindTargetComponent))]
+    [WithDisabled(typeof(FindTargetTagComponent))]
     [BurstCompile]
     public partial struct RecycleFindTargetComponentJob : IJobEntity
     {
-        [NativeDisableParallelForRestriction] public ComponentLookup<FindTargetComponent> FindTargetLookup;
+        [NativeDisableParallelForRestriction] public ComponentLookup<FindTargetTagComponent> FindTargetLookup;
         private void Execute(
             Entity entity,
             in TriggerConditionAmount triggersAmount,
-            in DynamicBuffer<CompletedTriggerElement> completedTriggers)
+            in DynamicBuffer<CompletedTriggerElement> completedTriggers,
+            ref DynamicBuffer<TargetableElement> targetableElements) 
         {
-            var findTargetTrigger = TypeManager.GetTypeIndex<FindTargetComponent>().Index;
+            var findTargetTrigger = TypeManager.GetTypeIndex<FindTargetTagComponent>().Index;
             foreach (var trigger in completedTriggers)
             {
                 // completed, wait for recycle
@@ -41,6 +42,7 @@ namespace GASCore.Systems.TargetDetectionSystems.Systems
             // wait for other triggers
             if (this.FindTargetLookup[entity].WaitForOtherTriggers && completedTriggers.Length < triggersAmount - 1) return;
             this.FindTargetLookup.SetComponentEnabled(entity, true);
+            targetableElements.Clear();
         }
     }
 }

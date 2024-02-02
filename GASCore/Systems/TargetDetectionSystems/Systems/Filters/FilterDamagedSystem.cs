@@ -33,7 +33,7 @@
         }
     }
 
-    [WithAll(typeof(FindTargetComponent))]
+    [WithAll(typeof(FindTargetTagComponent))]
     [WithAll(typeof(FilterDamagedTag))]
     [BurstCompile]
     public partial struct FilterDamagedJob : IJobEntity

@@ -3,17 +3,15 @@ namespace GASCore.Systems.TargetDetectionSystems.Systems
     using GASCore.Systems.LogicEffectSystems.Components;
     using GASCore.Systems.StatSystems.Components;
     using GASCore.Systems.TargetDetectionSystems.Components;
-    using GASCore.Systems.TimelineSystems.Components;
     using Unity.Burst;
     using Unity.Collections;
     using Unity.Entities;
-    using Unity.Jobs;
     using Unity.Transforms;
 
     [UpdateInGroup(typeof(FindTargetGroup))]
     [RequireMatchingQueriesForUpdate]
     [BurstCompile]
-    public partial struct FindTargetSystem : ISystem
+    public partial struct FindAllTargetSystem : ISystem
     {
         private EntityQuery entityQuery;
 
@@ -25,17 +23,17 @@ namespace GASCore.Systems.TargetDetectionSystems.Systems
         {
             var entities = this.entityQuery.ToEntityArray(state.WorldUpdateAllocator);
 
-            new FindTargetJob
+            new FindAllTargetJob
             {
                 Entities = entities
             }.ScheduleParallel();
         }
     }
 
-    [WithAll(typeof(FindTargetComponent))]
-    [WithNone(typeof(OverrideFindTargetTag))]
+    [WithAll(typeof(FindAllTargetTag))]
+    [WithNone(typeof(OverrideFindAllTargetTag))]
     [BurstCompile]
-    public partial struct FindTargetJob : IJobEntity
+    public partial struct FindAllTargetJob : IJobEntity
     {
         [ReadOnly] public NativeArray<Entity> Entities;
 
