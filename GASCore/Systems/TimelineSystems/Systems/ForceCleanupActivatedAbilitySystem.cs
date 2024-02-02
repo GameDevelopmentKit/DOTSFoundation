@@ -44,15 +44,15 @@
         [ReadOnly] public BufferLookup<LinkedEntityGroup> LinkedEntityBufferLookup;
         void Execute([EntityIndexInQuery] int entityInQueryIndex, in ActivatedStateEntityOwner activatedStateEntityOwner)
         {
-            this.Ecb.DestroyEntity(entityInQueryIndex, activatedStateEntityOwner.Value);
+            // this.Ecb.DestroyEntity(entityInQueryIndex, activatedStateEntityOwner.Value);
             // Debug.Log("ForceCleanupActivatedAbilityJob");
-            // if (this.LinkedEntityBufferLookup.TryGetBuffer(activatedStateEntityOwner.Value, out var linkedEntityGroups))
-            // {
-            //     foreach (var linkedEntity in linkedEntityGroups)
-            //     {
-            //         this.Ecb.AddComponent<ForceCleanupTag>(entityInQueryIndex, linkedEntity.Value);
-            //     }
-            // }
+            if (this.LinkedEntityBufferLookup.TryGetBuffer(activatedStateEntityOwner.Value, out var linkedEntityGroups))
+            {
+                foreach (var linkedEntity in linkedEntityGroups)
+                {
+                    this.Ecb.AddComponent<ForceCleanupTag>(entityInQueryIndex, linkedEntity.Value);
+                }
+            }
         }
     }
 }
