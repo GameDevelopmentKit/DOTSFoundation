@@ -57,7 +57,7 @@ namespace GASCore.Systems.TargetDetectionSystems.Systems
 
             if (entityColliderData.ShapeType == VisualEffectSystems.Components.ShapeType.Sphere)
             {
-                var action = new CirclesCollision
+                var action = new SphereCollision
                 {
                     Entity                = entity,
                     Transform             = transform,
@@ -65,7 +65,19 @@ namespace GASCore.Systems.TargetDetectionSystems.Systems
                     StatefulTriggerEvents = statefulTriggerEvents,
                 };
 
-                this.Spatial.QuerySphere(transform.Position, entityColliderData.Radius, ref action);
+                this.Spatial.QuerySphere(transform.Position + entityColliderData.Center, entityColliderData.Radius, ref action);
+            }
+            else if (entityColliderData.ShapeType == VisualEffectSystems.Components.ShapeType.Box)
+            {
+                var action = new BoxCollision
+                {
+                    Entity                = entity,
+                    Transform             = transform,
+                    EntityColliderData    = entityColliderData,
+                    StatefulTriggerEvents = statefulTriggerEvents,
+                };
+
+                this.Spatial.QueryBox(transform.Position, entityColliderData.Center, transform.Rotation, entityColliderData.Size, ref action);
             }
 
             for (var index = 0; index < statefulTriggerEvents.Length; index++)
@@ -81,7 +93,7 @@ namespace GASCore.Systems.TargetDetectionSystems.Systems
             onCollisionEnableState.ValueRW = statefulTriggerEvents.Length > 0;
         }
 
-        struct CirclesCollision : ISpatialQueryEntity
+        struct SphereCollision : ISpatialQueryEntity
         {
             public Entity                              Entity;
             public EntityColliderData                  EntityColliderData;
@@ -122,65 +134,69 @@ namespace GASCore.Systems.TargetDetectionSystems.Systems
             }
         }
 
-        struct CylindersCollision : ISpatialQueryEntity
+        struct BoxCollision : ISpatialQueryEntity
         {
-            public Entity         Entity;
-            public AgentBody      Body;
-            public AgentShape     Shape;
-            public LocalTransform Transform;
-            public float3         Displacement;
-            public float          Weight;
-            public float          ResolveFactor;
+            public Entity                              Entity;
+            public EntityColliderData                  EntityColliderData;
+            public LocalToWorld                        Transform;
+            public DynamicBuffer<StatefulTriggerEvent> StatefulTriggerEvents;
+
+            private bool CheckCollision(float3 centerA, float3 sizeA, quaternion rotationA, float3 centerB, float3 sizeB, quaternion rotationB)
+            {
+                // Calculate the half extents of the boxes
+                float3 halfSizeA = math.mul(rotationA, sizeA * 0.5f);
+                float3 halfSizeB = math.mul(rotationB, sizeB * 0.5f);
+
+                // Calculate the minimum and maximum points defining the bounding boxes for each box
+                float3 fromA = centerA - halfSizeA;
+                float3 toA   = centerA + halfSizeA;
+                float3 fromB = centerB - halfSizeB;
+                float3 toB   = centerB + halfSizeB;
+
+                var minA = math.min(fromA, toA);
+                var maxA = math.max(fromA, toA);
+                var minB = math.min(fromB, toB);
+                var maxB = math.max(fromB, toB);
+
+                // Check for overlap along each axis
+                bool xOverlap = maxA.x >= minB.x && minA.x <= maxB.x;
+                bool yOverlap = maxA.y >= minB.y && minA.y <= maxB.y;
+                bool zOverlap = maxA.z >= minB.z && minA.z <= maxB.z;
+
+                // If there is overlap along all axes, the boxes collide
+                return xOverlap && yOverlap && zOverlap;
+            }
 
             public void Execute(Entity otherEntity, AgentBody otherBody, AgentShape otherShape, LocalToWorld otherTransform)
             {
-                if (otherShape.Type != ShapeType.Cylinder)
-                    return;
+                if (this.Entity == otherEntity) return;
+                var centerA = math.mul(this.Transform.Rotation, EntityColliderData.Center) + this.Transform.Position;
+                var centerB = otherTransform.Position;
+                var sizeB   = new float3(otherShape.Radius, otherShape.Height, otherShape.Radius);
 
-                if (this.Body.IsStopped && !otherBody.IsStopped)
-                    return;
-
-                float extent      = this.Shape.Height * 0.5f;
-                float otherExtent = otherShape.Height * 0.5f;
-                if (math.abs((this.Transform.Position.y + extent) - (otherTransform.Position.y + otherExtent)) > extent + otherExtent)
-                    return;
-
-                float2 towards    = this.Transform.Position.xz - otherTransform.Position.xz;
-                float  distancesq = math.lengthsq(towards);
-                float  radius     = this.Shape.Radius + otherShape.Radius;
-                if (distancesq > radius * radius || this.Entity == otherEntity)
-                    return;
-
-                float distance    = math.sqrt(distancesq);
-                float penetration = radius - distance;
-
-                if (distance < 0.0001f)
+                if (!this.CheckCollision(centerA, this.EntityColliderData.Size, this.Transform.Rotation, centerB, sizeB, otherTransform.Rotation)) return;
+                var isStay = false;
+                for (var index = 0; index < this.StatefulTriggerEvents.Length; index++)
                 {
-                    // Avoid both having same displacement
-                    if (otherEntity.Index > this.Entity.Index)
+                    var triggerEvent = this.StatefulTriggerEvents[index];
+                    if (triggerEvent.EntityB == otherEntity)
                     {
-                        towards = -this.Body.Velocity.xz;
+                        isStay                            = true;
+                        triggerEvent.State                = StatefulEventState.Stay;
+                        this.StatefulTriggerEvents[index] = triggerEvent;
+                        break;
                     }
-                    else
-                    {
-                        towards = this.Body.Velocity.xz;
-                    }
-
-                    if (math.length(towards) < 0.0001f)
-                    {
-                        float2 avoidDirection = new Random((uint)this.Entity.Index + 1).NextFloat2Direction();
-                        towards = avoidDirection;
-                    }
-
-                    penetration = 0.01f;
-                }
-                else
-                {
-                    penetration = (penetration / distance) * this.ResolveFactor;
                 }
 
-                this.Displacement += new float3(towards.x, 0, towards.y) * penetration;
-                this.Weight++;
+                if (!isStay)
+                {
+                    this.StatefulTriggerEvents.Add(new StatefulTriggerEvent()
+                    {
+                        EntityA = this.Entity,
+                        EntityB = otherEntity,
+                        State   = StatefulEventState.Enter
+                    });
+                }
             }
         }
     }
