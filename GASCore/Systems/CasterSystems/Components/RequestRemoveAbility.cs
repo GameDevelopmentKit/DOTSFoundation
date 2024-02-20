@@ -7,13 +7,17 @@
     {
         public   FixedString64Bytes AbilityId { get; }
         public   int                Level   { get; }
-        internal FixedString64Bytes AbilityLevelKey;
 
         public RequestRemoveAbility(FixedString64Bytes abilityId, int level)
         {
             this.AbilityId       = abilityId;
             this.Level         = level;
-            this.AbilityLevelKey = $"{this.AbilityId}_{this.Level}";
+        }
+        
+        public RequestRemoveAbility(FixedString64Bytes abilityId)
+        {
+            this.AbilityId = abilityId;
+            this.Level     = -1;
         }
     }
 }

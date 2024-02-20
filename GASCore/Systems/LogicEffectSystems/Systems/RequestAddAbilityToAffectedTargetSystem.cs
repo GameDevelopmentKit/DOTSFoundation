@@ -5,6 +5,7 @@
     using GASCore.Systems.CasterSystems.Components;
     using GASCore.Systems.LogicEffectSystems.Components;
     using Unity.Burst;
+    using Unity.Collections;
     using Unity.Entities;
 
     [UpdateInGroup(typeof(AbilityLogicEffectGroup))]
@@ -27,6 +28,7 @@
             new RequestAddAbilityToAffectedTargetJob()
             {
                 Ecb = ecb,
+                RequestAddAbilityLookup = SystemAPI.GetBufferLookup<RequestAddOrUpgradeAbility>(true)
             }.ScheduleParallel();
         }
     }
@@ -34,15 +36,19 @@
     [BurstCompile]
     public partial struct RequestAddAbilityToAffectedTargetJob : IJobEntity
     {
-        public EntityCommandBuffer.ParallelWriter Ecb;
+        public            EntityCommandBuffer.ParallelWriter       Ecb;
+        [ReadOnly] public BufferLookup<RequestAddOrUpgradeAbility> RequestAddAbilityLookup;
 
         void Execute(AffectedTargetComponent entity,[EntityIndexInQuery] int entityInQueryIndex, in DynamicBuffer<AddAbilityToAffectedTargetElement> addAbilityElements)
         {
-            var requestAddAbilities = this.Ecb.AddBuffer<RequestAddOrUpgradeAbility>(entityInQueryIndex, entity);
+            if (!this.RequestAddAbilityLookup.HasBuffer(entity))
+            {
+                this.Ecb.AddBuffer<RequestAddOrUpgradeAbility>(entityInQueryIndex, entity);
+            }
 
             foreach (var abilityInfo in addAbilityElements)
             {
-                requestAddAbilities.Add(new RequestAddOrUpgradeAbility(abilityInfo.AbilityId, abilityInfo.Level));
+                this.Ecb.AppendToBuffer(entityInQueryIndex, entity, new RequestAddOrUpgradeAbility(abilityInfo.AbilityId, abilityInfo.Level));
             }
         }
     }

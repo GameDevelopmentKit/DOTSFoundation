@@ -47,7 +47,7 @@
                     {
                         var abilityContainerElement = abilityContainerBuffer[index];
                         if (!requestRemoveAbility.AbilityId.Equals(abilityContainerElement.AbilityId)) continue;
-                        if (requestRemoveAbility.Level == abilityContainerElement.Level)
+                        if (requestRemoveAbility.Level == -1 || requestRemoveAbility.Level == abilityContainerElement.Level)
                         {
                             abilityContainerBuffer.RemoveAtSwapBack(index);
                             index = math.max(index - 1, 0);
