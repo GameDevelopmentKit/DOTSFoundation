@@ -3,6 +3,7 @@
     using GASCore.Interfaces;
     using Unity.Entities;
 
+    //todo refactor to use StatModifierData, can make it more simple
     public class DamageStatModifierEntityAuthoring : StatModifierEntityAuthoring
     {
         public override void Convert(EntityCommandBuffer.ParallelWriter ecb, int index, Entity entity)
