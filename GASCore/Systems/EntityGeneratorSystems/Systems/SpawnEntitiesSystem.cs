@@ -37,8 +37,7 @@
             {
                 Ecb             = ecb,
                 Random          = random,
-                TeamLookup      = SystemAPI.GetComponentLookup<TeamOwnerId>(true),
-                TransformLookup = SystemAPI.GetComponentLookup<LocalToWorld>(true)
+                TeamLookup      = SystemAPI.GetComponentLookup<TeamOwnerId>(true)
             }.ScheduleParallel();
         }
     }
@@ -52,7 +51,6 @@
         public            EntityCommandBuffer.ParallelWriter Ecb;
         public            Random                             Random;
         [ReadOnly] public ComponentLookup<TeamOwnerId>       TeamLookup;
-        [ReadOnly] public ComponentLookup<LocalToWorld>      TransformLookup;
         private void Execute(
             Entity spawnerEntity,
             [EntityIndexInQuery] int index,
@@ -60,7 +58,8 @@
             in ActivatedStateEntityOwner activatedStateEntityOwner,
             in CasterComponent caster,
             in AbilityEffectId effectId,
-            in AffectedTargetComponent affectedTarget)
+            in AffectedTargetComponent affectedTarget,
+            in LocalToWorld transform)
         {
             if (this.Random.NextFloat(0f, 1f) > spawnData.SpawnChance) return;
 
@@ -79,7 +78,7 @@
                 var newEntity = this.Ecb.Instantiate(index, spawnData.EntityPrefab);
 
                 var rotateY = quaternion.RotateY(spawnData.CurrentAngle);
-                var rotate  = spawnData.IsLookSpawnerRotation ? math.mul(TransformLookup[affectedTarget].Rotation, rotateY) : rotateY;
+                var rotate  = spawnData.IsLookSpawnerRotation ? math.mul(transform.Rotation, rotateY) : rotateY;
 
                 var position = math.forward(rotate) * spawnData.SpawnerRadius;
                 position += math.forward(rotate) * spawnData.CurrentPosition;
@@ -91,7 +90,7 @@
                 else
                 {
                     this.Ecb.RemoveParent(index, newEntity);
-                    position += this.TransformLookup[spawnerEntity].Position;
+                    position += transform.Position;
                 }
 
                 this.Ecb.SetComponent(index, newEntity, LocalTransform.FromPositionRotation(position, rotate));

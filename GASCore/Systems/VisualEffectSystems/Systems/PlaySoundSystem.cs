@@ -1,4 +1,4 @@
-﻿namespace GASCore.Systems.SoundSystems.System
+﻿namespace GASCore.Systems.VisualEffectSystems.Systems
 {
     using GameFoundation.Scripts.Utilities;
     using GASCore.Groups;
@@ -11,7 +11,7 @@
     {
         protected override void OnUpdate()
         {
-            Entities.WithoutBurst().WithChangeFilter<PlaySoundComponent>().ForEach((in PlaySoundComponent playSoundComponent) =>
+            this.Entities.WithoutBurst().WithChangeFilter<PlaySoundComponent>().ForEach((in PlaySoundComponent playSoundComponent) =>
             {
                 // AudioManager.Instance.StopAllSound(playSoundComponent.SoundAssetPath);
                 AudioManager.Instance.PlaySound(playSoundComponent.SoundAssetPath, playSoundComponent.IsLoop);
