@@ -9,7 +9,7 @@
         public class _ : IAbilityActionComponentConverter
         {
             [ReadOnly] public bool Position = true;
-            public bool Rotation = true;
+            public            bool Rotation = true;
             public void Convert(EntityCommandBuffer.ParallelWriter ecb, int index, Entity entity)
             {
                 if (!this.Position) return;
@@ -22,4 +22,10 @@
     }
 
     public struct AttachPositionToAffectedTarget : IComponentData { }
+
+
+    public struct UnAttachFromParent : IComponentData, IAbilityActionComponentConverter
+    {
+        public void Convert(EntityCommandBuffer.ParallelWriter ecb, int index, Entity entity) { ecb.AddComponent(index, entity, this); }
+    }
 }
