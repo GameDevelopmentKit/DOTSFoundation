@@ -21,11 +21,10 @@
                 {
                     destroyListener.DestroyGameObject();
                 }
-
                 EntityManager.RemoveComponent<GameObjectHybridLink>(entity);
             }).Run();
 
-            this.Entities.WithoutBurst().WithStructuralChanges().WithChangeFilter<AddressablePathComponent>().ForEach((Entity entity, in GameObjectHybridLink hybridLink) =>
+            this.Entities.WithoutBurst().WithStructuralChanges().WithAll<SyncGameObjectTransformCleanup>().WithChangeFilter<AddressablePathComponent>().ForEach((Entity entity, in GameObjectHybridLink hybridLink) =>
             {
                 var destroyListener = hybridLink.Value.GetComponent<IDestroyListener>();
                 if (destroyListener == null)
@@ -36,8 +35,8 @@
                 {
                     destroyListener.DestroyGameObject();
                 }
-
                 EntityManager.RemoveComponent<GameObjectHybridLink>(entity);
+                EntityManager.RemoveComponent<SyncGameObjectTransformCleanup>(entity);
             }).Run();
         }
     }

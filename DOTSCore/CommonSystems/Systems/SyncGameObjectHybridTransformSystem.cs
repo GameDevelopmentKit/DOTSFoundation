@@ -64,6 +64,7 @@
 namespace DOTSCore.CommonSystems.Systems
 {
     using DOTSCore.CommonSystems.Components;
+    using GameFoundation.Scripts.Utilities.Extension;
     using Unity.Burst;
     using Unity.Collections;
     using Unity.Entities;
@@ -84,8 +85,8 @@ namespace DOTSCore.CommonSystems.Systems
             public int instanceID;
         }
 
-        TransformAccessArray                    m_TransformAccessArray;
-        NativeList<Entity>                      m_Entities;
+        TransformAccessArray m_TransformAccessArray;
+        NativeList<Entity> m_Entities;
         NativeHashMap<Entity, IndexAndInstance> m_EntitiesMap;
 
         EntityQuery m_CreatedQuery;
@@ -94,19 +95,19 @@ namespace DOTSCore.CommonSystems.Systems
         protected override void OnCreate()
         {
             m_TransformAccessArray = new TransformAccessArray(0);
-            m_Entities             = new NativeList<Entity>(64, Allocator.Persistent);
-            m_EntitiesMap          = new NativeHashMap<Entity, IndexAndInstance>(64, Allocator.Persistent);
+            m_Entities = new NativeList<Entity>(64, Allocator.Persistent);
+            m_EntitiesMap = new NativeHashMap<Entity, IndexAndInstance>(64, Allocator.Persistent);
             m_CreatedQuery = GetEntityQuery(
                 new EntityQueryDesc
                 {
-                    All  = new[] { ComponentType.ReadOnly<GameObjectHybridLink>() },
+                    All = new[] { ComponentType.ReadOnly<GameObjectHybridLink>() },
                     None = new[] { ComponentType.ReadOnly<SyncGameObjectTransformCleanup>() }
                 }
             );
             m_DestroyedQuery = GetEntityQuery(
                 new EntityQueryDesc
                 {
-                    All  = new[] { ComponentType.ReadOnly<SyncGameObjectTransformCleanup>() },
+                    All = new[] { ComponentType.ReadOnly<SyncGameObjectTransformCleanup>() },
                     None = new[] { ComponentType.ReadOnly<AddressablePathComponent>() }
                 }
             );
@@ -121,11 +122,11 @@ namespace DOTSCore.CommonSystems.Systems
 
         struct RemoveDestroyedEntitiesArgs
         {
-            public EntityQuery                             DestroyedQuery;
-            public NativeList<Entity>                      Entities;
+            public EntityQuery DestroyedQuery;
+            public NativeList<Entity> Entities;
             public NativeHashMap<Entity, IndexAndInstance> EntitiesMap;
-            public TransformAccessArray                    TransformAccessArray;
-            public EntityManager                           EntityManager;
+            public TransformAccessArray TransformAccessArray;
+            public EntityManager EntityManager;
         }
 
         [BurstCompile]
@@ -146,7 +147,7 @@ namespace DOTSCore.CommonSystems.Systems
                     if (index < args.Entities.Length)
                     {
                         var fixup = args.EntitiesMap[args.Entities[index]];
-                        fixup.transformAccessArrayIndex        = index;
+                        fixup.transformAccessArrayIndex = index;
                         args.EntitiesMap[args.Entities[index]] = fixup;
                     }
                 }
@@ -163,18 +164,30 @@ namespace DOTSCore.CommonSystems.Systems
                 var entities = m_CreatedQuery.ToEntityArray(Allocator.Temp);
                 for (int i = 0; i < entities.Length; i++)
                 {
+
                     var entity = entities[i];
-                    var link   = EntityManager.GetComponentData<GameObjectHybridLink>(entity);
+                    var link = EntityManager.GetComponentData<GameObjectHybridLink>(entity);
 
                     // It is possible that an object is created and immediately destroyed, and then this shouldn't run.
                     if (link.Value != null && !EntityManager.HasComponent<IgnoreSysnTransformComponent>(entity))
                     {
                         IndexAndInstance indexAndInstance = default;
-                        indexAndInstance.transformAccessArrayIndex = m_Entities.Length;
-                        indexAndInstance.instanceID                = link.Value.GetInstanceID();
-                        m_EntitiesMap.Add(entity, indexAndInstance);
-                        m_TransformAccessArray.Add(link.Value.transform);
-                        m_Entities.Add(entity);
+                        indexAndInstance.instanceID = link.Value.GetInstanceID();
+
+                        var entityIndex = m_Entities.IndexOf(entity);
+                        if (entityIndex != -1)
+                        {
+                            indexAndInstance.transformAccessArrayIndex = entityIndex;
+                            m_EntitiesMap[entity] = indexAndInstance;
+                            m_TransformAccessArray[entityIndex] = link.Value.transform;
+                        }
+                        else
+                        {
+                            indexAndInstance.transformAccessArrayIndex = m_Entities.Length;
+                            m_EntitiesMap.Add(entity, indexAndInstance);
+                            m_TransformAccessArray.Add(link.Value.transform);
+                            m_Entities.Add(entity);
+                        }
                     }
                 }
 
@@ -186,10 +199,10 @@ namespace DOTSCore.CommonSystems.Systems
             {
                 var args = new RemoveDestroyedEntitiesArgs
                 {
-                    Entities             = m_Entities,
-                    DestroyedQuery       = m_DestroyedQuery,
-                    EntitiesMap          = m_EntitiesMap,
-                    EntityManager        = EntityManager,
+                    Entities = m_Entities,
+                    DestroyedQuery = m_DestroyedQuery,
+                    EntitiesMap = m_EntitiesMap,
+                    EntityManager = EntityManager,
                     TransformAccessArray = m_TransformAccessArray
                 };
                 RemoveDestroyedEntities(ref args);
@@ -197,8 +210,8 @@ namespace DOTSCore.CommonSystems.Systems
 
             Dependency = new CopyTransformJob
             {
-                localToWorld    = GetComponentLookup<LocalToWorld>(true),
-                entities        = m_Entities,
+                localToWorld = GetComponentLookup<LocalToWorld>(true),
+                entities = m_Entities,
                 ignoreTransform = GetComponentLookup<IgnoreSysnTransformComponent>(true)
             }.Schedule(m_TransformAccessArray, Dependency);
         }
@@ -206,8 +219,8 @@ namespace DOTSCore.CommonSystems.Systems
         [BurstCompile]
         struct CopyTransformJob : IJobParallelForTransform
         {
-            [ReadOnly] public ComponentLookup<LocalToWorld>                 localToWorld;
-            [ReadOnly] public NativeList<Entity>                            entities;
+            [ReadOnly] public ComponentLookup<LocalToWorld> localToWorld;
+            [ReadOnly] public NativeList<Entity> entities;
             [ReadOnly] public ComponentLookup<IgnoreSysnTransformComponent> ignoreTransform;
             public unsafe void Execute(int index, TransformAccess transform)
             {
@@ -218,7 +231,7 @@ namespace DOTSCore.CommonSystems.Systems
                     var mat = *(UnityEngine.Matrix4x4*)&ltw;
                     transform.localPosition = ltw.Position;
                     transform.localRotation = mat.rotation;
-                    transform.localScale    = mat.lossyScale;
+                    transform.localScale = mat.lossyScale;
                 }
             }
         }
