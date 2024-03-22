@@ -1,0 +1,21 @@
+{
+    "name": "Wallet",
+    "rootNamespace": "",
+    "references": [
+        "UniTask",
+        "GameFoundation.BlueprintFlow",
+        "GameFoundation.UserData",
+        "GameFoundation.Utilities",
+        "UniRx",
+        "Zenject-Source"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
