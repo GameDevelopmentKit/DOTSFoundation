@@ -8,7 +8,7 @@
         public override void InstallBindings()
         {
             this.Container.Bind<NotifyCurrencyService>().AsSingle().NonLazy();
-            this.Container.Bind<IWalletManager>().To<WalletManager>().AsSingle();
+            this.Container.Bind<IWalletManager>().To<WalletManager>().AsSingle().NonLazy();
         }
     }
 }
