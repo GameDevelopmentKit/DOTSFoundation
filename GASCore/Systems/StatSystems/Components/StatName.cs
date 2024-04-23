@@ -11,6 +11,7 @@ namespace GASCore.Systems.StatSystems.Components
         public static readonly FixedString64Bytes AttackSpeed          = "AttackSpeed";
         public static readonly FixedString64Bytes CriticalStrikeChance = "CriticalStrikeChance";
         public static readonly FixedString64Bytes CriticalStrikeDamage = "CriticalStrikeDamage";
+        public static readonly FixedString64Bytes Accuracy             = "Accuracy";
 
         public static readonly FixedString64Bytes Damage = "Damage";
 
@@ -18,11 +19,13 @@ namespace GASCore.Systems.StatSystems.Components
 
         #region Defensive
 
-        public static readonly FixedString64Bytes Armor              = "Armor";
-        public static readonly FixedString64Bytes Health             = "Health";
+        public static readonly FixedString64Bytes Armor  = "Armor";
+        public static readonly FixedString64Bytes Health = "Health";
+
         public static readonly FixedString64Bytes HealthRegeneration = "HealthRegeneration";
+
         //todo implement clamp stat mechanic
-        public static readonly FixedString64Bytes MaxHealth          = "MaxHealth";
+        public static readonly FixedString64Bytes MaxHealth = "MaxHealth";
 
         #endregion
 
