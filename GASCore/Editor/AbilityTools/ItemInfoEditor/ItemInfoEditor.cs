@@ -101,8 +101,11 @@
 
         private void OnChangeAbilityId(FocusOutEvent evt)
         {
-            var textField = evt.target as TextField;
-            AssetDatabase.RenameAsset($"{AbilityToolUtils.AbilityItemSOFolderPath}{currentSelectedAbility.name}.asset", textField.value);
+            if (evt.currentTarget is TextField textField)
+            {
+                AssetDatabase.RenameAsset(AssetDatabase.GetAssetPath(this.currentSelectedAbility), textField.value);
+            }
+
             this.OnUpdateAbilityData?.Invoke();
         }
     }
