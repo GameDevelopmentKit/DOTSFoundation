@@ -7,46 +7,36 @@
     using Unity.Entities;
     using UnityEngine;
     using UnityEngine.EventSystems;
-    using UnityEngine.InputSystem;
 
     [UpdateInGroup(typeof(TaskPresentationSystemGroup))]
     public partial class WaitTapToScreenSystem : SystemBase
     {
-        private InputAction tapAction;
-        protected override void OnCreate()
+        protected override void OnUpdate()
         {
-            base.OnCreate();
-            tapAction           =  new InputAction("Tap", InputActionType.PassThrough, "<Pointer>/press");
-            tapAction.performed += OnTap;
-            tapAction.Enable();
-        }
-        private void OnTap(InputAction.CallbackContext input)
-        {
-            if (!input.performed || !input.ReadValueAsButton()) return;
-            foreach (var (waitTapToScreen, entity) in SystemAPI.Query<RefRW<TapAnyWhereToComplete>>().WithAll<TaskIndex, ActivatedTag>().WithDisabled<CompletedTag>().WithEntityAccess())
+            if (Input.GetMouseButton(0))
             {
-                if (waitTapToScreen.ValueRO.DelayTime > 0)
+                foreach (var (waitTapToScreen, entity) in SystemAPI.Query<RefRW<TapAnyWhereToComplete>>().WithAll<TaskIndex, ActivatedTag>().WithDisabled<CompletedTag>().WithEntityAccess())
                 {
-                    if (waitTapToScreen.ValueRO.NextEndTimeValue <= 0)
+                    if (waitTapToScreen.ValueRO.DelayTime > 0)
                     {
-                        waitTapToScreen.ValueRW.NextEndTimeValue = SystemAPI.Time.ElapsedTime + waitTapToScreen.ValueRO.DelayTime;
-                    }
+                        if (waitTapToScreen.ValueRO.NextEndTimeValue <= 0)
+                        {
+                            waitTapToScreen.ValueRW.NextEndTimeValue = SystemAPI.Time.ElapsedTime + waitTapToScreen.ValueRO.DelayTime;
+                        }
 
-                    if (SystemAPI.Time.ElapsedTime >= waitTapToScreen.ValueRO.NextEndTimeValue)
+                        if (SystemAPI.Time.ElapsedTime >= waitTapToScreen.ValueRO.NextEndTimeValue)
+                        {
+                            waitTapToScreen.ValueRW.NextEndTimeValue = -1;
+                            SystemAPI.SetComponentEnabled<CompletedTag>(entity, true);
+                        }
+                    }
+                    else
                     {
-                        waitTapToScreen.ValueRW.NextEndTimeValue = -1;
                         SystemAPI.SetComponentEnabled<CompletedTag>(entity, true);
                     }
                 }
-                else
-                {
-                    SystemAPI.SetComponentEnabled<CompletedTag>(entity, true);
-                }
             }
-        }
 
-        protected override void OnUpdate()
-        {
             foreach (var (tapToGameObject, entity) in SystemAPI.Query<TapToGameObjectComplete>().WithAll<TaskIndex, ActivatedTag>().WithDisabled<CompletedTag>().WithChangeFilter<ActivatedTag>()
                          .WithEntityAccess())
             {
@@ -61,13 +51,6 @@
                     Object.Destroy(currentEventTrigger);
                 });
             }
-        }
-
-        protected override void OnDestroy()
-        {
-            base.OnDestroy();
-            tapAction.performed -= OnTap;
-            tapAction.Disable();
         }
     }
 }
