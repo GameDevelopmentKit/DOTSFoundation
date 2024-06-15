@@ -7,7 +7,8 @@
         "Zenject-Signals",
         "GameFoundation.BlueprintFlow",
         "GameFoundation.UIModule",
-        "UniTask"
+        "UniTask",
+        "GameFoundation.DataManager"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

@@ -1,6 +1,6 @@
 ﻿namespace Transactions.Blueprint
 {
-    using BlueprintFlow.BlueprintReader;
+    using DataManager.Blueprint.BlueprintReader;
 
     [BlueprintReader("Transaction")]
     public class TransactionBlueprint : GenericBlueprintReaderByRow<string, TransactionRecord> { }

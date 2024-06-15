@@ -1,6 +1,6 @@
 ﻿namespace Wallet.Blueprint
 {
-    using BlueprintFlow.BlueprintReader;
+    using DataManager.Blueprint.BlueprintReader;
 
     [BlueprintReader("Resource")]
     public class ResourceBlueprint : GenericBlueprintReaderByRow<string, ResourceRecord> { }

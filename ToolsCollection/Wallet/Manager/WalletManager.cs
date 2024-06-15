@@ -1,7 +1,8 @@
 ﻿namespace Wallet.Manager
 {
     using System.Collections.Generic;
-    using UserData;
+    using DataManager.MasterData;
+    using DataManager.UserData;
     using Wallet.Blueprint;
     using Wallet.Model;
 

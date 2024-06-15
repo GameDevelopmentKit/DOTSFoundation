@@ -2,8 +2,7 @@ namespace GASCore.Blueprints
 {
     using System;
     using System.Collections.Generic;
-    using BlueprintFlow.BlueprintReader;
-    using GASCore.Systems.AbilityMainFlow.Components;
+    using DataManager.Blueprint.BlueprintReader;
 
     /// <summary>Define a ability data, Name, Description, Icon, Effects....</summary>
     [BlueprintReader("Ability")]

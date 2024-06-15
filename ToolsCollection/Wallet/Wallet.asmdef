@@ -3,11 +3,10 @@
     "rootNamespace": "",
     "references": [
         "UniTask",
-        "GameFoundation.BlueprintFlow",
-        "GameFoundation.UserData",
         "GameFoundation.Utilities",
         "UniRx",
-        "Zenject-Source"
+        "Zenject-Source",
+        "GameFoundation.DataManager"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

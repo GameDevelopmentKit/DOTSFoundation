@@ -2,8 +2,8 @@
 {
     using System;
     using System.Collections.Generic;
-    using GameFoundation.Scripts.Interfaces;
-    using UserData;
+    using DataManager.LocalData;
+    using DataManager.UserData;
 
     /// <summary>
     ///     Serializable data structure that contains the state of the Wallet.

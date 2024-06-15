@@ -1,6 +1,6 @@
 namespace DeepLink.Blueprint
 {
-    using BlueprintFlow.BlueprintReader;
+    using DataManager.Blueprint.BlueprintReader;
 
     [BlueprintReader("DeepLink")]
     public class DeepLinkBlueprint : GenericBlueprintReaderByRow<string, DeepLinkRecord> { }

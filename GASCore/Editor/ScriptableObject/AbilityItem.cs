@@ -3,11 +3,10 @@ namespace GASCore.Editor.ScriptableObject
     using System;
     using System.Collections.Generic;
     using System.Linq;
-    using BlueprintFlow.BlueprintReader;
+    using DataManager.Blueprint.BlueprintReader;
     using GASCore.Blueprints;
     using GASCore.Interfaces;
     using GASCore.Services;
-    using GASCore.Systems.AbilityMainFlow.Components;
     using Sirenix.OdinInspector;
     using UnityEngine;
 

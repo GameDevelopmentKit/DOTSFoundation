@@ -3,10 +3,10 @@
     "rootNamespace": "",
     "references": [
         "Wallet",
-        "GameFoundation.BlueprintFlow",
         "UniTask",
         "Zenject-Source",
-        "GameFoundation.Utilities"
+        "GameFoundation.Utilities",
+        "GameFoundation.DataManager"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

@@ -2,7 +2,6 @@
     "name": "GASCore",
     "rootNamespace": "",
     "references": [
-        "GameFoundation.BlueprintFlow",
         "DOTSCore",
         "Unity.Entities",
         "Unity.Entities.Hybrid",
@@ -19,7 +18,9 @@
         "DOTween.Modules",
         "Unity.Physics.Custom",
         "ProjectDawn.Navigation",
-        "Unity.Scenes"
+        "Unity.Scenes",
+        "GameFoundation.DataManager",
+        "GameFoundation.SoundManager"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

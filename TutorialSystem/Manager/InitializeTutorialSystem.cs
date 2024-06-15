@@ -1,9 +1,9 @@
 ﻿namespace TutorialSystem.Manager
 {
     using System.Linq;
+    using DataManager.LocalData;
     using DOTSCore.Extension;
     using GameFoundation.Scripts.Utilities.Extension;
-    using GameFoundation.Scripts.Utilities.UserData;
     using QuestSystem.QuestBase;
     using TaskModule;
     using TaskModule.Actions;
@@ -20,7 +20,7 @@
     [RequireMatchingQueriesForUpdate]
     public partial class InitializeTutorialSystem : SystemBase
     {
-        [Inject] IHandleUserDataServices handleUserDataServices;
+        [Inject] IHandleLocalDataServices handleUserDataServices;
 
         private          TutorialLocalData  localData;
         private          TutorialBlueprint  tutorialBlueprint;

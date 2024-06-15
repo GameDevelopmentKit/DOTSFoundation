@@ -12,7 +12,8 @@
         "Unity.Entities",
         "GameFoundation.Editor",
         "Unity.Collections",
-        "Unity.Entities.Editor"
+        "Unity.Entities.Editor",
+        "GameFoundation.DataManager"
     ],
     "includePlatforms": [
         "Editor"

@@ -1,6 +1,6 @@
 ﻿namespace RequirementSystem.Blueprint
 {
-    using BlueprintFlow.BlueprintReader;
+    using DataManager.Blueprint.BlueprintReader;
 
     [CsvHeaderKey("RequirementId")]
     public struct RequirementsRecord

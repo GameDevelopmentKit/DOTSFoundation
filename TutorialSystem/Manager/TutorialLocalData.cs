@@ -1,7 +1,7 @@
 ﻿namespace TutorialSystem.Manager
 {
     using System.Collections.Generic;
-    using GameFoundation.Scripts.Interfaces;
+    using DataManager.LocalData;
 
     public class TutorialLocalData : ILocalData
     {
