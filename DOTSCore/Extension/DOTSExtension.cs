@@ -107,8 +107,11 @@ namespace DOTSCore.Extension
         /// <summary>Gets the singleton data of the specified component type.</summary>
         public static T GetSingleton<T>(this EntityManager entityManager) where T : unmanaged, IComponentData
             => entityManager.CreateEntityQuery(typeof(T)).GetSingleton<T>();
+        
+        public static T GetSingletonComponentObject<T>(this EntityManager entityManager) where T : class
+            => entityManager.CreateEntityQuery(typeof(T)).GetSingleton<T>();
 
-        public static Entity GetSingletonEntity<T>(this EntityManager entityManager) where T : unmanaged, IComponentData
+        public static Entity GetSingletonEntity<T>(this EntityManager entityManager)
             => entityManager.CreateEntityQuery(typeof(T)).GetSingletonEntity();
     }
 }

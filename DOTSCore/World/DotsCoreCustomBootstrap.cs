@@ -23,17 +23,15 @@
             DefaultWorldInitialization.AddSystemsToRootLevelSystemGroups(World.DefaultGameObjectInjectionWorld,
                 filteredSystems);
             ScriptBehaviourUpdateOrder.AppendWorldToCurrentPlayerLoop(World.DefaultGameObjectInjectionWorld);
-#else
-            World.DefaultGameObjectInjectionWorld = new World(defaultWorldName, WorldFlags.None);
 #endif
-            return true;
+            return false;
         }
     }
 
 
     public class GameWorldController
     {
-        public World WorldInstance { get; set; }
+        public World WorldInstance { get; private set; }
 
         public virtual void Initialize(string worldName, bool isDefault = true, bool customFilterSystems = true)
         {
