@@ -42,7 +42,6 @@ namespace GASCore.Blueprints
         public int                       LevelIndex;
         public float                     Cooldown;
         public Dictionary<string, float> Cost;
-        public Dictionary<string, float> Sell;
         public float                     CastRange;
 
         public string                        AbilityActivateCondition;

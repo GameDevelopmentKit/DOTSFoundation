@@ -46,7 +46,6 @@ namespace GASCore.Editor.ScriptableObject
                     LevelIndex = levelEditorRecord.LevelIndex,
                     Cooldown   = levelEditorRecord.Cooldown,
                     Cost       = levelEditorRecord.Cost.ToDictionary(cost => cost.Name, cost => cost.Value),
-                    Sell       = levelEditorRecord.Sell.ToDictionary(cost => cost.Name, cost => cost.Value),
                     CastRange  = levelEditorRecord.CastRange,
 
                     AbilityActivateCondition = levelEditorRecord.abilityActivateConditionComponents.ConvertComponentsDataToJson(),
@@ -84,7 +83,6 @@ namespace GASCore.Editor.ScriptableObject
                     LevelIndex                         = levelRecord.LevelIndex,
                     Cooldown                           = levelRecord.Cooldown,
                     Cost                               = levelRecord.Cost.Select(pair => new AbilityCost() { Name = pair.Key, Value = pair.Value }).ToList(),
-                    Sell                               = levelRecord.Sell.Select(pair => new AbilityCost() { Name = pair.Key, Value = pair.Value }).ToList(),
                     CastRange                          = levelRecord.CastRange,
                     abilityActivateConditionComponents = levelRecord.AbilityActivateCondition.ConvertJsonToComponentsData<IAbilityActivateConditionConverter>(),
                     timelineComponents                 = levelRecord.AbilityTimeline.ConvertJsonToEntitiesData<ITimelineActionComponentConverter>(),
@@ -112,7 +110,6 @@ namespace GASCore.Editor.ScriptableObject
         [Header("General Data")] [ReadOnly] public int               LevelIndex;
         public                                     float             Cooldown;
         public                                     List<AbilityCost> Cost = new();
-        public                                     List<AbilityCost> Sell = new();
         public                                     float             CastRange;
 
         [SerializeReference] public List<IAbilityActivateConditionConverter> abilityActivateConditionComponents = new();
