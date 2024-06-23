@@ -2,6 +2,7 @@ namespace GASCore.UnityHybrid.ViewMono
 {
     using System;
     using System.Collections.Generic;
+    using System.Linq;
 
     [Serializable]
     public class Element<T>
@@ -18,19 +19,16 @@ namespace GASCore.UnityHybrid.ViewMono
 
     public static class ListExtensions
     {
-        public static void Init<T>(this List<Element<T>> list)
-        {
-            list.Sort((a, b) => b.value.CompareTo(a.value));
-        }
+        public static void Init<T>(this List<Element<T>> list) { list.Sort((a, b) => b.value.CompareTo(a.value)); }
 
         public static T Get<T>(this List<Element<T>> list, float currentValue)
         {
             foreach (var (value, item) in list)
             {
-                if (currentValue > value) return item;
+                if (currentValue >= value) return item;
             }
 
-            return default;
+            return list[^1].item;
         }
     }
 }
