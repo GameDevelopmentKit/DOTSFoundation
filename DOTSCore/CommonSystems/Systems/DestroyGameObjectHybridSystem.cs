@@ -12,32 +12,28 @@
         {
             this.Entities.WithoutBurst().WithStructuralChanges().WithNone<AddressablePathComponent>().ForEach((Entity entity, in GameObjectHybridLink hybridLink) =>
             {
-                var destroyListener = hybridLink.Value.GetComponent<IDestroyListener>();
-                if (destroyListener == null)
-                {
-                    hybridLink.Value.Recycle();
-                }
-                else
-                {
-                    destroyListener.DestroyGameObject();
-                }
-                EntityManager.RemoveComponent<GameObjectHybridLink>(entity);
+                this.DestroyLinkGameObject(hybridLink, entity);
             }).Run();
 
-            this.Entities.WithoutBurst().WithStructuralChanges().WithAll<SyncGameObjectTransformCleanup>().WithChangeFilter<AddressablePathComponent>().ForEach((Entity entity, in GameObjectHybridLink hybridLink) =>
+            //todo find another solution to change addressable path
+            // this.Entities.WithoutBurst().WithStructuralChanges().WithAll<SyncGameObjectTransformCleanup>().WithChangeFilter<AddressablePathComponent>().ForEach((Entity entity, in GameObjectHybridLink hybridLink) =>
+            // {
+            //     DestroyLinkGameObject(hybridLink, entity);
+            //     EntityManager.RemoveComponent<SyncGameObjectTransformCleanup>(entity);
+            // }).Run();
+        }
+        private void DestroyLinkGameObject(GameObjectHybridLink hybridLink, Entity entity)
+        {
+            var destroyListener = hybridLink.Value.GetComponent<IDestroyListener>();
+            if (destroyListener == null)
             {
-                var destroyListener = hybridLink.Value.GetComponent<IDestroyListener>();
-                if (destroyListener == null)
-                {
-                    hybridLink.Value.Recycle();
-                }
-                else
-                {
-                    destroyListener.DestroyGameObject();
-                }
-                EntityManager.RemoveComponent<GameObjectHybridLink>(entity);
-                EntityManager.RemoveComponent<SyncGameObjectTransformCleanup>(entity);
-            }).Run();
+                hybridLink.Value.Recycle();
+            }
+            else
+            {
+                destroyListener.DestroyGameObject();
+            }
+            this.EntityManager.RemoveComponent<GameObjectHybridLink>(entity);
         }
     }
 }

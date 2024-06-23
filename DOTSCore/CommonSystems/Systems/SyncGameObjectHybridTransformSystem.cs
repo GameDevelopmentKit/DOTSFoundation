@@ -162,31 +162,29 @@ namespace DOTSCore.CommonSystems.Systems
             if (!m_CreatedQuery.IsEmpty)
             {
                 var entities = m_CreatedQuery.ToEntityArray(Allocator.Temp);
-                for (int i = 0; i < entities.Length; i++)
+                foreach (var entity in entities)
                 {
-
-                    var entity = entities[i];
-                    var link = EntityManager.GetComponentData<GameObjectHybridLink>(entity);
+                    var link = this.EntityManager.GetComponentData<GameObjectHybridLink>(entity);
 
                     // It is possible that an object is created and immediately destroyed, and then this shouldn't run.
-                    if (link.Value != null && !EntityManager.HasComponent<IgnoreSysnTransformComponent>(entity))
+                    if (link.Value != null && !this.EntityManager.HasComponent<IgnoreSysnTransformComponent>(entity))
                     {
                         IndexAndInstance indexAndInstance = default;
                         indexAndInstance.instanceID = link.Value.GetInstanceID();
 
-                        var entityIndex = m_Entities.IndexOf(entity);
+                        var entityIndex = this.m_Entities.IndexOf(entity);
                         if (entityIndex != -1)
                         {
                             indexAndInstance.transformAccessArrayIndex = entityIndex;
-                            m_EntitiesMap[entity] = indexAndInstance;
-                            m_TransformAccessArray[entityIndex] = link.Value.transform;
+                            this.m_EntitiesMap[entity]                 = indexAndInstance;
+                            this.m_TransformAccessArray[entityIndex]   = link.Value.transform;
                         }
                         else
                         {
-                            indexAndInstance.transformAccessArrayIndex = m_Entities.Length;
-                            m_EntitiesMap.Add(entity, indexAndInstance);
-                            m_TransformAccessArray.Add(link.Value.transform);
-                            m_Entities.Add(entity);
+                            indexAndInstance.transformAccessArrayIndex = this.m_Entities.Length;
+                            this.m_EntitiesMap.Add(entity, indexAndInstance);
+                            this.m_TransformAccessArray.Add(link.Value.transform);
+                            this.m_Entities.Add(entity);
                         }
                     }
                 }

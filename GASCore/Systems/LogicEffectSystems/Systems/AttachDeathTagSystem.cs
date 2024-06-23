@@ -1,5 +1,6 @@
 ﻿namespace GASCore.Systems.LogicEffectSystems.Systems
 {
+    using DOTSCore.Extension;
     using GASCore.Groups;
     using GASCore.Systems.AbilityMainFlow.Components;
     using GASCore.Systems.LogicEffectSystems.Components;
@@ -31,8 +32,7 @@
         public EntityCommandBuffer.ParallelWriter Ecb;
         void Execute([EntityIndexInQuery] int entityInQueryIndex, in AffectedTargetComponent affectedTarget)
         {
-            this.Ecb.AddComponent<DeathTag>(entityInQueryIndex, affectedTarget.Value);
-            this.Ecb.SetComponentEnabled<DeathTag>(entityInQueryIndex, affectedTarget.Value, true);
+            this.Ecb.AddEnableableComponentTag<DeathTag>(entityInQueryIndex, affectedTarget.Value, true);
         }
     }
 }
