@@ -1,40 +1,52 @@
 ﻿namespace Transactions.Blueprint
 {
     using DataManager.Blueprint.BlueprintReader;
+    using UnityEngine;
 
-    [BlueprintReader("Transaction")]
-    public class TransactionBlueprint : GenericBlueprintReaderByRow<string, TransactionRecord> { }
-
-    [CsvHeaderKey("Id")]
+    [CsvHeaderKey("TransactionId")]
     public struct TransactionRecord
     {
-        public string Id;
-        public BlueprintByRow<CostRecord> Costs;
+        public string                       TransactionId;
+        public BlueprintByRow<CostRecord>   Costs;
         public BlueprintByRow<PayoutRecord> Payouts;
     }
 
     [CsvHeaderKey("PaymentType")]
     public struct CostRecord
     {
-        public string CostAssetId;
-        public float Amount;
+        public string      CostAssetId;
+        public float       CostAmount;
         public PaymentType PaymentType;
     }
 
-    [CsvHeaderKey("AssetType")]
-    public struct PayoutRecord
+    public abstract class PayoutRecordAbstract
     {
-        public string PayoutAssetId;
-        public int MinAmount;
-        public int MaxAmount;
-        public float Chance;
-        public string AssetType;
+        public string PayoutAssetId { get; set; }
+        public float  Chance        { get; set; }
+        public string AssetType     { get; set; }
+
+        public abstract int GetAmount();
     }
 
-    public static class  AssetType
+    [CsvHeaderKey("AssetType")]
+    public class PayoutRecord : PayoutRecordAbstract
+    {
+        public          int PayoutAmount { get; set; }
+        public override int GetAmount()  => PayoutAmount;
+    }
+
+    [CsvHeaderKey("AssetType")]
+    public class PayoutMinMaxRecord : PayoutRecordAbstract
+    {
+        public          int MinAmount   { get; set; }
+        public          int MaxAmount   { get; set; }
+        public override int GetAmount() => Random.Range(MinAmount, MaxAmount);
+    }
+
+    public static class AssetDefaultType
     {
         public const string Currency = "Currency";
-        public const string Item = "Item";
+        public const string Item     = "Item";
     }
 
     public enum PaymentType

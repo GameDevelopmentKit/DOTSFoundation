@@ -39,7 +39,7 @@
             this.Value -= value;
             return true;
         }
-
+        
         public virtual void Add(int value) { this.Value += value; }
 
         public override string ToString() { return this.Value.ToString(); }

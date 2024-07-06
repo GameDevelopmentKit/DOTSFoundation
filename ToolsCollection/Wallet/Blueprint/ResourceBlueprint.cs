@@ -12,6 +12,7 @@
         public readonly string Name;
         public readonly string Icon;
         public readonly string Description;
+        public readonly bool   IsDefault;
         public readonly int    DefaultValue;
     }
 }

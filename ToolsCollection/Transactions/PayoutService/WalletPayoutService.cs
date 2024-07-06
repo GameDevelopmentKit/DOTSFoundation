@@ -7,7 +7,7 @@
     public class WalletPayoutService : IPayoutService
     {
         readonly IWalletManager walletManager;
-        public   string         AssetType => Blueprint.AssetType.Currency;
+        public   string         AssetType => Blueprint.AssetDefaultType.Currency;
 
         public WalletPayoutService(IWalletManager walletManager) { this.walletManager = walletManager; }
 

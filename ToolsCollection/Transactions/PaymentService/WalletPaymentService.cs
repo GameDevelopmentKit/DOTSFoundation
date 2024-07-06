@@ -8,21 +8,12 @@
     public class WalletPaymentService : IPaymentService
     {
         private readonly IWalletManager walletManager;
-        public PaymentType PaymentType => PaymentType.Currency;
+        public           PaymentType    PaymentType                              => PaymentType.Currency;
+        public           bool           Available(string assetId)                { return this.walletManager.CanPay(assetId, 1); }
+        public           bool           VerifyCost(string assetId, float value)  { return this.walletManager.CanPay(assetId, (int)value); }
+        public           UniTask<float> MakePayment(string assetId, float value) { return UniTask.FromResult((float)this.walletManager.TryPay(assetId, (int)value)); }
 
         public WalletPaymentService(IWalletManager walletManager) { this.walletManager = walletManager; }
-
-        public bool Available() => true;
-        public bool VerifyCost(CostRecord costRecord) { return this.walletManager.CanPay(costRecord.CostAssetId, (int)costRecord.Amount); }
-        public UniTask MakePayment(CostRecord costRecord)
-        {
-            if (!this.walletManager.Pay(costRecord.CostAssetId, (int)costRecord.Amount))
-            {
-                throw new InsufficientAssetException($"Not enough {costRecord.CostAssetId}");
-            }
-
-            return UniTask.CompletedTask;
-        }
     }
 
     public class InsufficientAssetException : Exception

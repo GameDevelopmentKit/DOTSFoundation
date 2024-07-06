@@ -1,5 +1,7 @@
 ﻿namespace Wallet.Manager
 {
+    using System.Collections.Generic;
+    using Wallet.Blueprint;
     using Wallet.Model;
 
     /// <summary>
@@ -11,28 +13,44 @@
         ///     Gets the balance of the specified <see cref="currencyId"/>.
         /// </summary>
         Currency Get(string currencyId);
+        
+        ResourceRecord GetStaticData(string currencyId);
+        
+        /// <summary>
+        ///   Gets all the balances.
+        /// </summary>
+        /// <returns></returns>
+        IReadOnlyCollection<Currency> GetAllBalances();
 
         /// <summary>
         ///   Checks if the player can pay the specified currency value.
         /// </summary>
         /// <param name="currencyId"></param>
-        /// <param name="balance"></param>
+        /// <param name="value"></param>
         /// <returns></returns>
-        public bool CanPay(string currencyId, int balance);
+        public bool CanPay(string currencyId, int value);
         
         /// <summary>
         ///     Increases the balance of the specified currency value.
         /// </summary>
         /// <param name="currencyId"> The currency you want to increase the balance. </param>
-        /// <param name="balance">The amount to add to the balance. </param>
-        void Add(string currencyId, int balance);
+        /// <param name="value">The amount to add to the balance. </param>
+        void Add(string currencyId, int value);
 
         /// <summary>
         ///     Decreases the balance of the specified currency value.
         /// </summary>
         /// <param name="currencyId"> The currency you want to decrease the balance.</param>
-        /// <param name="balance"> The amount to remove to the balance. </param>
+        /// <param name="value"> The amount to remove to the balance. </param>
         /// <returns><c>true</c> if the update is valid, <c>false</c> otherwise.</returns>
-        bool Pay(string currencyId, int balance);
+        bool Pay(string currencyId, int value);
+        
+        /// <summary>
+        ///  Decreases the balance of the specified currency value until reaching 0.
+        /// </summary>
+        /// <param name="currencyId"></param>
+        /// <param name="value"></param>
+        /// <returns>Remain Value</returns>
+        int TryPay(string currencyId, int value);
     }
 }
