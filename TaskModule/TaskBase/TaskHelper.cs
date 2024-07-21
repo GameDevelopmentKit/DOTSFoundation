@@ -3,18 +3,26 @@
     using System;
     using DOTSCore.Extension;
     using TaskModule.Actions;
+    using TaskModule.ActiveRequirement;
     using Unity.Entities;
     using Unity.Transforms;
 
     public static class TaskExtension
     {
-        public static void InitSimpleTaskBaseData(this IBaker baker, Entity taskEntity)
+        public static void InitSimpleTaskBaseData(this IBaker baker, Entity taskEntity, int taskOrder, Entity taskContainerOwner = default)
         {
-            baker.AddComponent(taskEntity, new TaskIndex() { Value = 0 });
+            baker.AddComponent(taskEntity, new TaskIndex() { Value = taskOrder });
             baker.AddComponent<TaskProgress>(taskEntity);
-            baker.AddComponent<ActivatedTag>(taskEntity);
-            baker.AddComponent<CompletedTag>(taskEntity);
-            baker.SetComponentEnabled<CompletedTag>(taskEntity, false);
+            baker.AddEnableableComponentTag<ActivatedTag>(taskEntity);
+            baker.AddEnableableComponentTag<CompletedTag>(taskEntity);
+            
+            if (taskContainerOwner != default)
+            {
+                baker.SetBuffer<SubTaskEntity>(taskContainerOwner).Add(new SubTaskEntity() { Value = taskEntity });
+                baker.AddComponent(taskEntity, new ContainerOwner() { Value                    = taskContainerOwner });
+                baker.AddComponent<LocalToWorld>(taskEntity);
+                baker.AddComponent(taskEntity, new Parent() { Value = taskContainerOwner });
+            }
         }
 
         #region EntityCommandBuffer

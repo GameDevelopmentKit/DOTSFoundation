@@ -40,6 +40,20 @@
                     this.substituteTransform.localScale = originalLocalScale;
                     this.substituteTransform.sizeDelta  = rectTransform.sizeDelta;
                     this.substituteTransform.SetSiblingIndex(this.OriginSiblingIndex);
+
+                    var layoutElement = this.Value.GetComponent<LayoutElement>();
+                    if (layoutElement != null)
+                    {
+                        //copy to substitute
+                        var substituteLayoutElement = this.substituteTransform.gameObject.AddComponent<LayoutElement>();
+                        substituteLayoutElement.preferredWidth  = layoutElement.preferredWidth;
+                        substituteLayoutElement.preferredHeight = layoutElement.preferredHeight;
+                        substituteLayoutElement.flexibleWidth   = layoutElement.flexibleWidth;
+                        substituteLayoutElement.flexibleHeight  = layoutElement.flexibleHeight;
+                        substituteLayoutElement.minWidth        = layoutElement.minWidth;
+                        substituteLayoutElement.minHeight       = layoutElement.minHeight;
+                        substituteLayoutElement.layoutPriority  = layoutElement.layoutPriority;
+                    }
                 }
             }
         }
@@ -48,8 +62,8 @@
         {
             if (this.substituteTransform != null)
                 Object.Destroy(this.substituteTransform.gameObject);
-            
-            if(this.Value == null) return;
+
+            if (this.Value == null) return;
             this.Value.transform.SetParent(this.OriginParent);
             this.Value.transform.SetSiblingIndex(this.OriginSiblingIndex);
         }

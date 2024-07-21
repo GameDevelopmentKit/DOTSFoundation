@@ -1,6 +1,7 @@
 ﻿namespace QuestSystem.QuestBase
 {
     using System;
+    using TaskModule.ActiveRequirement;
     using TaskModule.TaskBase;
     using Unity.Collections;
     using Unity.Entities;

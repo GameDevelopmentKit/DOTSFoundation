@@ -10,7 +10,6 @@ namespace GASCore.Systems.TargetDetectionSystems.Systems
     using Unity.Physics.Stateful;
     using Unity.Transforms;
     using static Unity.Entities.SystemAPI;
-    using ShapeType = ProjectDawn.Navigation.ShapeType;
 
     [BurstCompile]
     [RequireMatchingQueriesForUpdate]
@@ -31,7 +30,6 @@ namespace GASCore.Systems.TargetDetectionSystems.Systems
     }
 
     [BurstCompile]
-    [WithAll(typeof(OnCollisionTag))]
     [WithOptions(EntityQueryOptions.IgnoreComponentEnabledState)]
     partial struct EntityColliderJob : IJobEntity
     {
@@ -70,14 +68,14 @@ namespace GASCore.Systems.TargetDetectionSystems.Systems
             else if (entityColliderData.ShapeType == VisualEffectSystems.Components.ShapeType.Box)
             {
                 var action = new BoxCollision
-                {
-                    Entity                = entity,
-                    Transform             = transform,
-                    EntityColliderData    = entityColliderData,
-                    StatefulTriggerEvents = statefulTriggerEvents,
-                };
-
+                    {
+                        Entity                = entity,
+                        Transform             = transform,
+                        EntityColliderData    = entityColliderData,
+                        StatefulTriggerEvents = statefulTriggerEvents,
+                    };
                 this.Spatial.QueryBox(transform.Position, entityColliderData.Center, transform.Rotation, entityColliderData.Size, ref action);
+                //this.Spatial.QueryAlongOrientedBox(transform.Position + math.mul(transform.Rotation, entityColliderData.Center), entityColliderData.Size, transform.Rotation, ref action);
             }
 
             for (var index = 0; index < statefulTriggerEvents.Length; index++)
@@ -110,21 +108,21 @@ namespace GASCore.Systems.TargetDetectionSystems.Systems
                     return;
 
                 var isStay = false;
-                for (var index = 0; index < StatefulTriggerEvents.Length; index++)
+                for (var index = 0; index < this.StatefulTriggerEvents.Length; index++)
                 {
-                    var triggerEvent = StatefulTriggerEvents[index];
+                    var triggerEvent = this.StatefulTriggerEvents[index];
                     if (triggerEvent.EntityB == otherEntity)
                     {
-                        isStay                       = true;
-                        triggerEvent.State           = StatefulEventState.Stay;
-                        StatefulTriggerEvents[index] = triggerEvent;
+                        isStay                            = true;
+                        triggerEvent.State                = StatefulEventState.Stay;
+                        this.StatefulTriggerEvents[index] = triggerEvent;
                         break;
                     }
                 }
 
                 if (!isStay)
                 {
-                    StatefulTriggerEvents.Add(new StatefulTriggerEvent()
+                    this.StatefulTriggerEvents.Add(new StatefulTriggerEvent()
                     {
                         EntityA = this.Entity,
                         EntityB = otherEntity,
@@ -141,40 +139,118 @@ namespace GASCore.Systems.TargetDetectionSystems.Systems
             public LocalToWorld                        Transform;
             public DynamicBuffer<StatefulTriggerEvent> StatefulTriggerEvents;
 
-            private bool CheckCollision(float3 centerA, float3 sizeA, quaternion rotationA, float3 centerB, float3 sizeB, quaternion rotationB)
+
+            public bool CheckCollision(BoxInfo box1, BoxInfo box2)
             {
-                // Calculate the half extents of the boxes
-                float3 halfSizeA = math.mul(rotationA, sizeA * 0.5f);
-                float3 halfSizeB = math.mul(rotationB, sizeB * 0.5f);
+                // Convert both boxes into their local space
+                float4x4 box1ToLocal = math.inverse(float4x4.TRS(box1.Center, box1.WorldTransform.Rotation, new float3(1)));
 
-                // Calculate the minimum and maximum points defining the bounding boxes for each box
-                float3 fromA = centerA - halfSizeA;
-                float3 toA   = centerA + halfSizeA;
-                float3 fromB = centerB - halfSizeB;
-                float3 toB   = centerB + halfSizeB;
+                // Convert the second box into the first box's local space
+                float4x4 box2ToBox1 = math.mul(box1ToLocal, box2.WorldTransform.Value);
 
-                var minA = math.min(fromA, toA);
-                var maxA = math.max(fromA, toA);
-                var minB = math.min(fromB, toB);
-                var maxB = math.max(fromB, toB);
+                // Iterate through all axes for separation
+                using var axes = box1.GetAxes();
+                foreach (float3 axis in axes)
+                {
+                    if (!OverlapOnAxis(axis, box1, box2, box2ToBox1))
+                    {
+                        // If there is no overlap on any axis, the boxes are not colliding
+                        return false;
+                    }
+                }
 
-                // Check for overlap along each axis
-                bool xOverlap = maxA.x >= minB.x && minA.x <= maxB.x;
-                bool yOverlap = maxA.y >= minB.y && minA.y <= maxB.y;
-                bool zOverlap = maxA.z >= minB.z && minA.z <= maxB.z;
-
-                // If there is overlap along all axes, the boxes collide
-                return xOverlap && yOverlap && zOverlap;
+                // If overlap occurs on all axes, the boxes are colliding
+                return true;
             }
+
+            private bool OverlapOnAxis(float3 axis, BoxInfo box1, BoxInfo box2, float4x4 box2ToBox1)
+            {
+                // Project vertices of both boxes onto the axis
+                float thisMin  = float.MaxValue, thisMax  = float.MinValue;
+                float otherMin = float.MaxValue, otherMax = float.MinValue;
+
+                var thisVertices  = box1.GetVertices();
+                var otherVertices = box2.GetVertices();
+
+                foreach (float3 vertex in thisVertices)
+                {
+                    float projection = math.dot(vertex, axis);
+                    thisMin = math.min(thisMin, projection);
+                    thisMax = math.max(thisMax, projection);
+                }
+
+                thisVertices.Dispose();
+
+                foreach (float3 vertex in otherVertices)
+                {
+                    float projection = math.dot(vertex, axis);
+                    otherMin = math.min(otherMin, projection);
+                    otherMax = math.max(otherMax, projection);
+                }
+
+                otherVertices.Dispose();
+
+                // Apply transformation between boxes
+                float3 thisMinInOtherSpace = math.mul(box2ToBox1, new float4(thisMin * axis, 1.0f)).xyz;
+                float3 thisMaxInOtherSpace = math.mul(box2ToBox1, new float4(thisMax * axis, 1.0f)).xyz;
+
+                // Check for overlap
+                return thisMaxInOtherSpace.x >= otherMin && otherMax >= thisMinInOtherSpace.x &&
+                       thisMaxInOtherSpace.y >= otherMin && otherMax >= thisMinInOtherSpace.y &&
+                       thisMaxInOtherSpace.z >= otherMin && otherMax >= thisMinInOtherSpace.z;
+            }
+
+
+            public struct BoxInfo
+            {
+                public float3       Center;
+                public float3       Size;
+                public LocalToWorld WorldTransform;
+
+                public NativeArray<float3> GetVertices()
+                {
+                    var corners  = new NativeArray<float3>(8, Allocator.Temp);
+                    var halfSize = math.mul(this.WorldTransform.Rotation, this.Size * 0.5f);
+
+                    corners[0] = this.Center + halfSize;
+                    corners[1] = this.Center + new float3(halfSize.x, -halfSize.y, halfSize.z);
+                    corners[2] = this.Center + new float3(-halfSize.x, halfSize.y, halfSize.z);
+                    corners[3] = this.Center + new float3(-halfSize.x, -halfSize.y, halfSize.z);
+                    corners[4] = this.Center + new float3(halfSize.x, halfSize.y, -halfSize.z);
+                    corners[5] = this.Center + new float3(halfSize.x, -halfSize.y, -halfSize.z);
+                    corners[6] = this.Center + new float3(-halfSize.x, halfSize.y, -halfSize.z);
+                    corners[7] = this.Center - halfSize;
+
+                    return corners;
+                }
+
+                public NativeArray<float3> GetAxes()
+                {
+                    // Get the local space axes of the oriented box
+                    var axes = new NativeArray<float3>(3, Allocator.Temp);
+                    axes[0] = this.WorldTransform.Right;
+                    axes[1] = this.WorldTransform.Up;
+                    axes[2] = this.WorldTransform.Forward;
+                    return axes;
+                }
+            }
+
 
             public void Execute(Entity otherEntity, AgentBody otherBody, AgentShape otherShape, LocalToWorld otherTransform)
             {
                 if (this.Entity == otherEntity) return;
-                var centerA = math.mul(this.Transform.Rotation, EntityColliderData.Center) + this.Transform.Position;
-                var centerB = otherTransform.Position;
-                var sizeB   = new float3(otherShape.Radius, otherShape.Height, otherShape.Radius);
+                // if (!this.CheckCollision(new BoxInfo()
+                //     {
+                //         Center         = math.mul(this.Transform.Rotation, EntityColliderData.Center) + this.Transform.Position,
+                //         Size           = this.EntityColliderData.Size,
+                //         WorldTransform = this.Transform
+                //     }, new BoxInfo()
+                //     {
+                //         Center         = otherTransform.Position,
+                //         Size           = new float3(otherShape.Radius, otherShape.Height, otherShape.Radius),
+                //         WorldTransform = otherTransform
+                //     })) return;
 
-                if (!this.CheckCollision(centerA, this.EntityColliderData.Size, this.Transform.Rotation, centerB, sizeB, otherTransform.Rotation)) return;
                 var isStay = false;
                 for (var index = 0; index < this.StatefulTriggerEvents.Length; index++)
                 {

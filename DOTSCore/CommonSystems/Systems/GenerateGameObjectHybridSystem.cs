@@ -1,13 +1,13 @@
 ﻿namespace DOTSCore.CommonSystems.Systems
 {
     using System.Collections.Generic;
+    using Cysharp.Threading.Tasks;
     using DOTSCore.CommonSystems.Components;
     using GameFoundation.Scripts.Utilities.Extension;
     using GameFoundation.Scripts.Utilities.ObjectPool;
     using Unity.Collections;
     using Unity.Entities;
     using Unity.Transforms;
-    using UnityEngine;
     using Zenject;
 
     [UpdateInGroup(typeof(SimulationSystemGroup))]
@@ -29,17 +29,11 @@
                 .WithStructuralChanges()
                 .WithNone<GameObjectHybridLink, IsLoadingGameObjectTag>().ForEach((Entity entity, in AddressablePathComponent assetPath, in LocalToWorld transform) =>
                 {
-                    this.GenerateGameObject(entity, assetPath, transform);
+                    this.GenerateGameObject(entity, assetPath, transform).Forget();
                 }).Run();
         }
 
-        private unsafe Vector3 GetScaleFromLocalToWorld(LocalToWorld transform)
-        {
-            var mat = *(UnityEngine.Matrix4x4*)&transform;
-            return mat.lossyScale;
-        }
-
-        private async void GenerateGameObject(Entity entity, AddressablePathComponent assetPath, LocalToWorld transform)
+        private async UniTaskVoid GenerateGameObject(Entity entity, AddressablePathComponent assetPath, LocalToWorld transform)
         {
             this.EntityManager.AddComponent<IsLoadingGameObjectTag>(entity);
             if (!this.assetPathToStringValue.ContainsKey(assetPath.Value))
@@ -55,7 +49,7 @@
                 if (intiGameObjectHybridLink == null)
                 {
                     intiGameObjectHybridLink       = tmpObject.AddComponent<InitGameObjectHybridLink>();
-                    tmpObject.transform.localScale = this.GetScaleFromLocalToWorld(transform);
+                    tmpObject.transform.localScale = transform.Value.Scale();
                 }
 
                 intiGameObjectHybridLink.Init(this.EntityManager, entity);

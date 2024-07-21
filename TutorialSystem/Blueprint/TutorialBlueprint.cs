@@ -3,12 +3,15 @@
     using System;
     using System.Collections.Generic;
     using Sirenix.OdinInspector;
+    using TaskModule.Actions;
+    using TaskModule.ActiveRequirement;
     using TaskModule.Authoring;
     using UnityEngine;
 
     public class TutorialBlueprint : BaseSOBlueprint<TutorialBlueprint>
     {
         public bool EnableFTUE = true;
+
         [ListDrawerSettings(ShowPaging = true, ListElementLabelName = "Name", OnBeginListElementGUI = "BeginListElement", NumberOfItemsPerPage = 5)]
         public List<TutorialRecord> TutorialRecords = new();
 
@@ -29,14 +32,9 @@
         [ListDrawerSettings(OnBeginListElementGUI = "BeginDrawListElement")]
         public List<TaskEntityData> Tasks;
 
-        #if UNITY_EDITOR
+#if UNITY_EDITOR
 
-        private void BeginDrawListElement(int index)
-        {
-            Sirenix.Utilities.Editor.SirenixEditorGUI.Title("Task Order: " + index, null, TextAlignment.Left, true);
-        }
-        #endif
+        private void BeginDrawListElement(int index) { Sirenix.Utilities.Editor.SirenixEditorGUI.Title("Task Order: " + index, null, TextAlignment.Left, true); }
+#endif
     }
-
-
 }

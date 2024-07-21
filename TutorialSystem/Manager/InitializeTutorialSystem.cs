@@ -7,6 +7,7 @@
     using QuestSystem.QuestBase;
     using TaskModule;
     using TaskModule.Actions;
+    using TaskModule.ActiveRequirement;
     using TaskModule.TaskBase;
     using TutorialSystem.Blueprint;
     using Unity.Collections;

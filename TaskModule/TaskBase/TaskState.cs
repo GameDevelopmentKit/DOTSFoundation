@@ -2,8 +2,6 @@
 {
     using Unity.Entities;
 
-    public struct AutoActiveOnStartTag : IComponentData { }
-
     public struct ActivatedTag : IComponentData, IEnableableComponent { }
 
     public struct CompletedTag : IComponentData, IEnableableComponent { }

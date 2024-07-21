@@ -1,9 +1,9 @@
-﻿namespace QuestSystem.QuestTrigger
+﻿namespace QuestSystem.QuestCompletionConditions
 {
     using Unity.Collections;
     using Unity.Entities;
 
-    public struct TriggerOnTaskQuestActivated : IComponentData
+    public struct TriggerOnTaskQuestCompleted : IComponentData
     {
         public FixedString64Bytes QuestSource;
         public int QuestId;

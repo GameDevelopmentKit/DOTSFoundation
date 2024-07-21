@@ -1,4 +1,4 @@
-﻿namespace QuestSystem.QuestTrigger
+﻿namespace QuestSystem.QuestCompletionConditions
 {
     using QuestSystem.QuestBase;
     using TaskModule;
@@ -19,6 +19,7 @@
         public void OnCreate(ref SystemState state)
         {
             this.triggerOnTaskActivated   = SystemAPI.QueryBuilder().WithAll<TriggerOnTaskQuestCompleted>().WithNone<CompletedTag>().Build();
+            state.RequireForUpdate(this.triggerOnTaskActivated);
         }
 
         [BurstCompile]

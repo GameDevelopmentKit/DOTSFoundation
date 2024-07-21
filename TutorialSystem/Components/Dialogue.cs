@@ -4,7 +4,7 @@
     using Unity.Entities;
     using UnityEngine;
 
-    public class Dialogue : IComponentData,ITaskActionComponentConverter
+    public class Dialogue : IComponentData,ITaskActiveActionComponentConverter
     {
         public string UIAddressablePath = "TutorialDialogueUI";
         public string Content;

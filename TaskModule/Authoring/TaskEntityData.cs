@@ -17,9 +17,13 @@ namespace TaskModule.Authoring
         public void Convert(EntityManager entityManager, Entity taskEntity);
     }
 
-    public interface ITaskActionComponentConverter : ITaskComponentConverter { }
+    public interface ITaskRequirementComponentConverter : ITaskComponentConverter { }
+
+    public interface ITaskActiveActionComponentConverter : ITaskComponentConverter { }
 
     public interface ITaskGoalComponentConverter : ITaskComponentConverter { }
+
+    public interface ITaskCompleteActionComponentConverter : ITaskComponentConverter { }
 
     public interface ITaskInfoConverter : ITaskComponentConverter { }
 }

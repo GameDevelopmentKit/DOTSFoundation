@@ -1,5 +1,6 @@
-﻿namespace TaskModule.TaskBase
+﻿namespace TaskModule.ActiveRequirement
 {
+    using TaskModule.TaskBase;
     using Unity.Burst;
     using Unity.Entities;
 

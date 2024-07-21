@@ -7,7 +7,7 @@
     using Unity.Entities;
     using UnityEngine;
 
-    public class HighlightUIArea : IComponentData, ITaskActionComponentConverter
+    public class HighlightUIArea : IComponentData, ITaskActiveActionComponentConverter
     {
         public string           GameObjectPath;
         public bool             IsForce;

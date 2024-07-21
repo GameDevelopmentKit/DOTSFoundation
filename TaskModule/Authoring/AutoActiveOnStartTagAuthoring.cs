@@ -1,5 +1,6 @@
 ﻿namespace TaskModule.Authoring
 {
+    using TaskModule.ActiveRequirement;
     using TaskModule.TaskBase;
     using Unity.Entities;
 

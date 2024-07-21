@@ -14,10 +14,7 @@
             {
                 var entity = this.GetEntity(TransformUsageFlags.Dynamic);
                 var targetEntity = this.GetEntity(authoring.TargetObject, TransformUsageFlags.Dynamic);
-                if (authoring.Value)
-                {
-                    this.AddComponent<Disabled>(targetEntity);
-                }
+ 
                 this.AddComponent(entity, new SetActiveOnTaskCompleted()
                 {
                     TargetEntity = targetEntity,

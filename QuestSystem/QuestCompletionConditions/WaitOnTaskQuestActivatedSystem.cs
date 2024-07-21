@@ -1,4 +1,4 @@
-﻿namespace QuestSystem.QuestTrigger
+﻿namespace QuestSystem.QuestCompletionConditions
 {
     using QuestSystem.QuestBase;
     using TaskModule;
@@ -18,7 +18,7 @@
         [BurstCompile]
         public void OnCreate(ref SystemState state)
         {
-            this.triggerOnTaskActivated   = SystemAPI.QueryBuilder().WithAll<TriggerOnTaskQuestActivated>().WithNone<CompletedTag>().WithOptions(EntityQueryOptions.IncludeDisabledEntities).Build();
+            this.triggerOnTaskActivated = SystemAPI.QueryBuilder().WithAll<TriggerOnTaskQuestActivated>().WithNone<CompletedTag>().WithOptions(EntityQueryOptions.IncludeDisabledEntities).Build();
             state.RequireForUpdate(this.triggerOnTaskActivated);
         }
 
@@ -38,29 +38,29 @@
 
             state.Dependency = listenOnHitEventJob.ScheduleParallel(JobHandle.CombineDependencies(getTriggerComponentHandle, getTriggerEntityHandle));
         }
-    }
 
 
-    [BurstCompile]
-    [WithAll(typeof(ActivatedTag), typeof(TaskIndex))]
-    [WithNone(typeof(QuestInfo))]
-    [WithChangeFilter(typeof(ActivatedTag))]
-    public partial struct ListenOnTaskActivatedJob : IJobEntity
-    {
-        [ReadOnly] public NativeList<Entity>                      TriggerEntityArray;
-        [ReadOnly] public NativeList<TriggerOnTaskQuestActivated> TriggerOnTaskQuestActivatedArray;
-        [ReadOnly] public ComponentLookup<QuestInfo>              QuestInfoLookup;
-
-        [NativeDisableParallelForRestriction] public ComponentLookup<CompletedTag> CompletedLookup;
-
-        void Execute(in TaskIndex taskIndex, in ContainerOwner questEntityOwner)
+        [BurstCompile]
+        [WithAll(typeof(ActivatedTag), typeof(TaskIndex))]
+        [WithNone(typeof(QuestInfo))]
+        [WithChangeFilter(typeof(ActivatedTag))]
+        public partial struct ListenOnTaskActivatedJob : IJobEntity
         {
-            for (var i = 0; i < this.TriggerOnTaskQuestActivatedArray.Length; i++)
+            [ReadOnly] public NativeList<Entity>                      TriggerEntityArray;
+            [ReadOnly] public NativeList<TriggerOnTaskQuestActivated> TriggerOnTaskQuestActivatedArray;
+            [ReadOnly] public ComponentLookup<QuestInfo>              QuestInfoLookup;
+
+            [NativeDisableParallelForRestriction] public ComponentLookup<CompletedTag> CompletedLookup;
+
+            void Execute(in TaskIndex taskIndex, in ContainerOwner questEntityOwner)
             {
-                var triggerData = this.TriggerOnTaskQuestActivatedArray[i];
-                var questInfo   = this.QuestInfoLookup[questEntityOwner.Value];
-                if (triggerData.QuestSource == questInfo.QuestSource && triggerData.QuestId == questInfo.Id && triggerData.TaskOrder == taskIndex.Value)
-                    this.CompletedLookup.SetComponentEnabled(this.TriggerEntityArray[i], true);
+                for (var i = 0; i < this.TriggerOnTaskQuestActivatedArray.Length; i++)
+                {
+                    var triggerData = this.TriggerOnTaskQuestActivatedArray[i];
+                    var questInfo   = this.QuestInfoLookup[questEntityOwner.Value];
+                    if (triggerData.QuestSource == questInfo.QuestSource && triggerData.QuestId == questInfo.Id && triggerData.TaskOrder == taskIndex.Value)
+                        this.CompletedLookup.SetComponentEnabled(this.TriggerEntityArray[i], true);
+                }
             }
         }
     }
