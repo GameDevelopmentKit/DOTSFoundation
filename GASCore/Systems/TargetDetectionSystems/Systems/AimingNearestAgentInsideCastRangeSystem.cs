@@ -51,49 +51,45 @@ namespace AdventureWorld.CombatSystem.AbilitySystemExtension.Systems
 
         public void Execute([EntityIndexInQuery] int entityInQueryIndex, ref DynamicBuffer<TargetableElement> targetables, in CasterComponent caster, in ActivatedStateEntityOwner owner)
         {
-            targetables.Clear(); //multi thread, targetables must clear before use
+            //multi thread, targetables must clear before use
+            targetables.Clear(); 
 
-            float hardFixAimRange = 200f;
             bool hasAimingComponent = AimingLookup.TryGetComponent(caster.Value, out AimingComponent aimingTarget);
 
-            //find a new target for casters dont have target or target was destroyed
-            if (!hasAimingComponent || (hasAimingComponent &&  aimingTarget.Value == Entity.Null))
+            var casterPosition = this.WorldTransformLookup[caster].Position;
+            var castRange = this.CastRangeLookup[owner];
+
+            if (hasAimingComponent && aimingTarget.Value != Entity.Null && WorldTransformLookup.HasComponent(aimingTarget.Value))
             {
-                if(!hasAimingComponent) //create new aiming component
-                {
-                    //AimingLookup.AddComponent(caster.Value, new AimingComponent());
-                    Ecb.AddComponent(entityInQueryIndex, caster.Value, new AimingComponent());
-                }
-
-                var casterPosition = this.WorldTransformLookup[caster].Position;
-                var castRange = this.CastRangeLookup[owner];
-                Entity nearestTarget = Entity.Null;
-
-                var action = new NearestAgentQuery
-                {
-                    UntargetableLookup = this.UntargetableLookup,
-                    CasterPos = casterPosition,
-                    //CastRangeSq = castRange.ValueSqr,
-                    CastRangeSq = hardFixAimRange,
-                    NearestDistanceSq = hardFixAimRange,
-                    NearestTarget = nearestTarget,
-                    Caster = caster.Value
-                };
-
-                this.Spatial.QuerySphere(casterPosition, hardFixAimRange, ref action);
-                Ecb.SetComponent(entityInQueryIndex, caster.Value, new AimingComponent { Value = action.NearestTarget });
-            }
-
-            else
-            {
-                //if distance bettween caster and target too far, clear target
-                var casterPosition = this.WorldTransformLookup[caster].Position;
+                //if aiming target is still in range, add it to targetables
                 var targetPosition = this.WorldTransformLookup[aimingTarget.Value].Position;
                 var distance = math.distancesq(casterPosition, targetPosition);
-                var castRange = hardFixAimRange;
-                if(distance > castRange) Ecb.SetComponent(entityInQueryIndex, caster.Value, new AimingComponent { Value = Entity.Null });
-                return;
+
+                if (distance <= castRange.ValueSqr)
+                {
+                    targetables.Add(aimingTarget.Value);
+                    return;
+                }
             }
+
+            //create new aiming component for caster if not exist
+            if (!hasAimingComponent) Ecb.AddComponent(entityInQueryIndex, caster.Value, new AimingComponent());
+
+            //find nearest target if current aiming target is not in range, was destroyed or caster doesnt have an aiming component
+            Entity nearestTarget = Entity.Null;
+            var action = new NearestAgentQuery
+            {
+                UntargetableLookup = this.UntargetableLookup,
+                CasterPos = casterPosition,
+                CastRangeSq = castRange.ValueSqr,
+                NearestDistanceSq = castRange.ValueSqr,
+                NearestTarget = nearestTarget,
+                Caster = caster.Value
+            };
+
+            this.Spatial.QuerySphere(casterPosition, castRange.Value, ref action);
+            Ecb.SetComponent(entityInQueryIndex, caster.Value, new AimingComponent { Value = action.NearestTarget });
+            targetables.Add(action.NearestTarget);
         }
 
         struct NearestAgentQuery : ISpatialQueryEntity
@@ -110,7 +106,6 @@ namespace AdventureWorld.CombatSystem.AbilitySystemExtension.Systems
                 if (this.UntargetableLookup.HasComponent(otherEntity)) return;
                 if (otherEntity.Equals(Caster)) return;
                 var distanceSq = math.distancesq(this.CasterPos, otherTransform.Position);
-                Debug.Log($"distanceSq {distanceSq} castRange {this.CastRangeSq}");
                 if (distanceSq > this.CastRangeSq) return;
                 if (distanceSq < NearestDistanceSq)
                 {
