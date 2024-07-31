@@ -3,8 +3,10 @@
     using GASCore.Groups;
     using GASCore.Systems.AbilityMainFlow.Components;
     using GASCore.Systems.LogicEffectSystems.Components;
+    using GASCore.Systems.StatSystems.Components;
     using GASCore.Systems.TargetDetectionSystems.Components;
     using Unity.Burst;
+    using Unity.Collections;
     using Unity.Entities;
     using Unity.Transforms;
 
@@ -23,7 +25,7 @@
             var ecbSingleton = SystemAPI.GetSingleton<BeginInitializationEntityCommandBufferSystem.Singleton>();
             var ecb          = ecbSingleton.CreateCommandBuffer(state.WorldUnmanaged).AsParallelWriter();
 
-            new ActivateAbilityJob() { Ecb = ecb }.ScheduleParallel();
+            new ActivateAbilityJob() { Ecb = ecb, statDataLookup = state.GetBufferLookup<StatDataElement>()}.ScheduleParallel();
         }
     }
 
@@ -31,10 +33,11 @@
     public partial struct ActivateAbilityJob : IJobEntity
     {
         public EntityCommandBuffer.ParallelWriter Ecb;
+        [NativeDisableParallelForRestriction] public BufferLookup<StatDataElement> statDataLookup;
 
         void Execute(Entity abilityEntity, [EntityIndexInQuery] int entityInQueryIndex, in AbilityEffectPoolComponent effectPool,
             in DynamicBuffer<AbilityTimelineInitialElement> timelineInitialElements,
-            in CasterComponent caster, in AbilityId abilityId, in Cooldown cooldown, in CastRangeComponent castRangeComponent)
+            in CasterComponent caster, in Components.AbilityId abilityId, in Cooldown cooldown, in CastRangeComponent castRangeComponent, in DynamicBuffer<AbilityCost> abilityCosts)
         {
             // set cooldownTime for ability if available
             if (cooldown.Value > 0)
@@ -43,7 +46,26 @@
                 this.Ecb.SetComponent(entityInQueryIndex, abilityEntity, new Duration() { Value = cooldown.Value });
             }
 
-            //update status
+            //if ability has stat costs, deduct them from caster
+            if (abilityCosts.Length > 0)
+            {
+                DynamicBuffer<StatDataElement> casterStatData = this.statDataLookup[caster.Value];
+                for (int i = 0; i < abilityCosts.Length; i++)
+                {
+                    var abilityCost = abilityCosts[i];
+                    for (int j = 0; j < casterStatData.Length; j++)
+                    {
+                        if (casterStatData[j].StatName == abilityCost.Name)
+                        {
+                            var statData = casterStatData[j];
+                            statData.BaseValue -= abilityCost.Value;
+                            casterStatData[j] = statData;
+                        }
+                    }
+                }
+            }
+
+                //update status
             this.Ecb.SetComponentEnabled<GrantedActivation>(entityInQueryIndex, abilityEntity, false);
             this.Ecb.SetComponentEnabled<ActivatedTag>(entityInQueryIndex, abilityEntity, true);
 
