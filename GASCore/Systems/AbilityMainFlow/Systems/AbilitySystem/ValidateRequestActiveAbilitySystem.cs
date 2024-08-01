@@ -14,10 +14,20 @@
     [BurstCompile]
     public partial struct ValidateRequestActiveAbilitySystem : ISystem
     {
+        private StatAspect.Lookup statDataLookup;
+
+        [BurstCompile]
+        public void OnCreate(ref SystemState state)
+        {
+            statDataLookup = new StatAspect.Lookup(ref state);
+        }
+
         [BurstCompile]
         public void OnUpdate(ref SystemState state)
         {
-            var job = new ValidateAbilityJob() { statDataLookup = new StatAspect.Lookup(ref state) }.ScheduleParallel(state.Dependency);
+            this.statDataLookup.Update(ref state);
+
+            var job = new ValidateAbilityJob() { statDataLookup = this.statDataLookup}.ScheduleParallel(state.Dependency);
             job.Complete();
         }
     }

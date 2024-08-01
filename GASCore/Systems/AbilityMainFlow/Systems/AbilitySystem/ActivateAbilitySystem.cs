@@ -16,16 +16,24 @@
     [BurstCompile]
     public partial struct ActivateAbilitySystem : ISystem
     {
+        private StatAspect.Lookup statDataLookup;
+
         [BurstCompile]
-        public void OnCreate(ref SystemState state) { state.RequireForUpdate<GrantedActivation>(); }
+        public void OnCreate(ref SystemState state) 
+        { 
+            state.RequireForUpdate<GrantedActivation>(); 
+            statDataLookup = new StatAspect.Lookup(ref state);
+        }
 
         [BurstCompile]
         public void OnUpdate(ref SystemState state)
         {
+            statDataLookup.Update(ref state);
+
             var ecbSingleton = SystemAPI.GetSingleton<BeginInitializationEntityCommandBufferSystem.Singleton>();
             var ecb          = ecbSingleton.CreateCommandBuffer(state.WorldUnmanaged).AsParallelWriter();
 
-            new ActivateAbilityJob() { Ecb = ecb, statDataLookup = new StatAspect.Lookup(ref state)}.ScheduleParallel();
+            new ActivateAbilityJob() { Ecb = ecb, statDataLookup = this.statDataLookup}.ScheduleParallel();
         }
     }
 
