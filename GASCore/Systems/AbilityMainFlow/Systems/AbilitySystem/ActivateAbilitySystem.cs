@@ -25,7 +25,7 @@
             var ecbSingleton = SystemAPI.GetSingleton<BeginInitializationEntityCommandBufferSystem.Singleton>();
             var ecb          = ecbSingleton.CreateCommandBuffer(state.WorldUnmanaged).AsParallelWriter();
 
-            new ActivateAbilityJob() { Ecb = ecb, statDataLookup = state.GetBufferLookup<StatDataElement>()}.ScheduleParallel();
+            new ActivateAbilityJob() { Ecb = ecb, statDataLookup = new StatAspect.Lookup(ref state)}.ScheduleParallel();
         }
     }
 
@@ -33,7 +33,7 @@
     public partial struct ActivateAbilityJob : IJobEntity
     {
         public EntityCommandBuffer.ParallelWriter Ecb;
-        [NativeDisableParallelForRestriction] public BufferLookup<StatDataElement> statDataLookup;
+        [NativeDisableParallelForRestriction] public StatAspect.Lookup statDataLookup;
 
         void Execute(Entity abilityEntity, [EntityIndexInQuery] int entityInQueryIndex, in AbilityEffectPoolComponent effectPool,
             in DynamicBuffer<AbilityTimelineInitialElement> timelineInitialElements,
@@ -49,19 +49,12 @@
             //if ability has stat costs, deduct them from caster
             if (abilityCosts.Length > 0)
             {
-                DynamicBuffer<StatDataElement> casterStatData = this.statDataLookup[caster.Value];
+                StatAspect casterStatData = this.statDataLookup[caster.Value];
                 for (int i = 0; i < abilityCosts.Length; i++)
                 {
                     var abilityCost = abilityCosts[i];
-                    for (int j = 0; j < casterStatData.Length; j++)
-                    {
-                        if (casterStatData[j].StatName == abilityCost.Name)
-                        {
-                            var statData = casterStatData[j];
-                            statData.BaseValue -= abilityCost.Value;
-                            casterStatData[j] = statData;
-                        }
-                    }
+                    var baseValue = casterStatData.GetBaseValue(abilityCost.Name);
+                    casterStatData.SetBaseValue(abilityCost.Name, baseValue - abilityCost.Value);
                 }
             }
 
